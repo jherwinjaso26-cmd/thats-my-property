@@ -10,7 +10,8 @@ import java.util.concurrent.*;
 class Game {
     static final double R = 18, SPEED = 240, DASH_SPEED = 720, TRAP_R = 20;
     static final long DASH_MS = 180, DASH_CD = 3000, HOLD_MS = 30_000, STEAL_GRACE = 1500;
-    static final String[] DISASTERS = {"METEOR", "LIGHTNING", "TORNADO"};
+    static final String[] DISASTERS = {"METEOR", "LIGHTNING", "TORNADO", "FLOOD", "SINKHOLE", "HAIL", "BOULDER"};
+    static final long DROWN_MS = 2500;
     static final ScheduledExecutorService SCH = Executors.newScheduledThreadPool(2);
 
     enum Ph { ROLE, COUNT, PLAY, SCORE, OVER }
@@ -18,11 +19,11 @@ class Game {
     static class Gp {
         Main.Player p;
         double x, y, dx, dy, fx = 1, fy = 0, ddx = 1, ddy = 0;
-        long dashUntil, dashReady, speedUntil, shieldUntil, frozenUntil, trappedUntil;
+        long dashUntil, dashReady, speedUntil, shieldUntil, frozenUntil, trappedUntil, wetSince;
         boolean alive = true, hasTrap;
     }
 
-    /** Hazard: k = "m" meteor, "l" lightning (both warn then hit), "t" tornado (moves, kills on touch). */
+    /** Hazard: "m" meteor, "l" lightning, "h" hail, "s" sinkhole (warn, then hit; sinkholes stay open), "t" tornado (chases players), "b" boulder (warns, then rolls across the map). */
     static class Hz {
         int id;
         String k;
@@ -47,10 +48,12 @@ class Game {
     final List<double[]> traps = new ArrayList<>(); // x, y
     final List<Hz> hz = new ArrayList<>();
     final List<double[]> blocks = new ArrayList<>(); // lucky blocks: id, x, y
+    final List<double[]> holes = new ArrayList<>();  // open sinkholes: x, y, radius
+    double fx, fy;                                    // flood: how far the water has risen from each edge
     final List<Bt> bears = new ArrayList<>();
     final Map<String, Gp> gp = new LinkedHashMap<>();
     final Map<String, Integer> scores = new HashMap<>();
-    String holder, disaster = "METEOR";
+    String holder, disaster = "";
     int round, hzId;
     Ph ph;
     long phaseEnd, lastSwap, nextHz, nextBlock, last = System.currentTimeMillis();
@@ -59,8 +62,9 @@ class Game {
     Game(Main.Room room) {
         this.room = room;
         int n = room.players.size();
-        W = 1000 + 250 * n;          // more players = bigger map
-        H = 650 + 160 * n;
+        int big = Math.min(n, 6), extra = Math.max(0, n - 6);
+        W = 1000 + 250 * big + 120 * extra;   // more players = bigger map (grows slower past 6)
+        H = 650 + 160 * big + 80 * extra;
         team = room.mode.equals("team");
         target = room.target;
         for (Main.Player p : room.players) { Gp g = new Gp(); g.p = p; gp.put(p.id, g); }
@@ -96,6 +100,7 @@ class Game {
                 move(dt);
                 steals(now);
                 hazards(now, dt);
+                flood(now);
                 powerups(now);
                 if (aliveCount() <= 1 || now >= phaseEnd) endRound(now); // timer never resets on steals
             }
@@ -104,17 +109,20 @@ class Game {
         }
         ObjectNode n = Main.JSON.createObjectNode();
         n.put("t", "state").put("ph", ph.name()).put("left", Math.max(0, phaseEnd - now) / 1000.0)
-            .put("round", round).put("holder", holder);
+            .put("round", round).put("holder", holder).put("fx", (int) fx).put("fy", (int) fy);
         ArrayNode a = n.putArray("p");
         for (Gp g : gp.values())
             a.addObject().put("id", g.p.id).put("x", (int) g.x).put("y", (int) g.y)
                 .put("dc", Math.max(0, g.dashReady - now)).put("d", now < g.dashUntil).put("a", g.alive)
                 .put("sp", Math.max(0, g.speedUntil - now)).put("sh", Math.max(0, g.shieldUntil - now))
-                .put("fz", Math.max(0, g.frozenUntil - now)).put("tr", Math.max(0, g.trappedUntil - now)).put("it", g.hasTrap);
+                .put("fz", Math.max(0, g.frozenUntil - now)).put("tr", Math.max(0, g.trappedUntil - now)).put("it", g.hasTrap)
+                .put("wt", g.wetSince > 0 ? Math.max(0, DROWN_MS - (now - g.wetSince)) : 0);
         ArrayNode hs = n.putArray("hz");
         for (Hz h : hz)
             hs.addObject().put("k", h.k).put("x", (int) h.x).put("y", (int) h.y).put("r", (int) h.r)
-                .put("w", Math.max(0, h.hitAt - now));
+                .put("w", Math.max(0, h.hitAt - now)).put("vx", (int) h.vx).put("vy", (int) h.vy);
+        ArrayNode ho = n.putArray("ho");
+        for (double[] o : holes) ho.addObject().put("x", (int) o[0]).put("y", (int) o[1]).put("r", (int) o[2]);
         ArrayNode lb = n.putArray("lb");
         for (double[] b : blocks) lb.addObject().put("x", (int) b[1]).put("y", (int) b[2]);
         ArrayNode bt = n.putArray("bt");
@@ -127,7 +135,7 @@ class Game {
         for (Gp g : gp.values()) {
             if (!g.alive || now < g.frozenUntil || now < g.trappedUntil) continue; // frozen / trapped = cannot move
             boolean dashing = now < g.dashUntil;
-            double vx = dashing ? g.ddx : g.dx, vy = dashing ? g.ddy : g.dy, s = dashing ? DASH_SPEED : SPEED * (now < g.speedUntil ? 1.6 : 1);
+            double vx = dashing ? g.ddx : g.dx, vy = dashing ? g.ddy : g.dy, s = dashing ? DASH_SPEED : SPEED * (now < g.speedUntil ? 1.6 : 1) * (g.wetSince > 0 ? 0.55 : 1);
             g.x = clamp(g.x + vx * s * dt, R, W - R);
             g.y = clamp(g.y + vy * s * dt, R, H - R);
             for (double[] o : obs) {
@@ -158,7 +166,7 @@ class Game {
     void startDisaster() {
         hz.clear();
         if (!disaster.equals("TORNADO")) return;
-        for (int i = 0; i < Math.min(4, 1 + round / 3); i++) {
+        for (int i = 0; i < Math.min(4 + gp.size() / 5, 1 + round / 3 + gp.size() / 6); i++) {
             Hz h = new Hz();
             h.id = ++hzId; h.k = "t"; h.r = 52;
             for (int tries = 0; tries < 40; tries++) {
@@ -172,20 +180,20 @@ class Game {
     }
 
     void hazards(long now, double dt) {
-        if (!disaster.equals("TORNADO") && now >= nextHz) {
-            boolean met = disaster.equals("METEOR");
-            int cnt = met ? 1 + round / 2 : 1 + round / 3;
-            for (int i = 0; i < cnt; i++) {
-                Hz h = new Hz();
-                h.id = ++hzId; h.k = met ? "m" : "l"; h.r = met ? 75 : 48; h.hitAt = now + (met ? 1600 : 900);
-                Gp t = randomAlive();
-                if (t != null && rnd.nextDouble() < (met ? 0.6 : 0.7)) { // aim near a player
-                    h.x = clamp(t.x + (rnd.nextDouble() - .5) * 240, 40, W - 40);
-                    h.y = clamp(t.y + (rnd.nextDouble() - .5) * 240, 40, H - 40);
-                } else { h.x = 40 + rnd.nextDouble() * (W - 80); h.y = 40 + rnd.nextDouble() * (H - 80); }
-                hz.add(h);
+        int n = gp.size();
+        if (now >= nextHz) {
+            switch (disaster) {
+                case "METEOR" -> { strikes("m", 1 + round / 2 + n / 5, 75, 1600, 0.6, now); nextHz = now + Math.max(500, 1400 - 120L * round); }
+                case "LIGHTNING" -> { strikes("l", 1 + round / 3 + n / 5, 48, 900, 0.7, now); nextHz = now + Math.max(350, 800 - 60L * round); }
+                case "HAIL" -> { strikes("h", 3 + round / 2 + n / 2, 34, 1000, 0.5, now); nextHz = now + Math.max(700, 1300 - 80L * round); }
+                case "SINKHOLE" -> {
+                    long pending = hz.stream().filter(h -> h.k.equals("s")).count();
+                    if (holes.size() + pending < 14) strikes("s", 1 + n / 6, 70, 1800, 0.65, now);
+                    nextHz = now + Math.max(900, 2200 - 130L * round);
+                }
+                case "BOULDER" -> { boulders(1 + round / 3 + n / 6, now); nextHz = now + Math.max(1800, 3600 - 200L * round); }
+                default -> nextHz = Long.MAX_VALUE; // tornado and flood have no timed strikes
             }
-            nextHz = now + (met ? Math.max(500, 1400 - 120L * round) : Math.max(350, 800 - 60L * round));
         }
         for (Iterator<Hz> it = hz.iterator(); it.hasNext(); ) {
             Hz h = it.next();
@@ -193,8 +201,15 @@ class Game {
                 moveTornado(h, dt);
                 for (Gp g : gp.values())
                     if (g.alive && Math.hypot(g.x - h.x, g.y - h.y) < h.r * 0.8 + R * 0.6) kill(g, now);
+            } else if (h.k.equals("b")) {
+                if (now < h.hitAt) continue; // still warning
+                h.x += h.vx * dt; h.y += h.vy * dt;
+                for (Gp g : gp.values())
+                    if (g.alive && Math.hypot(g.x - h.x, g.y - h.y) < h.r * 0.85 + R * 0.6) kill(g, now);
+                if (h.x < -h.r - 5 || h.x > W + h.r + 5 || h.y < -h.r - 5 || h.y > H + h.r + 5) it.remove();
             } else if (now >= h.hitAt) {
                 it.remove();
+                if (h.k.equals("s")) holes.add(new double[]{h.x, h.y, h.r});
                 ObjectNode ev = Main.JSON.createObjectNode();
                 ev.put("t", "ev").put("k", "boom").put("hk", h.k).put("x", (int) h.x).put("y", (int) h.y).put("r", (int) h.r);
                 broadcast(ev);
@@ -202,9 +217,57 @@ class Game {
                     if (g.alive && Math.hypot(g.x - h.x, g.y - h.y) < h.r + R * 0.5) kill(g, now);
             }
         }
+        for (double[] o : holes)
+            for (Gp g : gp.values())
+                if (g.alive && Math.hypot(g.x - o[0], g.y - o[1]) < o[2] * 0.8 + R * 0.3) kill(g, now);
         for (double[] t : traps)
             for (Gp g : gp.values())
                 if (g.alive && Math.hypot(g.x - t[0], g.y - t[1]) < TRAP_R + R * 0.6) kill(g, now);
+    }
+
+    /** Spawns warned circular strikes (meteor, lightning, hail, sinkhole); some are aimed near a player. */
+    void strikes(String k, int cnt, double r, long warn, double aim, long now) {
+        for (int i = 0; i < cnt; i++) {
+            Hz h = new Hz();
+            h.id = ++hzId; h.k = k; h.r = r; h.hitAt = now + warn;
+            Gp t = randomAlive();
+            if (t != null && rnd.nextDouble() < aim) {
+                h.x = clamp(t.x + (rnd.nextDouble() - .5) * 240, 40, W - 40);
+                h.y = clamp(t.y + (rnd.nextDouble() - .5) * 240, 40, H - 40);
+            } else { h.x = 40 + rnd.nextDouble() * (W - 80); h.y = 40 + rnd.nextDouble() * (H - 80); }
+            hz.add(h);
+        }
+    }
+
+    /** Boulders: a lane lights up for 1.5s, then the boulder rolls straight across the whole map. */
+    void boulders(int cnt, long now) {
+        for (int i = 0; i < cnt; i++) {
+            Hz h = new Hz();
+            h.id = ++hzId; h.k = "b"; h.r = 46; h.hitAt = now + 1500;
+            Gp t = randomAlive();
+            double tx = t != null ? t.x + (rnd.nextDouble() - .5) * 200 : W / 2, ty = t != null ? t.y + (rnd.nextDouble() - .5) * 200 : H / 2;
+            boolean pos = rnd.nextBoolean();
+            if (rnd.nextBoolean()) { // rolls sideways
+                h.y = clamp(ty, 60, H - 60); h.x = pos ? -h.r : W + h.r; h.vx = pos ? 460 : -460;
+            } else {                 // rolls up or down
+                h.x = clamp(tx, 60, W - 60); h.y = pos ? -h.r : H + h.r; h.vy = pos ? 460 : -460;
+            }
+            hz.add(h);
+        }
+    }
+
+    /** Flood: water rises from every edge. Standing in it slows you, and after 2.5s you drown. */
+    void flood(long now) {
+        if (!disaster.equals("FLOOD")) return;
+        double f = Math.max(0, Math.min(1, 1 - (phaseEnd - now) / (double) HOLD_MS));
+        fx = f * 0.32 * W; fy = f * 0.32 * H;
+        for (Gp g : gp.values()) {
+            if (!g.alive) { g.wetSince = 0; continue; }
+            boolean wet = g.x < fx || g.x > W - fx || g.y < fy || g.y > H - fy;
+            if (!wet) { g.wetSince = 0; continue; }
+            if (g.wetSince == 0) g.wetSince = now;
+            if (now - g.wetSince >= DROWN_MS) kill(g, now);
+        }
     }
 
     void moveTornado(Hz h, double dt) {
@@ -324,7 +387,9 @@ class Game {
         }
         ph = won ? Ph.OVER : Ph.SCORE;
         phaseEnd = now + (won ? 8000 : 5000);
-        hz.clear(); blocks.clear(); bears.clear();
+        hz.clear(); blocks.clear(); bears.clear(); holes.clear();
+        fx = fy = 0;
+        for (Gp g : gp.values()) g.wetSince = 0;
 
         List<ObjectNode> rows = new ArrayList<>();
         if (team) {
@@ -356,11 +421,14 @@ class Game {
         for (Gp g : gp.values()) {
             double[] s = sp.get(i++);
             g.x = s[0]; g.y = s[1]; g.dx = g.dy = 0; g.dashUntil = 0; g.dashReady = 0; g.alive = true; // everyone revives
-            g.speedUntil = g.shieldUntil = g.frozenUntil = g.trappedUntil = 0; g.hasTrap = false;
+            g.speedUntil = g.shieldUntil = g.frozenUntil = g.trappedUntil = g.wetSince = 0; g.hasTrap = false;
         }
         placeTraps(sp);
-        hz.clear(); blocks.clear(); bears.clear();
-        disaster = DISASTERS[rnd.nextInt(DISASTERS.length)];
+        hz.clear(); blocks.clear(); bears.clear(); holes.clear();
+        fx = fy = 0;
+        String next;
+        do { next = DISASTERS[rnd.nextInt(DISASTERS.length)]; } while (next.equals(disaster)); // never the same twice in a row
+        disaster = next;
         holder = new ArrayList<>(gp.keySet()).get(rnd.nextInt(gp.size())); // exactly one protector
         ph = Ph.ROLE;
         phaseEnd = now + 3000;
@@ -388,7 +456,7 @@ class Game {
     /** More traps every round, never near a spawn point. */
     void placeTraps(List<double[]> sp) {
         traps.clear();
-        for (int i = 0; i < Math.min(14, 2 * round); i++) {
+        for (int i = 0; i < Math.min(Math.max(14, 2 * gp.size()), 2 * round); i++) {
             for (int tries = 0; tries < 80; tries++) {
                 double x = 60 + rnd.nextDouble() * (W - 120), y = 60 + rnd.nextDouble() * (H - 120);
                 boolean ok = true;
@@ -451,7 +519,8 @@ class Game {
     }
 
     void broadcast(ObjectNode n) {
-        for (Gp g : gp.values()) Main.send(g.p.ctx, n);
+        String s = n.toString(); // serialize once, send to everyone
+        for (Gp g : gp.values()) Main.sendRaw(g.p.ctx, s);
     }
 
     static double clamp(double v, double lo, double hi) { return Math.max(lo, Math.min(hi, v)); }

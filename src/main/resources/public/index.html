@@ -29,7 +29,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
 .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .chip{width:46px;height:46px;font-size:24px;padding:0;border-radius:12px;background:#1e293b;border:2px solid transparent}
-.chip.sel{border-color:#facc15;background:#3b3510}
+.chip.sel{border-color:#facc15;background:#3b3510}.chip.taken{opacity:.25;filter:grayscale(1)}
 .dot{width:34px;height:34px;border-radius:50%;padding:0;border:3px solid transparent}.dot.sel{border-color:#fff}
 .field{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;font-size:14px;color:#cbd5e1}
 .chat{gap:8px}#log{flex:1;overflow:auto;font-size:14px;display:flex;flex-direction:column;gap:4px;min-height:0}
@@ -61,7 +61,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
       <h2>Character</h2><div id="chars" class="chips"></div>
       <h2>Team color</h2><div id="teams" class="chips"></div>
       <h2>Match</h2>
-      <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option></select></label>
+      <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option></select></label>
       <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option></select></label>
       <label class="field">Race to: <b id="tv"></b><input id="target" type="range" min="1" max="10"></label>
       <button id="start" class="pri">Start Match</button>
@@ -72,7 +72,8 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
 </section>
 
 <script>
-const CH=['🐱','🐶','🦊','🐼','🐸','🐵'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'};
+const CH=['🐱','🐶','🦊','🐼','🐸','🐵','🐰','🐻','🐯','🦁','🐷','🐮','🐨','🐭','🐺','🦝','🐧','🐥','🦄','🤖'],
+CHN=['Cat','Dog','Fox','Panda','Frog','Monkey','Bunny','Bear','Tiger','Lion','Pig','Cow','Koala','Mouse','Wolf','Raccoon','Penguin','Chick','Unicorn','Robot'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'};
 const $=id=>document.getElementById(id);
 let ws,S=null,lastAct=0;
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id))}
@@ -96,7 +97,7 @@ function on(m){
 function btn(cls,txt,fn){const b=document.createElement('button');b.className=cls;b.textContent=txt;b.onclick=fn;return b}
 function render(){
   const me=S.players.find(p=>p.id===S.you),host=S.hostId===S.you,team=S.mode==='team';
-  $('rc').textContent=S.code;$('pc').textContent=S.players.length+'/6';
+  $('rc').textContent=S.code;$('pc').textContent=S.players.length+'/15';
   const pl=$('plist');pl.innerHTML='';
   S.players.forEach(p=>{
     const d=document.createElement('div');d.className='pl';
@@ -107,7 +108,8 @@ function render(){
     pl.append(d);
   });
   const ch=$('chars');ch.innerHTML='';
-  CH.forEach((e,i)=>ch.append(btn('chip'+(me.character===i?' sel':''),e,()=>go({t:'profile',character:i}))));
+  CH.forEach((e,i)=>{const taken=S.players.some(p=>p.id!==S.you&&p.character===i);
+    const b=btn('chip'+(me.character===i?' sel':'')+(taken?' taken':''),e,()=>go({t:'profile',character:i}));b.title=CHN[i]+(taken?' (taken)':'');b.disabled=taken;ch.append(b)});
   const tm=$('teams');tm.innerHTML='';
   Object.keys(TEAMS).forEach(k=>{const b=btn('dot'+(me.team===k?' sel':''),'',()=>go({t:'profile',team:k}));b.style.background=TEAMS[k];b.disabled=!team;tm.append(b)});
   $('map').value=S.map;$('mode').value=S.mode;$('target').value=S.target;$('tv').textContent=S.target;

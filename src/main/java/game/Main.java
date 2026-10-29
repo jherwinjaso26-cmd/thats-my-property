@@ -18,9 +18,10 @@ public class Main {
     static final Object LOCK = new Object();
     static final Map<String, Room> rooms = new HashMap<>();
     static final Map<String, Player> bySession = new HashMap<>();
-    static final int MAX_PLAYERS = 6;
+    static final int MAX_PLAYERS = 15;
+    static final int CHARS = 20; // more characters than max players, so everyone can pick a unique one
     static final long IDLE_MS = 120_000;
-    static final Set<String> MAPS = Set.of("forest", "desert", "snow", "lava");
+    static final Set<String> MAPS = Set.of("forest", "desert", "snow", "lava", "swamp", "beach", "candy", "space", "autumn", "ruins");
     static final Set<String> TEAMS = Set.of("red", "blue", "green", "yellow");
 
     static class Player {
@@ -79,14 +80,14 @@ public class Main {
                 } else {
                     r = rooms.get(m.path("code").asText().trim().toUpperCase());
                     if (r == null) { send(ctx, msg("error", "Room not found")); return; }
-                    if (r.players.size() >= MAX_PLAYERS) { send(ctx, msg("error", "Room is full (max 6)")); return; }
+                    if (r.players.size() >= MAX_PLAYERS) { send(ctx, msg("error", "Room is full (max " + MAX_PLAYERS + ")")); return; }
                 }
                 p = new Player();
                 p.id = UUID.randomUUID().toString().substring(0, 6);
                 p.name = uniqueName(r, name);
                 p.ctx = ctx;
                 p.room = r;
-                p.character = r.players.size() % 6;
+                p.character = freeCharacter(r);
                 r.players.add(p);
                 if (r.host == null) r.host = p;
                 bySession.put(ctx.sessionId(), p);
@@ -98,7 +99,11 @@ public class Main {
             switch (t) {
                 case "profile" -> {
                     if (r.game != null) return;
-                    p.character = Math.max(0, Math.min(5, m.path("character").asInt(p.character)));
+                    int ch = Math.max(0, Math.min(CHARS - 1, m.path("character").asInt(p.character)));
+                    boolean taken = false;
+                    for (Player q : r.players) if (q != p && q.character == ch) taken = true;
+                    if (taken) send(p.ctx, msg("error", "That character is already taken"));
+                    else p.character = ch;
                     String team = m.path("team").asText(p.team);
                     if (TEAMS.contains(team)) p.team = team;
                     broadcast(r);
@@ -190,8 +195,19 @@ public class Main {
         return JSON.createObjectNode().put("t", type).put("msg", text);
     }
 
-    static void send(WsContext ctx, ObjectNode n) {
-        try { ctx.send(n.toString()); } catch (Exception ignored) { }
+    static void send(WsContext ctx, ObjectNode n) { sendRaw(ctx, n.toString()); }
+
+    static void sendRaw(WsContext ctx, String s) {
+        try { ctx.send(s); } catch (Exception ignored) { }
+    }
+
+    /** A random character nobody in the room is using yet. */
+    static int freeCharacter(Room r) {
+        boolean[] used = new boolean[CHARS];
+        for (Player q : r.players) used[q.character] = true;
+        List<Integer> free = new ArrayList<>();
+        for (int i = 0; i < CHARS; i++) if (!used[i]) free.add(i);
+        return free.isEmpty() ? 0 : free.get(new Random().nextInt(free.size()));
     }
 
     static String clean(String s, int max) {
