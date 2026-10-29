@@ -1,9 +1,10 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
-WORKDIR /src
+WORKDIR /app
 COPY pom.xml .
 COPY src ./src
-RUN mvn -q -DskipTests package
+RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:17-jre
-COPY --from=build /src/target/app.jar /app.jar
-CMD ["java", "-jar", "/app.jar"]
+WORKDIR /app
+COPY --from=build /app/target/app.jar app.jar
+CMD ["java", "-jar", "app.jar"]
