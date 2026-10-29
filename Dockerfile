@@ -5,6 +5,6 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/classes ./classes
 EXPOSE 8080
-CMD ["java", "-cp", "app.jar", "Main"]
+CMD ["java", "-cp", "classes:classes/public", "Main"]
