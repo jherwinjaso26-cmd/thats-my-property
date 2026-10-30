@@ -68,10 +68,10 @@ function build(){
  const up=e=>{if(joy.on&&e.pointerId===joy.id){joy.on=false;joy.x=joy.y=0;q('#joy').style.display='none'}};
  addEventListener('pointerup',up);addEventListener('pointercancel',up);
 }
-function resize(){const d=Math.min(devicePixelRatio||1,1.5)*qual;cv.width=Math.round(Orient.w()*d);cv.height=Math.round(Orient.h()*d)}
+function resize(){const d=Math.min(devicePixelRatio||1,2)*qual;cv.width=Math.round(Orient.w()*d);cv.height=Math.round(Orient.h()*d)}
 /* Weak phones: if frames stay slow, quietly lower the canvas resolution (down to 60%); also shows ping + fps in the corner. */
 function perf(t,raw){fpsN++;ema=ema*.95+Math.min(raw,100)*.05;
- if(ema>24){if(++slow>90&&qual>.6){qual=Math.max(.6,qual-.15);slow=0;resize()}}else slow=0;
+ if(ema>40){if(++slow>240&&qual>.8){qual=Math.max(.8,qual-.1);slow=0;resize()}}else slow=0; // only for really slow devices (under ~25fps for several seconds)
  if(t-fpsT>500){fps=Math.round(fpsN*1000/(t-fpsT));fpsN=0;fpsT=t;const p=Net.ping,c=p<0?'#94a3b8':p<80?'#86efac':p<160?'#fde047':'#f87171';
   const n=q('#hNet');setT(n,(p<0?'📶 …':'📶 '+p+'ms')+' · '+fps+'fps'+(qual<1?' · low-res':''));setS(n,'color',c)}}
 
