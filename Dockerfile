@@ -6,4 +6,5 @@ RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:17-jre
 COPY --from=build /src/target/app.jar /app.jar
-CMD ["java", "-jar", "/app.jar"]
+# small instance: serial GC (short, predictable pauses), capped heap, quick startup
+CMD ["java", "-XX:+UseSerialGC", "-Xms128m", "-Xmx320m", "-Xss512k", "-XX:TieredStopAtLevel=1", "-XX:+ExitOnOutOfMemoryError", "-jar", "/app.jar"]

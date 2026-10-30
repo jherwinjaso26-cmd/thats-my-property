@@ -101,6 +101,8 @@ class Game {
         task = SCH.scheduleAtFixedRate(this::tick, 33, 33, TimeUnit.MILLISECONDS);
     }
 
+    int sendCount = 0;
+
     void tick() {
         synchronized (Main.LOCK) {
             try { step(); } catch (Exception e) { e.printStackTrace(); }
@@ -131,7 +133,8 @@ class Game {
             case SCORE -> { if (now >= phaseEnd) startRound(); }
             case OVER -> { if (now >= phaseEnd) { finish(); return; } }
         }
-        broadcast(stateMsg(now));
+        // physics still runs at 30/s, but only 2 of every 3 steps are sent (20 updates/s): less CPU and bandwidth, the client smooths the rest
+        if (++sendCount % 3 != 0) broadcast(stateMsg(now));
     }
 
     // ---------- messages ----------
