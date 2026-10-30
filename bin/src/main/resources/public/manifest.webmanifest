@@ -1,9 +1,0 @@
-{
-  "name": "That’s My Property",
-  "short_name": "My Property",
-  "start_url": "/",
-  "display": "standalone",
-  "orientation": "landscape",
-  "background_color": "#0b1220",
-  "theme_color": "#0b1220"
-}

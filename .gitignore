@@ -1,3 +1,7 @@
 target/
 .vscode/
 *.class
+
+*.class
+bin/
+target/
