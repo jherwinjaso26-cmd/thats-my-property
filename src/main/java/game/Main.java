@@ -22,8 +22,8 @@ public class Main {
     static final int MAX_PLAYERS = 15;
     static final int MAX_ROOMS = 200;
     static final int CHARS = 20; // more characters than max players, so everyone can pick a unique one
-    static final long IDLE_MS = 120_000;   // no input at all for 2 minutes = removed
-    static final long GRACE_MS = 15_000;   // a dropped connection keeps its seat this long
+    static final long IDLE_MS = 600_000;   // no input at all for 10 minutes = removed (a host waiting in the lobby must not lose the room)
+    static final long GRACE_MS = 60_000;   // a dropped connection keeps its seat this long
     static final Set<String> MAPS = Set.of("forest", "desert", "snow", "lava", "swamp", "beach", "candy", "space", "autumn", "ruins");
     static final Set<String> TEAMS = Set.of("red", "blue", "green", "yellow");
     static final List<String> TEAM_LIST = List.of("red", "blue", "green", "yellow");
@@ -88,8 +88,9 @@ public class Main {
                     r.code = newCode();
                     rooms.put(r.code, r);
                 } else {
-                    r = rooms.get(m.path("code").asText().trim().toUpperCase());
-                    if (r == null) { send(ctx, msg("error", "Room not found")); return; }
+                    String code = m.path("code").asText().toUpperCase().replaceAll("[^A-Z]", "");
+                    r = rooms.get(code);
+                    if (r == null) { send(ctx, msg("error", "Room " + code + " not found - it may have closed. Ask the host to make a new one")); return; }
                     if (r.game != null) { send(ctx, msg("error", "A match is in progress - try again when it ends")); return; }
                     if (r.players.size() >= MAX_PLAYERS) { send(ctx, msg("error", "Room is full (max " + MAX_PLAYERS + ")")); return; }
                 }

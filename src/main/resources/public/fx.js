@@ -18,7 +18,9 @@ function noise(d,vol){const a=ctx();if(!a||muted)return;const n=a.sampleRate*d|0
  for(let i=0;i<n;i++)da[i]=(Math.random()*2-1)*(1-i/n);const s=a.createBufferSource(),g=a.createGain(),f=a.createBiquadFilter();
  f.type='lowpass';f.frequency.value=1800;s.buffer=b;g.gain.value=(vol||.2)*Settings.get('sfx')/.8;s.connect(f);f.connect(g);g.connect(a.destination);s.start()}
 const S={
- tick:()=>tone(880,.08,'square',.05),count:()=>tone(520,.18,'square',.09),round:()=>tone(440,.2,'triangle',.1),
+ tick:()=>tone(880,.08,'square',.05),
+ hold:()=>{tone(660,.1,'triangle',.16);tone(990,.16,'sine',.1,0,.07)},
+ holdHot:()=>{tone(880,.1,'square',.12);tone(1320,.14,'triangle',.12,0,.06);tone(1760,.1,'sine',.07,0,.12)},count:()=>tone(520,.18,'square',.09),round:()=>tone(440,.2,'triangle',.1),
  go:()=>{tone(784,.25,'square',.1);tone(1175,.35,'square',.09,0,.12)},
  steal:()=>{tone(300,.14,'sawtooth',.12,400);tone(600,.22,'square',.08,300,.1)},
  dash:()=>noise(.15,.1),die:()=>tone(420,.55,'sawtooth',.12,-340),

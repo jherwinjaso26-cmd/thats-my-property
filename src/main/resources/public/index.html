@@ -176,7 +176,8 @@ const settings=()=>go({t:'settings',map:$('map').value,mode:$('mode').value,targ
 ['map','mode','target'].forEach(i=>$(i).onchange=settings);
 $('target').oninput=()=>$('tv').textContent=$('target').value;
 $('create').onclick=()=>go({t:'create',name:$('name').value});
-$('join').onclick=()=>go({t:'join',name:$('name').value,code:$('code').value});
+$('code').addEventListener('input',e=>{const c=e.target;c.value=c.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4)});
+$('join').onclick=()=>{const code=$('code').value.toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4){toast('Enter the 4-letter room code');return}go({t:'join',name:$('name').value,code})};
 $('ready').onclick=()=>go({t:'ready'});
 $('addbot').onclick=()=>go({t:'addbot'});
 $('invite').onclick=()=>{const url=location.origin+location.pathname+'?code='+S.code;

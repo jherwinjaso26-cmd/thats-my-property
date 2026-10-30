@@ -43,7 +43,7 @@ const shape=team=>init&&init.mode==='team'&&TSH[team]?' '+TSH[team]:'';
 function build(){
  el=document.createElement('section');el.id='game';el.className='screen';
  el.innerHTML=`<canvas></canvas>
- <div id="hTop" class="ov"><span id="hRound"></span><div id="hTimer"><span id="hT">30</span><i id="hBar"></i></div><span id="hHold"></span></div>
+ <div id="hPulse" class="ov"></div><div id="hHeld" class="ov"></div><div id="hTop" class="ov"><span id="hRound"></span><div id="hTimer"><span id="hT">30</span><i id="hBar"></i></div><span id="hHold"></span></div>
  <div id="hNet" class="ov"></div><div id="hScores" class="ov"></div><div id="hFx" class="ov"></div><button id="hLeave" class="ghost">Leave</button><button id="hMute" class="ghost">🔊</button>
  <div id="popup" class="ov"></div><div id="banner" class="ov"></div><div id="sb" class="ov"></div>
  <div id="hEm">${EMO.map((e,i)=>`<button data-e="${i}" aria-label="Emote ${i+1}">${e}</button>`).join('')}</div>
@@ -227,9 +227,17 @@ function drawArrow(me){
 function hud(me,dead){
  const ph=st.ph,left=st.left,prot=st.holder===S.you;
  setT(q('#hRound'),'Round '+st.round+' · '+DIS[disaster][0]+(mod?' '+MODS[mod][0]:'')+' · Race to '+init.target);
- setT(q('#hHold'),dead?'👁 '+nm(specId()):'🏠 '+(prot?'You':nm(st.holder)));
+ if(hud.hh!==st.holder||st.round!==hud.hr||ph!=='PLAY'){hud.hh=st.holder;hud.hr=st.round;hud.held=0;hud.hs=-1}
+ const hold=prot&&!dead&&ph==='PLAY';
+ setT(q('#hHold'),dead?'👁 '+nm(specId()):'🏠 '+(prot?'You':nm(st.holder))+(hold&&hud.held?' · '+hud.held+'s':''));
  const tm=q('#hTimer'),secs=ph==='PLAY'?Math.ceil(left):30;
- setT(q('#hT'),secs);if(ph==='PLAY'&&secs<=5&&secs!==hud.ls){hud.ls=secs;SFX.play('tick')}tm.classList.toggle('low',ph==='PLAY'&&secs<=5);setS(q('#hBar'),'width',(ph==='PLAY'?Math.round(left/30*1000)/10:100)+'%');
+ setT(q('#hT'),secs);if(ph==='PLAY'&&secs!==hud.hs){hud.hs=secs;
+  if(hold){ // every second the property is in YOUR hand: sound, glow, floating counter, particles, buzz
+   hud.held++;const hot=secs<=5;SFX.play(hot?'holdHot':'hold');vib(hot?35:18);
+   const pu=q('#hPulse');pu.className='ov'+(hot?' hot':'');void pu.offsetWidth;pu.classList.add('go');
+   const he=q('#hHeld');he.textContent='🏠 '+hud.held+'s';he.className='ov'+(hot?' hot':'');void he.offsetWidth;he.classList.add('go');
+   const g=pos[S.you];if(g)burst(g.sx,g.sy,hot?'#ef4444':'#facc15',hot?16:10)}}
+ if(ph==='PLAY'&&secs<=5&&secs!==hud.ls){hud.ls=secs;if(!hold)SFX.play('tick')}tm.classList.toggle('low',ph==='PLAY'&&secs<=5);setS(q('#hBar'),'width',(ph==='PLAY'?Math.round(left/30*1000)/10:100)+'%');
  setS(q('#popup'),'display',(ph==='ROLE'||ph==='COUNT')?'flex':'none');
  setS(q('#sb'),'display',(ph==='SCORE'||ph==='OVER')?'flex':'none');
  setS(q('#hEm'),'display',(ph==='PLAY'||ph==='SCORE')?'flex':'none');
