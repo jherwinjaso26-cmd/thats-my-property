@@ -109,6 +109,10 @@ public class Main {
                 broadcast(r);
                 return;
             }
+            if (t.equals("ping")) { // latency check: answer right away, does not count as player activity
+                send(ctx, JSON.createObjectNode().put("t", "pong").put("ts", m.path("ts").asLong()));
+                return;
+            }
             long now = System.currentTimeMillis();
             p.tokens = Math.min(80, p.tokens + (now - p.tokenAt) / 1000.0 * 50); // ~50 msgs/sec sustained
             p.tokenAt = now;

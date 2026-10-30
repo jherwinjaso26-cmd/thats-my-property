@@ -1,7 +1,7 @@
 #game{padding:0;position:relative;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
 #game canvas{width:100%;height:100%;display:block}
 #game .ov{position:absolute;pointer-events:none}
-#hTop{top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:14px;align-items:center;background:#0b1220cc;border:1px solid #334155;border-radius:14px;padding:6px 16px;font-weight:700;backdrop-filter:blur(6px);font-size:14px;white-space:nowrap}
+#hTop{top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:14px;align-items:center;background:#0b1220cc;border:1px solid #334155;border-radius:14px;padding:6px 16px;font-weight:700;font-size:14px;white-space:nowrap}
 #hTimer{position:relative;min-width:64px;text-align:center;font-size:28px;color:#facc15;line-height:1}
 #hTimer.low{color:#ef4444;animation:pulse .5s infinite alternate}
 #hBar{position:absolute;left:0;bottom:-6px;height:4px;background:currentColor;border-radius:2px}
@@ -52,3 +52,5 @@ h1 span{text-shadow:0 0 26px #facc1590}
 .aw{display:flex;gap:8px;align-items:center;background:#0b122099;border-radius:10px;padding:6px 8px;font-size:12px;text-align:left;color:#cbd5e1}
 .aw span{font-size:22px}.aw b{color:#facc15}
 header>div{display:flex;gap:6px;align-items:center}
+
+#hNet{left:max(10px,env(safe-area-inset-left));bottom:max(6px,env(safe-area-inset-bottom));font-size:11px;font-weight:700;text-shadow:0 1px 4px #000;opacity:.85}
