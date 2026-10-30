@@ -163,10 +163,13 @@ const CHORDS=[{n:[57,60,64,67],b:45},{n:[53,57,60,64],b:41},{n:[60,64,67,71],b:4
 const ARP=[0,1,2,3,2,1,3,2],PENT=[69,72,74,76,79,81];
 const hz=m=>440*Math.pow(2,(m-69)/12);
 function ensure(){
+ try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){} // iOS: play even when the silent switch is on
  if(!ac){
   try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return false}
   mg=ac.createGain();mg.gain.value=0;
-  const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3200;mg.connect(lp);lp.connect(ac.destination);
+  const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3200;
+  const cp=ac.createDynamicsCompressor();cp.threshold.value=-12;cp.ratio.value=4; // lets the music be loud without clipping
+  mg.connect(lp);lp.connect(cp);cp.connect(ac.destination);
   nb=ac.createBuffer(1,ac.sampleRate*.3|0,ac.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
  }
  return true;
@@ -178,27 +181,27 @@ function osc(type,f,t,dur,vol,att,det){
 }
 function kick(t){
  const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(42,t+.14);
- g.gain.setValueAtTime(.32,t);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.25);
+ g.gain.setValueAtTime(.6,t);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.25);
 }
 function hat(t){
  const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=nb;f.type='highpass';f.frequency.value=7000;
- g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.0001,t+.05);s.connect(f);f.connect(g);g.connect(mg);s.start(t);s.stop(t+.06);
+ g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.0001,t+.05);s.connect(f);f.connect(g);g.connect(mg);s.start(t);s.stop(t+.06);
 }
 function play(s,t){
  const bar=(s>>4)&3,k=s&15,c=CHORDS[bar];
- if(k===0){c.n.forEach((m,i)=>osc('triangle',hz(m),t,SPB*15.5,.05,.5,(i-1.5)*5));osc('sine',hz(c.b),t,SPB*6,.2,.02)}
- if(k===8)osc('sine',hz(c.b),t,SPB*5,.16,.02);
- if(k===6||k===14)osc('sine',hz(c.b+12),t,SPB*1.5,.07,.01);
- if(k%2===0)osc('square',hz(c.n[ARP[(k>>1)&7]]+12),t,SPB*1.9,.026,.01);
+ if(k===0){c.n.forEach((m,i)=>osc('triangle',hz(m),t,SPB*15.5,.1,.5,(i-1.5)*5));osc('sine',hz(c.b),t,SPB*6,.45,.02)}
+ if(k===8)osc('sine',hz(c.b),t,SPB*5,.36,.02);
+ if(k===6||k===14)osc('sine',hz(c.b+12),t,SPB*1.5,.16,.01);
+ if(k%2===0)osc('square',hz(c.n[ARP[(k>>1)&7]]+12),t,SPB*1.9,.06,.01);
  if(k===0||k===10)kick(t);
  if(k%4===2)hat(t);
- if((k===0||k===6||k===10||k===13)&&Math.random()<.45)osc('triangle',hz(PENT[Math.random()*PENT.length|0]),t,SPB*3,.05,.02);
+ if((k===0||k===6||k===10||k===13)&&Math.random()<.45)osc('triangle',hz(PENT[Math.random()*PENT.length|0]),t,SPB*3,.1,.02);
 }
 function sched(){
  if(nextT<ac.currentTime)nextT=ac.currentTime+.05; // after a pause, don't replay what was missed
  while(nextT<ac.currentTime+.3){play(step,nextT);nextT+=SPB;step++}
 }
-function level(){return Settings.get('music')*.5}
+function level(){return Settings.get('music')*.9}
 function start(){
  if(playing||!ensure())return;
  playing=true;clearTimeout(stopT);
@@ -214,8 +217,11 @@ function stop(){
 }
 function sync(){if(wanted&&Settings.get('musicOn')&&Settings.get('music')>0)start();else stop()}
 Settings.on(k=>{if(playing&&k==='music')mg.gain.setTargetAtTime(level(),ac.currentTime,.1);sync()});
+const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let keep=null;
+function iosKeepAlive(){if(!IOS||keep)return;try{keep=new Audio('data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');keep.loop=true;keep.setAttribute('playsinline','');keep.play().catch(()=>{keep=null})}catch(e){keep=null}}
 // browsers only allow sound after a tap or key press, so the first one wakes the audio up
-['pointerdown','keydown','touchend'].forEach(e=>addEventListener(e,()=>{if(ensure()&&ac.state==='suspended')ac.resume().catch(()=>{});sync()},{passive:true}));
+['pointerdown','keydown','touchend'].forEach(e=>addEventListener(e,()=>{iosKeepAlive();if(ensure()&&ac.state!=='running')ac.resume().catch(()=>{});sync()},{passive:true}));
 document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidden)ac.suspend().catch(()=>{});else if(playing)ac.resume().catch(()=>{})});
 return{want(b){wanted=!!b;sync()},get playing(){return playing}};
 })();

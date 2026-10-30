@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="My Property">
+<meta name="theme-color" content="#0b1220"><link rel="manifest" href="manifest.webmanifest">
 <title>That’s My Property</title>
 <style>
 *{box-sizing:border-box;margin:0}
@@ -48,13 +51,14 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
 @keyframes pop{from{transform:scale(.9);opacity:0}}
 </style>
 <link rel="stylesheet" href="game.css"></head><body>
-<div id="rotate"><div><div>📱↻</div><p>Rotate your device to landscape</p></div></div>
+<div id="rotate"><div><div>📱↻</div><p>Rotate your device to landscape</p><p class="ios" style="display:none;color:#facc15;max-width:80vw;margin:10px auto 0">iPhone: swipe down from the top-right corner and turn OFF “Portrait Orientation Lock”, then turn your phone sideways.</p></div></div>
 <div id="toast"></div>
 
 <section id="home" class="screen on"><button id="gearH" class="ghost gear" title="Settings">⚙</button><div class="card">
   <h1>That’s My <span>Property</span></h1><p class="sub">Hold it. Steal it. Keep it.</p>
   <input id="name" maxlength="12" placeholder="Username" autocomplete="off">
   <button id="create" class="pri">Host Room</button>
+  <p id="iosTip" class="sub" style="display:none;font-size:13px">📱 iPhone tip: tap Share → <b>Add to Home Screen</b> to play full screen with no browser bars.</p>
   <div class="row"><input id="code" maxlength="4" placeholder="CODE" autocomplete="off"><button id="join">Join Room</button></div>
 </div></section>
 
@@ -89,6 +93,8 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
 const CH=['🐱','🐶','🦊','🐼','🐸','🐵','🐰','🐻','🐯','🦁','🐷','🐮','🐨','🐭','🐺','🦝','🐧','🐥','🦄','🤖'],
 CHN=['Cat','Dog','Fox','Panda','Frog','Monkey','Bunny','Bear','Tiger','Lion','Pig','Cow','Koala','Mouse','Wolf','Raccoon','Penguin','Chick','Unicorn','Robot'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'},TSH={red:'●',blue:'■',green:'▲',yellow:'◆'};
 const $=id=>document.getElementById(id);
+const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(IOS){document.querySelectorAll('#rotate .ios').forEach(e=>e.style.display='block');if(!navigator.standalone)$('iosTip').style.display='block'}
 let ws,S=null,lastAct=0,token=null,tries=0,rc=0;
 try{token=sessionStorage.getItem('tmp_tok')}catch(e){}
 function setTok(t){token=t;try{t?sessionStorage.setItem('tmp_tok',t):sessionStorage.removeItem('tmp_tok')}catch(e){}}
