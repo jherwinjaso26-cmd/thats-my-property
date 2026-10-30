@@ -44,3 +44,11 @@ h1 span{text-shadow:0 0 26px #facc1590}
 .fsb{min-width:40px}
 .fs-home{position:absolute;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));z-index:2}
 #game .fs-game{position:absolute;top:max(8px,env(safe-area-inset-top));right:calc(max(10px,env(safe-area-inset-right)) + 140px)}
+#hEm{position:absolute;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));display:none;gap:6px;z-index:3}
+#hEm button{width:38px;height:38px;border-radius:50%;padding:0;font-size:20px;line-height:1;background:#0b1220cc;border:1px solid #334155}
+#hSpec{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(max(14px,env(safe-area-inset-bottom)) + 52px)}
+.tdot{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-style:normal;font-size:12px;color:#0b1220;font-weight:900}
+.awards{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.aw{display:flex;gap:8px;align-items:center;background:#0b122099;border-radius:10px;padding:6px 8px;font-size:12px;text-align:left;color:#cbd5e1}
+.aw span{font-size:22px}.aw b{color:#facc15}
+header>div{display:flex;gap:6px;align-items:center}

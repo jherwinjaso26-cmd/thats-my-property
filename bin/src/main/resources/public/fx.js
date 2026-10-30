@@ -1,14 +1,22 @@
 /* Polish layer for "That's My Property": sounds (WebAudio, no files), character sprites, ambient weather, minimap. */
 
+/* Settings: saved in this browser. Used by sounds, music, screen shake and vibration. */
+const Settings=(()=>{
+const v={music:.5,sfx:.8,musicOn:true,shake:true,vibe:true},ls=[];
+try{Object.assign(v,JSON.parse(localStorage.getItem('tmp_settings')||'{}'))}catch(e){}
+return{get:k=>v[k],on:fn=>ls.push(fn),
+ set(k,x){v[k]=x;try{localStorage.setItem('tmp_settings',JSON.stringify(v))}catch(e){}ls.forEach(f=>f(k))}};
+})();
+
 const SFX=(()=>{
 let ac=null,muted=false;try{muted=localStorage.getItem('tmp_mute')==='1'}catch(e){}
 function ctx(){if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(ac.state==='suspended')ac.resume();return ac}
 function tone(f,d,type,vol,slide,delay){const a=ctx();if(!a||muted)return;const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+(delay||0);
  o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f+slide),t+d);
- g.gain.setValueAtTime(vol||.12,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d)}
+ g.gain.setValueAtTime(Math.max(.0001,(vol||.12)*Settings.get('sfx')/.8),t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d)}
 function noise(d,vol){const a=ctx();if(!a||muted)return;const n=a.sampleRate*d|0,b=a.createBuffer(1,n,a.sampleRate),da=b.getChannelData(0);
  for(let i=0;i<n;i++)da[i]=(Math.random()*2-1)*(1-i/n);const s=a.createBufferSource(),g=a.createGain(),f=a.createBiquadFilter();
- f.type='lowpass';f.frequency.value=1800;s.buffer=b;g.gain.value=vol||.2;s.connect(f);f.connect(g);g.connect(a.destination);s.start()}
+ f.type='lowpass';f.frequency.value=1800;s.buffer=b;g.gain.value=(vol||.2)*Settings.get('sfx')/.8;s.connect(f);f.connect(g);g.connect(a.destination);s.start()}
 const S={
  tick:()=>tone(880,.08,'square',.05),count:()=>tone(520,.18,'square',.09),round:()=>tone(440,.2,'triangle',.1),
  go:()=>{tone(784,.25,'square',.1);tone(1175,.35,'square',.09,0,.12)},
@@ -17,6 +25,8 @@ const S={
  boom:()=>{noise(.5,.28);tone(120,.4,'sine',.25,-80)},zap:()=>{noise(.22,.25);tone(1200,.2,'sawtooth',.1,-900)},
  power:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.15,'triangle',.1,0,i*.07)),
  bad:()=>tone(300,.45,'sawtooth',.1,-150),snap:()=>{noise(.1,.28);tone(180,.2,'square',.12,-100)},
+ bounce:()=>tone(260,.22,'sine',.14,520),tp:()=>{tone(900,.28,'sine',.1,-650);tone(450,.3,'triangle',.08,500,.08)},
+ swap:()=>{tone(500,.12,'square',.07,300);tone(800,.14,'square',.07,-300,.1)},emote:()=>tone(760,.09,'triangle',.07,160),
  win:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.28,'triangle',.12,0,i*.12))};
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>ctx()));
 return{play:n=>{try{if(S[n])S[n]()}catch(e){}},get muted(){return muted},
@@ -107,6 +117,7 @@ const Minimap={draw(c,o){
  c.save();c.setTransform(1,0,0,1,0,0);
  c.fillStyle='rgba(8,12,22,.6)';c.fillRect(x0,y0,mw,mh);c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1.5*u;c.strokeRect(x0,y0,mw,mh);
  c.fillStyle='rgba(148,163,184,.55)';for(const b of obs){c.beginPath();c.arc(x0+b[0]*k,y0+b[1]*k,Math.max(1.5,b[2]*k),0,7);c.fill()}
+ const ZC={ice:'#bfe3ff',slow:'#a16207',bush:'#16a34a',bounce:'#f472b6',portal:'#a78bfa',lava:'#ef4444'};c.globalAlpha=.5;for(const z of (o.zones||[])){c.fillStyle=ZC[z.k]||'#fff';c.beginPath();c.arc(x0+z.x*k,y0+z.y*k,Math.max(1.5,z.r*k),0,7);c.fill()}c.globalAlpha=1;
  c.fillStyle='#ef4444';for(const b of traps)c.fillRect(x0+b[0]*k-1.5*u,y0+b[1]*k-1.5*u,3*u,3*u);
  c.fillStyle='#facc15';for(const b of st.lb)c.fillRect(x0+b.x*k-2*u,y0+b.y*k-2*u,4*u,4*u);
  c.fillStyle='#000';for(const o of (st.ho||[])){c.beginPath();c.arc(x0+o.x*k,y0+o.y*k,Math.max(1.5,o.r*k),0,7);c.fill()}
@@ -142,4 +153,87 @@ const FS=(()=>{
  const lv=document.getElementById('leave');
  if(lv){const w=document.createElement('div');w.style.cssText='display:flex;gap:8px';lv.replaceWith(w);w.append(button(),lv)}
  return{button};
+})();
+
+/* Lobby music: a calm looping track made live with WebAudio (no audio files). Plays in the lobby, fades out when a match starts. */
+const Music=(()=>{
+let ac=null,mg=null,timer=null,nb=null,nextT=0,step=0,playing=false,wanted=false,stopT=0;
+const SPB=60/84/4; // 84 bpm, sixteenth-note grid
+const CHORDS=[{n:[57,60,64,67],b:45},{n:[53,57,60,64],b:41},{n:[60,64,67,71],b:48},{n:[55,59,62,64],b:43}]; // Am7 Fmaj7 Cmaj7 G6
+const ARP=[0,1,2,3,2,1,3,2],PENT=[69,72,74,76,79,81];
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function ensure(){
+ if(!ac){
+  try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return false}
+  mg=ac.createGain();mg.gain.value=0;
+  const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3200;mg.connect(lp);lp.connect(ac.destination);
+  nb=ac.createBuffer(1,ac.sampleRate*.3|0,ac.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+ }
+ return true;
+}
+function osc(type,f,t,dur,vol,att,det){
+ const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;if(det)o.detune.value=det;
+ g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+ o.connect(g);g.connect(mg);o.start(t);o.stop(t+dur+.05);
+}
+function kick(t){
+ const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(42,t+.14);
+ g.gain.setValueAtTime(.32,t);g.gain.exponentialRampToValueAtTime(.0001,t+.22);o.connect(g);g.connect(mg);o.start(t);o.stop(t+.25);
+}
+function hat(t){
+ const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=nb;f.type='highpass';f.frequency.value=7000;
+ g.gain.setValueAtTime(.06,t);g.gain.exponentialRampToValueAtTime(.0001,t+.05);s.connect(f);f.connect(g);g.connect(mg);s.start(t);s.stop(t+.06);
+}
+function play(s,t){
+ const bar=(s>>4)&3,k=s&15,c=CHORDS[bar];
+ if(k===0){c.n.forEach((m,i)=>osc('triangle',hz(m),t,SPB*15.5,.05,.5,(i-1.5)*5));osc('sine',hz(c.b),t,SPB*6,.2,.02)}
+ if(k===8)osc('sine',hz(c.b),t,SPB*5,.16,.02);
+ if(k===6||k===14)osc('sine',hz(c.b+12),t,SPB*1.5,.07,.01);
+ if(k%2===0)osc('square',hz(c.n[ARP[(k>>1)&7]]+12),t,SPB*1.9,.026,.01);
+ if(k===0||k===10)kick(t);
+ if(k%4===2)hat(t);
+ if((k===0||k===6||k===10||k===13)&&Math.random()<.45)osc('triangle',hz(PENT[Math.random()*PENT.length|0]),t,SPB*3,.05,.02);
+}
+function sched(){
+ if(nextT<ac.currentTime)nextT=ac.currentTime+.05; // after a pause, don't replay what was missed
+ while(nextT<ac.currentTime+.3){play(step,nextT);nextT+=SPB;step++}
+}
+function level(){return Settings.get('music')*.5}
+function start(){
+ if(playing||!ensure())return;
+ playing=true;clearTimeout(stopT);
+ if(ac.state==='suspended')ac.resume().catch(()=>{});
+ nextT=ac.currentTime+.15;step=0;clearInterval(timer);
+ timer=setInterval(()=>{if(ac.state==='running')sched()},80);
+ mg.gain.cancelScheduledValues(ac.currentTime);mg.gain.setTargetAtTime(level(),ac.currentTime,.8);
+}
+function stop(){
+ if(!playing)return;
+ playing=false;mg.gain.cancelScheduledValues(ac.currentTime);mg.gain.setTargetAtTime(0,ac.currentTime,.25);
+ clearTimeout(stopT);stopT=setTimeout(()=>{if(!playing)clearInterval(timer)},1500);
+}
+function sync(){if(wanted&&Settings.get('musicOn')&&Settings.get('music')>0)start();else stop()}
+Settings.on(k=>{if(playing&&k==='music')mg.gain.setTargetAtTime(level(),ac.currentTime,.1);sync()});
+// browsers only allow sound after a tap or key press, so the first one wakes the audio up
+['pointerdown','keydown','touchend'].forEach(e=>addEventListener(e,()=>{if(ensure()&&ac.state==='suspended')ac.resume().catch(()=>{});sync()},{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!ac)return;if(document.hidden)ac.suspend().catch(()=>{});else if(playing)ac.resume().catch(()=>{})});
+return{want(b){wanted=!!b;sync()},get playing(){return playing}};
+})();
+
+/* Settings panel (opened from the home and lobby screens) and the lobby music button. */
+(function(){
+ const g=id=>document.getElementById(id),m=g('settings');if(!m)return;
+ const sync=()=>{g('sMusic').value=Settings.get('music')*100;g('sSfx').value=Settings.get('sfx')*100;g('sMusicOn').checked=Settings.get('musicOn');g('sShake').checked=Settings.get('shake');g('sVibe').checked=Settings.get('vibe')};
+ const open=()=>{sync();m.style.display='flex'};
+ ['gearH','gearL'].forEach(i=>{const b=g(i);if(b)b.onclick=open});
+ g('sClose').onclick=()=>m.style.display='none';
+ m.addEventListener('pointerdown',e=>{if(e.target===m)m.style.display='none'});
+ g('sMusic').oninput=e=>Settings.set('music',e.target.value/100);
+ g('sSfx').oninput=e=>Settings.set('sfx',e.target.value/100);
+ g('sSfx').onchange=()=>SFX.play('power');
+ g('sMusicOn').onchange=e=>Settings.set('musicOn',e.target.checked);
+ g('sShake').onchange=e=>Settings.set('shake',e.target.checked);
+ g('sVibe').onchange=e=>{Settings.set('vibe',e.target.checked);if(e.target.checked&&navigator.vibrate)try{navigator.vibrate(60)}catch(x){}};
+ const mus=g('mus');
+ if(mus){const upd=()=>{mus.textContent=Settings.get('musicOn')?'🎵':'🔇';mus.title='Lobby music'};upd();mus.onclick=()=>Settings.set('musicOn',!Settings.get('musicOn'));Settings.on(upd)}
 })();

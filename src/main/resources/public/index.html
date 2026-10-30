@@ -16,6 +16,11 @@ input,select{background:#0b1220;border:1px solid #334155;color:inherit;border-ra
 input:focus,select:focus{outline:2px solid #facc15;border-color:transparent}
 button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 16px;background:#334155;color:inherit;cursor:pointer;transition:transform .1s,filter .15s}
 button:hover:not(:disabled){filter:brightness(1.2)}button:active:not(:disabled){transform:scale(.96)}button:disabled{opacity:.4;cursor:default}
+.chk{flex-direction:row;align-items:center;gap:10px}.chk input{width:auto}
+.gear{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));z-index:2}
+#settings{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:#000a}
+.rdy{margin-left:auto;font-size:13px;color:#86efac;white-space:nowrap}.off{opacity:.5}
+.tsh{font-size:15px;color:#0b1220;font-weight:900}
 .pri{background:linear-gradient(135deg,#facc15,#f59e0b);color:#1a1200}
 .ghost{background:#1e293b;padding:7px 12px;font-size:13px}
 .row{display:flex;gap:8px}.row input{text-transform:uppercase}
@@ -46,7 +51,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
 <div id="rotate"><div><div>📱↻</div><p>Rotate your device to landscape</p></div></div>
 <div id="toast"></div>
 
-<section id="home" class="screen on"><div class="card">
+<section id="home" class="screen on"><button id="gearH" class="ghost gear" title="Settings">⚙</button><div class="card">
   <h1>That’s My <span>Property</span></h1><p class="sub">Hold it. Steal it. Keep it.</p>
   <input id="name" maxlength="12" placeholder="Username" autocomplete="off">
   <button id="create" class="pri">Host Room</button>
@@ -54,9 +59,9 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
 </div></section>
 
 <section id="lobby" class="screen">
-  <header><div>Room<b id="rc"></b><button id="copy" class="ghost">Copy</button></div><button id="leave" class="ghost">Leave</button></header>
+  <header><div>Room<b id="rc"></b><button id="copy" class="ghost">Copy</button><button id="invite" class="ghost">Invite</button><button id="mus" class="ghost">🎵</button><button id="gearL" class="ghost" title="Settings">⚙</button></div><button id="leave" class="ghost">Leave</button></header>
   <main>
-    <div class="panel"><h2>Players <span id="pc"></span></h2><div id="plist"></div></div>
+    <div class="panel"><h2>Players <span id="pc"></span></h2><div id="plist"></div><button id="ready" class="pri" style="margin-top:auto">I’m ready</button></div>
     <div class="panel">
       <h2>Character</h2><div id="chars" class="chips"></div>
       <h2>Team color</h2><div id="teams" class="chips"></div>
@@ -64,6 +69,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
       <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option></select></label>
       <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option></select></label>
       <label class="field">Race to: <b id="tv"></b><input id="target" type="range" min="1" max="10"></label>
+      <button id="addbot" class="ghost" style="margin-bottom:8px">🤖 Add bot</button>
       <button id="start" class="pri">Start Match</button>
     </div>
     <div class="panel chat"><h2>Chat</h2><div id="log"></div>
@@ -71,57 +77,96 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px
   </main>
 </section>
 
+<div id="settings"><div class="card"><h1 style="font-size:24px">Settings</h1>
+  <label class="field">🎵 Lobby music volume<input id="sMusic" type="range" min="0" max="100"></label>
+  <label class="field">🔊 Sound effects volume<input id="sSfx" type="range" min="0" max="100"></label>
+  <label class="field chk"><input id="sMusicOn" type="checkbox"> Play lobby music</label>
+  <label class="field chk"><input id="sShake" type="checkbox"> Screen shake</label>
+  <label class="field chk"><input id="sVibe" type="checkbox"> Vibration (phones)</label>
+  <button id="sClose" class="pri">Done</button></div></div>
+
 <script>
 const CH=['🐱','🐶','🦊','🐼','🐸','🐵','🐰','🐻','🐯','🦁','🐷','🐮','🐨','🐭','🐺','🦝','🐧','🐥','🦄','🤖'],
-CHN=['Cat','Dog','Fox','Panda','Frog','Monkey','Bunny','Bear','Tiger','Lion','Pig','Cow','Koala','Mouse','Wolf','Raccoon','Penguin','Chick','Unicorn','Robot'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'};
+CHN=['Cat','Dog','Fox','Panda','Frog','Monkey','Bunny','Bear','Tiger','Lion','Pig','Cow','Koala','Mouse','Wolf','Raccoon','Penguin','Chick','Unicorn','Robot'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'},TSH={red:'●',blue:'■',green:'▲',yellow:'◆'};
 const $=id=>document.getElementById(id);
-let ws,S=null,lastAct=0;
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id))}
+let ws,S=null,lastAct=0,token=null,tries=0,rc=0;
+try{token=sessionStorage.getItem('tmp_tok')}catch(e){}
+function setTok(t){token=t;try{t?sessionStorage.setItem('tmp_tok',t):sessionStorage.removeItem('tmp_tok')}catch(e){}}
+function clearTok(){setTok(null);rc=0}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));if(typeof Music!=='undefined')Music.want(id==='lobby')}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2600)}
+function open(first){
+  const w=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');ws=w;
+  w.onopen=()=>{tries=0;w.send(first||JSON.stringify({t:'resume',token}))};
+  w.onmessage=e=>on(JSON.parse(e.data));
+  w.onclose=()=>{if(ws===w)lost()};
+  w.onerror=()=>{if(!S&&!rc)toast('Cannot reach server')};
+}
 function go(m){
+  if(rc)return; // reconnecting: nothing is sent until the seat is back
   const s=JSON.stringify(m);
   if(ws&&ws.readyState===1){ws.send(s);return}
-  ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');
-  ws.onopen=()=>ws.send(s);
-  ws.onmessage=e=>on(JSON.parse(e.data));
-  ws.onclose=()=>{if(S){S=null;GameUI.stop();show('home');toast('Disconnected')}};
-  ws.onerror=()=>toast('Cannot reach server');
+  if(ws&&ws.readyState===0){ws.addEventListener('open',()=>ws.send(s),{once:true});return}
+  open(s);
 }
+// the connection dropped: keep the screen and try to take the seat back (the server holds it for 15 seconds)
+function lost(){
+  if(S&&token){
+    rc=1;
+    if(++tries>8){clearTok();S=null;GameUI.stop();show('home');toast('Disconnected');return}
+    if(tries===1)toast('Connection lost — reconnecting…');
+    setTimeout(()=>{if(rc)open()},Math.min(1200*tries,3500));
+  }else{rc=0;if(S){S=null;GameUI.stop();show('home');toast('Disconnected')}}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S&&token&&!rc&&(!ws||ws.readyState>1))lost()});
 function on(m){
   if(m.t==='lobby'){const first=!S||GameUI.active;S=m;render();if(first){if(!GameUI.active)$('log').innerHTML='';GameUI.stop();show('lobby')}}
   else if(['init','round','state','ev','scores'].includes(m.t))GameUI.on(m);
   else if(m.t==='chat'){const d=document.createElement('div'),b=document.createElement('b');b.textContent=m.from+': ';d.append(b,m.text);const l=$('log');l.append(d);l.scrollTop=l.scrollHeight}
-  else if(m.t==='kicked'){S=null;GameUI.stop();show('home');toast(m.msg)}
-  else if(m.t==='error')toast(m.msg);
+  else if(m.t==='welcome'){setTok(m.token);if(rc){rc=0;toast('Reconnected ✅')}}
+  else if(m.t==='resumefail'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg);if(ws)ws.close()}
+  else if(m.t==='kicked'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg)}
+  else if(m.t==='error'){toast(m.msg);if(!S&&!rc&&ws)ws.close()}
 }
 function btn(cls,txt,fn){const b=document.createElement('button');b.className=cls;b.textContent=txt;b.onclick=fn;return b}
 function render(){
   const me=S.players.find(p=>p.id===S.you),host=S.hostId===S.you,team=S.mode==='team';
-  $('rc').textContent=S.code;$('pc').textContent=S.players.length+'/15';
+  $('rc').textContent=S.code;$('pc').textContent=S.players.length+'/'+(S.max||15);
   const pl=$('plist');pl.innerHTML='';
   S.players.forEach(p=>{
-    const d=document.createElement('div');d.className='pl';
+    const d=document.createElement('div');d.className='pl'+(p.off?' off':'');
     const av=document.createElement('span');av.className='av';av.textContent=CH[p.character];av.style.background=team?TEAMS[p.team]:'#334155';
-    const nm=document.createElement('span');nm.className='nm';nm.textContent=p.name+(p.id===S.you?' (you)':'')+(p.id===S.hostId?' 👑':'');
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=(team?TSH[p.team]+' ':'')+p.name+(p.bot?' 🤖':'')+(p.id===S.you?' (you)':'')+(p.id===S.hostId?' 👑':'')+(p.off?' (reconnecting…)':'');
     d.append(av,nm);
-    if(host&&p.id!==S.you)d.append(btn('ghost','Kick',()=>go({t:'kick',id:p.id})));
+    if(p.ready&&!p.bot)d.append(Object.assign(document.createElement('span'),{className:'rdy',textContent:'✅ Ready'}));
+    if(host&&p.id!==S.you)d.append(btn('ghost',p.bot?'Remove':'Kick',()=>go({t:'kick',id:p.id})));
     pl.append(d);
   });
   const ch=$('chars');ch.innerHTML='';
   CH.forEach((e,i)=>{const taken=S.players.some(p=>p.id!==S.you&&p.character===i);
     const b=btn('chip'+(me.character===i?' sel':'')+(taken?' taken':''),e,()=>go({t:'profile',character:i}));b.title=CHN[i]+(taken?' (taken)':'');b.disabled=taken;ch.append(b)});
   const tm=$('teams');tm.innerHTML='';
-  Object.keys(TEAMS).forEach(k=>{const b=btn('dot'+(me.team===k?' sel':''),'',()=>go({t:'profile',team:k}));b.style.background=TEAMS[k];b.disabled=!team;tm.append(b)});
+  Object.keys(TEAMS).forEach(k=>{const b=btn('dot'+(me.team===k?' sel':''),'',()=>go({t:'profile',team:k}));b.style.background=TEAMS[k];b.textContent=TSH[k];b.className+=' tsh';b.disabled=!team;tm.append(b)});
   $('map').value=S.map;$('mode').value=S.mode;$('target').value=S.target;$('tv').textContent=S.target;
   ['map','mode','target'].forEach(i=>$(i).disabled=!host);
-  $('start').style.display=host?'':'none';
+  const nr=S.players.filter(p=>p.ready||p.bot).length;
+  $('start').style.display=host?'':'none';$('start').textContent='Start Match ('+nr+'/'+S.players.length+' ready)';
+  $('addbot').style.display=host?'':'none';$('addbot').disabled=S.players.length>=(S.max||15);
+  $('ready').textContent=me.ready?'✅ Ready (tap to cancel)':'I’m ready';
 }
 const settings=()=>go({t:'settings',map:$('map').value,mode:$('mode').value,target:+$('target').value});
 ['map','mode','target'].forEach(i=>$(i).onchange=settings);
 $('target').oninput=()=>$('tv').textContent=$('target').value;
 $('create').onclick=()=>go({t:'create',name:$('name').value});
 $('join').onclick=()=>go({t:'join',name:$('name').value,code:$('code').value});
-$('leave').onclick=()=>{go({t:'leave'});S=null;if(ws)ws.close();show('home')};
+$('ready').onclick=()=>go({t:'ready'});
+$('addbot').onclick=()=>go({t:'addbot'});
+$('invite').onclick=()=>{const url=location.origin+location.pathname+'?code='+S.code;
+  if(navigator.share){navigator.share({title:'That’s My Property',text:'Join my room '+S.code,url}).catch(()=>{})}
+  else{navigator.clipboard&&navigator.clipboard.writeText(url);toast('Invite link copied')}};
+$('leave').onclick=()=>{go({t:'leave'});S=null;clearTok();if(ws)ws.close();show('home')};
+{const c=new URLSearchParams(location.search).get('code');if(c)$('code').value=c.toUpperCase().slice(0,4)}
+if(token){rc=1;open()} // page was refreshed: try to take the old seat back
 $('start').onclick=()=>go({t:'start'});
 $('copy').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(S.code);toast('Code copied')};
 const sendChat=()=>{const v=$('msg').value.trim();if(v){go({t:'chat',text:v});$('msg').value=''}};
