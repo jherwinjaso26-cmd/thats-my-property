@@ -32,11 +32,18 @@ const TABS={
  'Lucky blocks':`<p>A 🎁 lucky block appears about <b>every 10 seconds</b>. Touch one to get a random effect:</p>
   ${row('⚡','Speed Boost','You move much faster for 5 seconds.')}
   ${row('🛡️','Shield','For 5 seconds nobody can steal the property from you.')}
-  ${row('🪤','Bear Trap','Place it on the ground (item button or E). Anyone who steps on it is stuck for 3 seconds.')}
+  ${row('🪤','Bear Trap','Place it on the ground (item button or E). The next player who steps on it is stuck for 3 seconds. It does not catch you.')}
   ${row('💨','Smoke Bomb','For 4 seconds you are hard to see.')}
   ${row('👥','Decoy','Leaves a fake copy of you for 8 seconds to confuse everyone.')}
   ${row('🔀','Swap','Instantly trade places with another player who is still alive.')}
   ${row('🥶','Freeze (bad luck!)','You freeze yourself for 3 seconds. Ouch.')}`,
+ 'Obstacles & traps':`<p>The map is not empty. Learn what is on it and use it!</p>
+  ${row('🌲','Obstacles','Trees, rocks and other big objects are solid. You cannot walk through them. Use them to block someone chasing you, but do not get cornered behind them. More appear every round.')}
+  ${row('☠️','Spike traps','Grey discs with spikes on the ground. <b>Touching one kills you instantly.</b> They never appear near the starting spots, and more are added every round, so watch where you run.')}
+  ${row('🕳️','Sinkholes','Created by the Sinkholes disaster. They stay open for the rest of the round and kill on touch.')}
+  ${row('🌋','Lava pools','On the Lava map, lava pools burn you to death. Stay out!')}
+  ${row('🪤','Bear traps','Not on the map at the start. A player who finds the Bear Trap lucky item can place one. It arms after about 1 second, and the next player who steps on it is stuck for 3 seconds. It does not catch the player who placed it, and it disappears after it snaps.')}
+  ${row('💡','Tip','Dashing across a trap or hole is risky, so look before you dash. The minimap shows obstacles and traps.')}`,
  'Disasters':`<p>Every round has one natural disaster. A warning circle or lane shows where it will hit, so keep moving!</p>
   ${row('☄️','Meteor Shower','Red circles show where meteors land. Move out before they hit.')}
   ${row('⚡','Lightning Storm','Yellow circles mark lightning strikes. They hit fast!')}
