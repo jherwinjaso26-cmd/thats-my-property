@@ -72,11 +72,12 @@ html.lsx #rotate{display:none!important}
   <main>
     <div class="panel"><h2>Players <span id="pc"></span></h2><div id="plist"></div><button id="ready" class="pri" style="margin-top:auto">I’m ready</button></div>
     <div class="panel">
-      <h2>Character</h2><div id="chars" class="chips"></div>
+      <h2>Character</h2><canvas id="prev" title="Your character"></canvas><div id="chars" class="chips"></div>
       <h2>Team color</h2><div id="teams" class="chips"></div>
       <h2>Match</h2>
       <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option></select></label>
-      <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option></select></label>
+      <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option><option value="blitz">⚡ Blitz (15s rounds)</option><option value="shrink">🌊 Shrinking Arena</option></select></label>
+      <p id="modeInfo" class="minfo"></p>
       <label class="field">Race to: <b id="tv"></b><input id="target" type="range" min="1" max="10"></label>
       <button id="addbot" class="ghost" style="margin-bottom:8px">🤖 Add bot</button>
       <button id="start" class="pri">Start Match</button>
@@ -87,9 +88,13 @@ html.lsx #rotate{display:none!important}
 </section>
 
 <div id="settings"><div class="card"><h1 style="font-size:24px">Settings</h1>
-  <label class="field">🎵 Lobby music volume<input id="sMusic" type="range" min="0" max="100"></label>
+  <label class="field">🎵 Music volume<input id="sMusic" type="range" min="0" max="100"></label>
+  <label class="field">🌬️ Ambient sound volume<input id="sAmb" type="range" min="0" max="100"></label>
   <label class="field">🔊 Sound effects volume<input id="sSfx" type="range" min="0" max="100"></label>
-  <label class="field chk"><input id="sMusicOn" type="checkbox"> Play lobby music</label>
+  <label class="field chk"><input id="sMusicOn" type="checkbox"> Play music</label>
+  <label class="field chk"><input id="sGfx3d" type="checkbox"> 3D graphics (turn off for the classic 2D view)</label>
+  <label class="field">🎨 Graphics quality<select id="sGfx"><option value="auto">Auto</option><option value="high">High (shadows)</option><option value="med">Medium</option><option value="low">Low (fastest)</option></select></label>
+  <label class="field">📷 Camera<select id="sCam"><option value="tilt">Tilted (default)</option><option value="top">Top-down</option><option value="close">Close-up</option></select></label>
   <label class="field chk"><input id="sShake" type="checkbox"> Screen shake</label>
   <label class="field chk"><input id="sVibe" type="checkbox"> Vibration (phones)</label>
   <button id="sClose" class="pri">Done</button></div></div>
@@ -110,7 +115,7 @@ let ws,S=null,lastAct=0,token=null,tries=0,rc=0;
 try{token=sessionStorage.getItem('tmp_tok')}catch(e){}
 function setTok(t){token=t;try{t?sessionStorage.setItem('tmp_tok',t):sessionStorage.removeItem('tmp_tok')}catch(e){}}
 function clearTok(){setTok(null);rc=0}
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));if(typeof Music!=='undefined')Music.want(id==='lobby')}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));if(typeof Music!=='undefined'){const g=id==='game';Music.want(id==='lobby'||g,g?'match':'lobby')}}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2600)}
 function open(first){
   const w=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');ws=w;
@@ -165,6 +170,9 @@ function render(){
     const b=btn('chip'+(me.character===i?' sel':'')+(taken?' taken':''),e,()=>go({t:'profile',character:i}));b.title=CHN[i]+(taken?' (taken)':'');b.disabled=taken;ch.append(b)});
   const tm=$('teams');tm.innerHTML='';
   Object.keys(TEAMS).forEach(k=>{const b=btn('dot'+(me.team===k?' sel':''),'',()=>go({t:'profile',team:k}));b.style.background=TEAMS[k];b.textContent=TSH[k];b.className+=' tsh';b.disabled=!team;tm.append(b)});
+  const MI={solo:'Everyone for themselves. Hold the property for 30 seconds to score.',team:'Teammates never steal from each other. Your team shares the score.',blitz:'⚡ 15 second rounds and everyone is fast. Pure chaos!',shrink:'🌊 Water closes in every round. Hold the middle to survive!'};
+  $('modeInfo').textContent=MI[S.mode]||'';
+  if(typeof R3D!=='undefined'){if(!render.pv){render.pv=1;if(!R3D.previewStart($('prev')))$('prev').style.display='none'}R3D.previewSet(me.character,team?TEAMS[me.team]:'#334155')}
   $('map').value=S.map;$('mode').value=S.mode;$('target').value=S.target;$('tv').textContent=S.target;
   ['map','mode','target'].forEach(i=>$(i).disabled=!host);
   const nr=S.players.filter(p=>p.ready||p.bot).length;
@@ -193,7 +201,8 @@ const sendChat=()=>{const v=$('msg').value.trim();if(v){go({t:'chat',text:v});$(
 $('send').onclick=sendChat;$('msg').onkeydown=e=>{if(e.key==='Enter')sendChat()};
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{const n=Date.now();if(S&&n-lastAct>10000){lastAct=n;go({t:'active'})}}));
 document.addEventListener('click',()=>{try{screen.orientation.lock('landscape')}catch(e){}},{once:true});
-</script><script src="fx.js"></script>
+</script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>window.THREE||document.write('<script src="three.min.js"><\/script>')</script><script src="fx.js"></script>
+<script src="game3d.js"></script>
 <script src="game.js"></script>
 <script src="help.js"></script>
 </body></html>

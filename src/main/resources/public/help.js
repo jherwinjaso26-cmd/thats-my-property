@@ -67,6 +67,16 @@ const TABS={
   ${row('🌑','Moon Base','Portals teleport you to their twin.')}
   ${row('🏛️','Ancient Ruins','Ancient gates teleport you to their twin.')}
   <p style="margin-top:8px">Bigger rooms get a bigger map. You spawn far away from other players.</p>`};
+TABS['Modes']=`<p>The host picks the mode in the lobby.</p>
+  ${row('🧍','Solo','Everyone for themselves. Hold the property for 30 seconds to score a point.')}
+  ${row('🎨','Team colors','Teammates cannot steal from each other and share one score.')}
+  ${row('⚡','Blitz','Rounds last only 15 seconds and everybody runs fast. Quick and chaotic.')}
+  ${row('🌊','Shrinking Arena','Water closes in from every edge during the round. Stay near the middle or you will drown!')}`;
+TABS['3D & settings']=`<p>The game is now in 3D! If it runs slowly on your device, open ⚙️ Settings.</p>
+  ${row('📷','Camera','Tap the camera button in a match to switch between Tilted, Top-down and Close-up.')}
+  ${row('🎨','Graphics quality','Auto picks for you. Low turns off shadows and some effects for older phones.')}
+  ${row('🕹️','Classic 2D','Untick “3D graphics” in Settings to play the original 2D view.')}
+  ${row('🌬️','Sounds','Every map has its own ambient sound. Music gets faster in the last 5 seconds of a round.')}`;
 const css=document.createElement('style');
 css.textContent=`#help{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:#000b;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
 #help.on{display:flex}

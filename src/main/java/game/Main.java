@@ -137,7 +137,7 @@ public class Main {
                     if (r.host != p || r.game != null) return;
                     String map = m.path("map").asText(r.map), mode = m.path("mode").asText(r.mode);
                     if (MAPS.contains(map)) r.map = map;
-                    if (mode.equals("solo") || mode.equals("team")) r.mode = mode;
+                    if (mode.equals("solo") || mode.equals("team") || mode.equals("blitz") || mode.equals("shrink")) r.mode = mode;
                     r.target = Math.max(1, Math.min(10, m.path("target").asInt(r.target)));
                     broadcast(r);
                 }

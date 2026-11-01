@@ -112,4 +112,20 @@ class GameRulesTest {
             assertTrue(!g.zones.isEmpty(), map + " has terrain");
         }
     }
+
+    @Test
+    void blitzModeHasShortSpeedyRounds() {
+        Game g = match(room(2, "blitz"));
+        assertEquals(15_000, g.holdMs);
+        assertEquals("SPEEDY", g.mod);
+    }
+
+    @Test
+    void shrinkModeClosesTheArena() {
+        Game g = match(room(2, "shrink"));
+        g.disaster = "METEOR";
+        g.phaseEnd = System.currentTimeMillis() + 10_000;
+        g.flood(System.currentTimeMillis());
+        assertTrue(g.fx > 0 && g.fy > 0);
+    }
 }

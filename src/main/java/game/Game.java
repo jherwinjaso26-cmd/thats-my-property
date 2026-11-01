@@ -62,7 +62,8 @@ class Game {
 
     final Main.Room room;
     final double W, H;
-    final boolean team;
+    final boolean team, blitz, shrink;
+    final long holdMs;
     final int target;
     final Random rnd = new Random();
     final int seed = rnd.nextInt();
@@ -92,6 +93,9 @@ class Game {
         W = 1000 + 250 * big + 120 * extra;   // more players = bigger map (grows slower past 6)
         H = 650 + 160 * big + 80 * extra;
         team = room.mode.equals("team");
+        blitz = room.mode.equals("blitz");     // short 15s rounds, everyone always speedy
+        shrink = room.mode.equals("shrink");   // the arena closes in every round
+        holdMs = blitz ? 15_000 : HOLD_MS;
         target = room.target;
         for (Main.Player p : room.players) { Gp g = new Gp(); g.p = p; gp.put(p.id, g); }
         addObstacles((int) (W * H / 90000));
@@ -116,7 +120,7 @@ class Game {
         switch (ph) {
             case ROLE -> { if (now >= phaseEnd) { ph = Ph.COUNT; phaseEnd = now + 3000; } }
             case COUNT -> {
-                if (now >= phaseEnd) { ph = Ph.PLAY; phaseEnd = now + HOLD_MS; nextHz = now + 3000; nextBlock = now + 10_000; startDisaster(); }
+                if (now >= phaseEnd) { ph = Ph.PLAY; phaseEnd = now + holdMs; nextHz = now + 3000; nextBlock = now + 10_000; startDisaster(); }
             }
             case PLAY -> {
                 for (Gp g : gp.values()) if (g.p.bot) Bots.think(this, g, now);
@@ -144,7 +148,7 @@ class Game {
     ObjectNode initMsg(String you) {
         ObjectNode init = Main.JSON.createObjectNode();
         init.put("t", "init").put("w", (int) W).put("h", (int) H).put("map", room.map)
-            .put("seed", seed).put("mode", room.mode).put("target", target);
+            .put("seed", seed).put("mode", room.mode).put("target", target).put("hold", (int) (holdMs / 1000));
         if (you != null) init.put("you", you);
         ArrayNode a = init.putArray("players");
         for (Gp g : gp.values())
@@ -393,8 +397,8 @@ class Game {
 
     /** Flood: water rises from every edge. Standing in it slows you, and after 2.5s you drown. */
     void flood(long now) {
-        if (!disaster.equals("FLOOD")) return;
-        double f = Math.max(0, Math.min(1, 1 - (phaseEnd - now) / (double) HOLD_MS));
+        if (!disaster.equals("FLOOD") && !shrink) return;
+        double f = Math.max(0, Math.min(1, 1 - (phaseEnd - now) / (double) holdMs));
         fx = f * 0.32 * W; fy = f * 0.32 * H;
         for (Gp g : gp.values()) {
             if (!g.alive) { g.wetSince = 0; continue; }
@@ -582,7 +586,7 @@ class Game {
         String next;
         do { next = DISASTERS[rnd.nextInt(DISASTERS.length)]; } while (next.equals(disaster)); // never the same twice in a row
         disaster = next;
-        mod = (round >= 2 && rnd.nextDouble() < 0.4) ? MODS[rnd.nextInt(MODS.length)] : ""; // some rounds add a twist
+        mod = blitz ? "SPEEDY" : (round >= 2 && rnd.nextDouble() < 0.4) ? MODS[rnd.nextInt(MODS.length)] : ""; // some rounds add a twist
         holder = new ArrayList<>(gp.keySet()).get(rnd.nextInt(gp.size())); // exactly one protector
         prevHolder = null;
         ph = Ph.ROLE;
