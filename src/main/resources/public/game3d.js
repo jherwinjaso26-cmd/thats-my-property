@@ -110,12 +110,12 @@ const OBJ={
 function buildChar(ci){
  const D=Sprites.D,d=D[ci%D.length],limb=d.limb||d.b,feet=d.feet||limb;
  const mat=new T.MeshLambertMaterial({vertexColors:true}),anchor=new T.Group(),root=new T.Group(),pivot=new T.Group();anchor.add(root);root.add(pivot);
- const bp=[ball(d.b,0,22,0,13,14,11.5)];
- if(d.bl!==d.b)bp.push(ball(d.bl,0,21,6,8.6,9.6,6.5));
- if(d.spots){bp.push(ball(d.spots,-5,26,8,4.5,5,3),ball(d.spots,7,17,8,3.5,4,3))}
- if(d.stripes)for(const yy of[13,18,23,28]){bp.push(box(d.stripes,12,yy,0,2.6,1.6,6),box(d.stripes,-12,yy,0,2.6,1.6,6))}
+ const bp=[ball(d.b,0,20,0,11.8,12.6,10.6)];
+ if(d.bl!==d.b)bp.push(ball(d.bl,0,19,5.2,7.8,8.8,5.6));
+ if(d.spots){bp.push(ball(d.spots,-4.5,24,7,4,4.6,3),ball(d.spots,6,15,7,3.2,3.8,3))}
+ if(d.stripes)for(const yy of[11,16,21,26]){bp.push(box(d.stripes,10.8,yy,0,2.6,1.6,6),box(d.stripes,-10.8,yy,0,2.6,1.6,6))}
  const bodyM=mk(bp,true,mat);pivot.add(bodyM);
- const hy=42,hp=[ball(d.b,0,hy,0,13.5,12.5,12.5)];
+ const hy=0,hp=[ball(d.b,0,hy,0,13.5,12.5,12.5)];
  if(d.mane)hp.push(ball(d.mane,0,hy,-3,19,18,9));
  for(const s of[-1,1]){
   if(d.ear==='tri'){hp.push(part(G.cone,d.b,[s*8,hy+14,0],[4.8,10,4.8],[0,0,-s*.35]),part(G.cone,d.ei,[s*8,hy+13.2,1.4],[3,7,3],[0,0,-s*.35]))}
@@ -124,23 +124,25 @@ function buildChar(ci){
   else if(d.ear==='circ'){const k=d.es||1;hp.push(ball(d.ec,s*9.5,hy+10,0,5*k,5*k,3.6),ball(d.ei,s*9.5,hy+10,2,2.6*k,2.6*k,1.6))}}
  if(d.face)hp.push(ball(d.face,0,hy-1,7.5,9.8,9,6));
  if(d.mask)hp.push(ball(d.mask,0,hy+1.5,9.4,11.2,3.8,4));
- if(d.ear==='eyes'){for(const s of[-1,1])hp.push(ball(d.b,s*7,hy+11,3,5.5),ball('#fff',s*7,hy+11,6.4,3.9,3.9,2),ball('#111',s*7,hy+11,8.3,1.9,1.9,1))}
- else for(const s of[-1,1]){if(d.patch)hp.push(ball(d.patch,s*5.4,hy+1.5,10,4.8,5.8,2.6));hp.push(ball(d.ew||'#fff',s*5.2,hy+1.5,10.4,3.5,3.8,2.2),ball('#111',s*5.2,hy+1.5,12.3,1.9,2.1,1))}
+ if(d.ear==='eyes'){for(const s of[-1,1])hp.push(ball(d.b,s*7,hy+11,3,5.8),ball('#fff',s*7,hy+11,6.6,4.3,4.3,2.2),ball('#16161d',s*7,hy+11,8.6,2.6,2.6,1.2),ball('#fff',s*7+.9,hy+12,9.7,.9,.9,.5));for(const s of[-1,1])hp.push(ball('#fb7185',s*10,hy-3,8,2.9,1.8,1.2))}
+ else for(const s of[-1,1]){if(d.patch)hp.push(ball(d.patch,s*5.6,hy+1,9.6,5.8,6.6,2.8));
+  hp.push(ball(d.ew||'#16161d',s*5.6,hy+.8,10.6,4,4.8,2.6),ball('#fff',s*5.6+1.3,hy+2.8,12.8,1.6,1.6,.8),ball('#fff',s*5.6-1.1,hy-.9,12.7,.85,.85,.5));
+  if(!d.ant)hp.push(ball('#fb7185',s*9.4,hy-3.4,9.2,2.9,1.8,1.2))}
  if(d.m)hp.push(ball(d.m,0,hy-3.2,9.5,6.6,4.6,4));
  if(d.n)hp.push(ball(d.n,0,hy-1.2,13,2.4,1.7,1.4));
  if(d.snout)hp.push(ball(d.snout,0,hy-3,11.5,6.8,4.8,4),ball('#9d174d',-2.3,hy-3,15,1.1,1.5,.8),ball('#9d174d',2.3,hy-3,15,1.1,1.5,.8));
  if(d.beak)hp.push(part(G.cone,d.beak,[0,hy-3,13.5],[3.6,6,3.6],[PI/2,0,0]));
- if(!d.m&&!d.beak&&!d.snout)hp.push(box('#1f2937',0,hy-6.2,11.9,d.ear==='eyes'?9:4.4,.9,1));
+ if(!d.m&&!d.beak&&!d.snout)hp.push(box('#1f2937',0,hy-5.6,11.9,d.ear==='eyes'?8:3.2,.8,1));
  if(d.horn)hp.push(part(G.cone,d.horn,[0,hy+19,4],[2.8,14,2.8],[.3,0,0]));
  if(d.ant)hp.push(cyl('#94a3b8',0,hy+11,0,.9,8),ball(d.ant,0,hy+21,0,2.8));
- const headM=mk(hp,true,mat);pivot.add(headM);
+ const headMesh=mk(hp,true,mat),headM=new T.Group();headM.add(headMesh);headM.position.y=40;headM.scale.setScalar(1.3);pivot.add(headM);
  const legs=[],arms=[];
  for(const s of[-1,1]){
-  const lg=new T.Group();lg.position.set(s*6.5,12,0);lg.add(mk([cyl(limb,0,-10,0,3.6,10),ball(feet,0,-11,2,4.8,3.2,5.8)],true,mat));pivot.add(lg);legs.push(lg);
-  const ar=new T.Group();ar.position.set(s*13.5,31,0);ar.add(mk([ball(limb,s*1.5,-6,0,3.5,7.5,3.5)],false,mat));pivot.add(ar);arms.push(ar)}
+  const lg=new T.Group();lg.position.set(s*5.6,11.4,0);lg.add(mk([cyl(limb,0,-7,0,3.9,7),ball(feet,0,-8,2,5.3,3.7,6.3)],true,mat));pivot.add(lg);legs.push(lg);
+  const ar=new T.Group();ar.position.set(s*12.2,28,0);ar.add(mk([ball(limb,s*1.6,-5,0,3.9,6.2,3.9)],false,mat));pivot.add(ar);arms.push(ar)}
  let tail=null;
- if(d.tail){tail=new T.Group();tail.position.set(0,16,-10);const tp=[ball(d.tail,0,2,-5,5,5,6.5)];if(d.tip)tp.push(ball(d.tip,0,4,-10,3,3,3));tail.add(mk(tp,false,mat));pivot.add(tail)}
- return{anchor,root,pivot,bodyM,headM,legs,arms,tail,mat,yaw:0,ph:Math.random()*6,seed:Math.random()*6.28,al:1}}
+ if(d.tail){tail=new T.Group();tail.position.set(0,13,-9);const tp=[ball(d.tail,0,2,-5,5,5,6.5)];if(d.tip)tp.push(ball(d.tip,0,4,-10,3,3,3));tail.add(mk(tp,false,mat));pivot.add(tail)}
+ return{anchor,root,pivot,bodyM,headM,headY:40,legs,arms,tail,mat,yaw:0,ph:Math.random()*6,seed:Math.random()*6.28,al:1}}
 
 function buildHouse(){
  const g=new T.Group(),m=mk([box('#fde68a',0,0,0,18,13,16),part(G.cone4,'#ef4444',[0,19,0],[15.5,12,15.5],[0,PI/4,0]),box('#92400e',0,0,8.2,5,8,.6),box('#7dd3fc',-6,6,8.2,3.5,3.5,.5),box('#7dd3fc',6,6,8.2,3.5,3.5,.5),box('#b45309',5.5,15,-2,3,7,3)]);
@@ -236,7 +238,7 @@ function makeHole(){const g=new T.Group(),d=new T.Mesh(G.circ,flatMat('#fff',1))
 function makeLucky(){const g=new T.Group(),c=new T.Mesh(G.box,new T.MeshLambertMaterial({map:texQ(),emissive:'#7a4a00'})),sh=new T.Mesh(G.circ,flatMat('#000',.3)),gl=glowSprite('#facc15',110,.75),bm=new T.Mesh(G.tube,flatMat('#fde047',.16,true));
  c.scale.setScalar(26);c.castShadow=true;sh.rotation.x=-PI/2;sh.position.y=.8;sh.scale.setScalar(15);bm.scale.set(10,320,10);bm.position.y=160;g.add(c,sh,gl,bm);return{g,c,sh,gl}}
 function makeBear(){const g=new T.Group(),a=mk(buildTrapModel(),false),mm=new T.MeshLambertMaterial({vertexColors:true,transparent:true,opacity:.45});const b=new T.Mesh(a.geometry,mm);a.material=MAT;g.add(a,b);return{g,a,b}}
-function makeDecoy(ci,name,team){const c=buildChar(ci);c.ci=ci;c.nm=name;const h=buildHouse();h.g.position.y=88;h.g.visible=false;c.anchor.add(h.g);c.house=h;const l=labelSprite(name+(team||''),'#fff');l.position.y=76;c.anchor.add(l);c.label=l;const sh=new T.Mesh(G.circ,flatMat('#000',.28));sh.rotation.x=-PI/2;sh.position.y=.5;sh.scale.set(19,19,1);c.anchor.add(sh);return{g:c.anchor,c}}
+function makeDecoy(ci,name,team){const c=buildChar(ci);c.ci=ci;c.nm=name;const h=buildHouse();h.g.position.y=88;h.g.visible=false;c.anchor.add(h.g);c.house=h;const l=labelSprite(name+(team||''),'#fff');l.position.y=86;c.anchor.add(l);c.label=l;const sh=new T.Mesh(G.circ,flatMat('#000',.28));sh.rotation.x=-PI/2;sh.position.y=.5;sh.scale.set(19,19,1);c.anchor.add(sh);return{g:c.anchor,c}}
 
 /* ---------- scene setup ---------- */
 function attach(el,before){if(failed||glCv)return;glCv=document.createElement('canvas');glCv.id='gl';el.insertBefore(glCv,before||el.firstChild)}
@@ -344,12 +346,12 @@ function init(m,bgc){
    const sh2=new T.Mesh(G.circ,flatMat('#000',shadowsOn?.18:.3));sh2.rotation.x=-PI/2;sh2.position.y=.5;sh2.scale.set(20,20,1);c.anchor.add(sh2);c.blob=sh2;
    const team=m.mode==='team'?(TEAMS[p.team]||'#fff'):null;
    if(team){const tr=new T.Mesh(keep(new T.RingGeometry(21,26,28)),keep(flatMat(team,.9)));tr.rotation.x=-PI/2;tr.position.y=.7;c.anchor.add(tr)}
-   const lab=labelSprite(p.name+(team&&TSH[p.team]?' '+TSH[p.team]:''),p.id===m.you?'#facc15':'#ffffff');lab.position.y=76;c.anchor.add(lab);c.label=lab;
-   const house=buildHouse();house.g.position.y=96;house.g.visible=false;c.anchor.add(house.g);c.house=house;
+   const lab=labelSprite(p.name+(team&&TSH[p.team]?' '+TSH[p.team]:''),p.id===m.you?'#facc15':'#ffffff');lab.position.y=86;c.anchor.add(lab);c.label=lab;
+   const house=buildHouse();house.g.position.y=104;house.g.visible=false;c.anchor.add(house.g);c.house=house;
    const ring=new T.Mesh(keep(new T.RingGeometry(26,31,36)),keep(flatMat('#facc15',.8,true)));ring.rotation.x=-PI/2;ring.position.y=.9;ring.visible=false;c.anchor.add(ring);c.hring=ring;
    const halo=glowSprite('#facc15',120,.55);halo.position.y=26;halo.visible=false;c.anchor.add(halo);c.halo=halo;
-   const shield=new T.Mesh(G.sph,keep(new T.MeshBasicMaterial({color:'#38bdf8',transparent:true,opacity:.25,depthWrite:false,blending:T.AdditiveBlending})));shield.scale.setScalar(33);shield.position.y=28;shield.visible=false;c.anchor.add(shield);c.shield=shield;
-   const ice=new T.Mesh(G.box,keep(new T.MeshPhongMaterial({color:'#bfe6ff',transparent:true,opacity:.55,shininess:100,specular:0xffffff})));ice.scale.set(46,64,46);ice.position.y=32;ice.visible=false;c.anchor.add(ice);c.ice=ice;
+   const shield=new T.Mesh(G.sph,keep(new T.MeshBasicMaterial({color:'#38bdf8',transparent:true,opacity:.25,depthWrite:false,blending:T.AdditiveBlending})));shield.scale.setScalar(38);shield.position.y=30;shield.visible=false;c.anchor.add(shield);c.shield=shield;
+   const ice=new T.Mesh(G.box,keep(new T.MeshPhongMaterial({color:'#bfe6ff',transparent:true,opacity:.55,shininess:100,specular:0xffffff})));ice.scale.set(50,74,50);ice.position.y=37;ice.visible=false;c.anchor.add(ice);c.ice=ice;
    const bt=mk(buildTrapModel(),false);bt.scale.setScalar(.9);bt.visible=false;c.anchor.add(bt);c.bear=bt;
    const smoke=new T.Group(),sm=keep(new T.MeshBasicMaterial({color:'#e2e8f0',transparent:true,opacity:.55,depthWrite:false}));for(let i=0;i<5;i++){const s=new T.Mesh(G.sph2,sm);s.scale.setScalar(12);smoke.add(s)}smoke.visible=false;c.anchor.add(smoke);c.smoke=smoke;
    const tomb=buildTomb();tomb.visible=false;c.anchor.add(tomb);c.tomb=tomb;
@@ -396,7 +398,7 @@ function updChar(c,p,g,f,t,dt,al){
  const A=c.anchor,hold=f.st.holder===p.id,alive=p.a,mv=g.mv&&alive&&p.fz<=0&&p.tr<=0;
  A.visible=true;A.position.set(g.sx,0,g.sy);
  c.tomb.visible=!alive;c.root.visible=alive;c.label.visible=true;
- c.label.position.y=alive?(hold?120:78):44;
+ c.label.position.y=alive?(hold?126:86):44;
  c.blob.visible=alive;
  if(!alive){c.house.g.visible=false;c.halo.visible=false;c.hring.visible=false;c.shield.visible=false;c.ice.visible=false;c.bear.visible=false;c.smoke.visible=false;c.wet.visible=false;c.label.material.opacity=.6;return}
  c.label.material.opacity=al<1?Math.max(.25,al):1;
@@ -407,16 +409,16 @@ function updChar(c,p,g,f,t,dt,al){
  const idle=Math.sin(t*2+c.seed)*.08;
  c.arms[0].rotation.x=mv?-sw*.9:idle;c.arms[1].rotation.x=mv?sw*.9:-idle;c.arms[0].rotation.z=mv?-.15:-.08;c.arms[1].rotation.z=mv?.15:.08;
  c.pivot.position.y=bob+hop-(p.wt>0?5:0);
- c.headM.position.y=mv?Math.sin(c.ph*2)*.6:Math.sin(t*2.2+c.seed)*.3;c.headM.rotation.z=mv?Math.sin(c.ph)*.05:Math.sin(t*1.3+c.seed)*.04;
+ c.headM.position.y=c.headY+(mv?Math.sin(c.ph*2)*.9:Math.sin(t*2.2+c.seed)*.45);c.headM.rotation.z=mv?Math.sin(c.ph)*.05:Math.sin(t*1.3+c.seed)*.04;
  if(c.tail)c.tail.rotation.y=Math.sin(t*(mv?14:5)+c.seed)*(mv?.6:.35);
  if(p.d){c.pivot.scale.set(.88,.82,1.38);c.pivot.rotation.x=.5;c.dashT=t}else{const k=1-Math.exp(-dt*14);c.pivot.scale.x+=(1-c.pivot.scale.x)*k;c.pivot.scale.y+=((1+Math.sin(t*2.2+c.seed)*.015)-c.pivot.scale.y)*k;c.pivot.scale.z+=(1-c.pivot.scale.z)*k;c.pivot.rotation.x+=(0-c.pivot.rotation.x)*k}
  if(p.tr>0)c.pivot.position.x=Math.sin(t*60)*1.2;else c.pivot.position.x=0;
  if(Math.hypot(g.fx||0,g.fy||0)>.01){const target=Math.atan2(g.fx,g.fy);c.yaw+=aDiff(c.yaw,target)*(1-Math.exp(-dt*(p.d?40:15)))}
  c.root.rotation.y=c.yaw;
  setAlpha(c,al);
- c.house.g.visible=hold;if(hold){c.house.g.position.y=98+Math.sin(t*3)*3.5;c.house.g.rotation.y=t*1.4}
+ c.house.g.visible=hold;if(hold){c.house.g.position.y=104+Math.sin(t*3)*3.5;c.house.g.rotation.y=t*1.4}
  c.halo.visible=hold;c.hring.visible=hold;if(hold){c.halo.material.opacity=.45+Math.sin(t*6)*.12;const s=1+Math.sin(t*4)*.07;c.hring.scale.set(s,s,1);c.hring.rotation.z=t*.8}
- c.shield.visible=p.sh>0;if(p.sh>0){const s=33+Math.sin(t*9)*1.6;c.shield.scale.setScalar(s);c.shield.material.opacity=.2+Math.sin(t*7)*.06;c.shield.rotation.y=t}
+ c.shield.visible=p.sh>0;if(p.sh>0){const s=38+Math.sin(t*9)*1.8;c.shield.scale.setScalar(s);c.shield.material.opacity=.2+Math.sin(t*7)*.06;c.shield.rotation.y=t}
  c.ice.visible=p.fz>0;c.bear.visible=p.tr>0;
  c.smoke.visible=p.sm>0;if(p.sm>0)c.smoke.children.forEach((s,i)=>{const a=t*2+i*1.26;s.position.set(Math.cos(a)*17,22+Math.sin(a*1.3)*12,Math.sin(a)*17);s.scale.setScalar(11+Math.sin(t*4+i)*2.5)});
  c.wet.visible=p.wt>0;if(p.wt>0){const s=20+(t*40%16);c.wet.scale.set(s,s,1);if(Math.random()<.2)burst(g.sx,g.sy,'#bae6fd',2,{up:1.4,spd:.35,g:300,life:.5,h:6})}
@@ -426,7 +428,7 @@ function updChar(c,p,g,f,t,dt,al){
  /* emote bubble */
  let em=null;for(let i=f.emotes.length-1;i>=0;i--){const e=f.emotes[i];if(e.id===p.id){em=e;break}}
  if(em){const age=(performance.now()-em.t)/2200;if(age<1){if(!c.emo){c.emo=emojiSprite('👋',44);c.anchor.add(c.emo)}if(c.emoId!==em.t){c.emoId=em.t;c.emo.material.map=texEmoji(f.EMO[em.e]||'💬');c.emo.material.needsUpdate=true}
-   c.emo.visible=true;c.emo.position.y=(hold?148:104)+age*30;c.emo.material.opacity=1-age*age*age}else if(c.emo)c.emo.visible=false}else if(c.emo)c.emo.visible=false}
+   c.emo.visible=true;c.emo.position.y=(hold?152:112)+age*30;c.emo.material.opacity=1-age*age*age}else if(c.emo)c.emo.visible=false}else if(c.emo)c.emo.visible=false}
 
 function frame(f){
  if(!active||!sc)return;
@@ -466,7 +468,7 @@ function frame(f){
   if(watcher&&f.mod==='NIGHT'&&Math.hypot(d[0]-watcher.sx,d[1]-watcher.sy)>340)return;
   const info=names[d[4]]||{name:'?',team:'red'},tsh=I.mode==='team'&&TSH[info.team]?' '+TSH[info.team]:'';
   if(!o||o.c.ci!==ch0||o.c.nm!==info.name){if(o){P.decoyG.remove(o.g)}o=makeDecoy(ch0,info.name,tsh);P.decoys[i]=o;P.decoyG.add(o.g)}
-  o.g.visible=true;o.g.position.set(d[0],0,d[1]);o.c.house.g.visible=!!d[3];if(d[3]){o.c.house.g.position.y=98+Math.sin(t*3)*3.5;o.c.house.g.rotation.y=t*1.4}
+  o.g.visible=true;o.g.position.set(d[0],0,d[1]);o.c.house.g.visible=!!d[3];if(d[3]){o.c.house.g.position.y=104+Math.sin(t*3)*3.5;o.c.house.g.rotation.y=t*1.4}
   o.c.pivot.position.y=Math.sin(t*2.2+i)*.5;o.c.arms[0].rotation.x=Math.sin(t*2+i)*.08;o.c.arms[1].rotation.x=-Math.sin(t*2+i)*.08});
  /* hazards, pickups, water */
  hazards(f,t,dt);
