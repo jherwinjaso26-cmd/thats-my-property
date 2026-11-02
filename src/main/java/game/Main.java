@@ -21,16 +21,16 @@ public class Main {
     static final Map<String, Player> byToken = new HashMap<>();
     static final int MAX_PLAYERS = 15;
     static final int MAX_ROOMS = 200;
-    static final int CHARS = 20; // more characters than max players, so everyone can pick a unique one
+    static final int CHARS = 24; // more characters than max players, so everyone can pick a unique one
     static final long IDLE_MS = 600_000;   // no input at all for 10 minutes = removed (a host waiting in the lobby must not lose the room)
     static final long GRACE_MS = 60_000;   // a dropped connection keeps its seat this long
-    static final Set<String> MAPS = Set.of("forest", "desert", "snow", "lava", "swamp", "beach", "candy", "space", "autumn", "ruins");
+    static final Set<String> MAPS = Set.of("forest", "desert", "snow", "lava", "swamp", "beach", "candy", "space", "autumn", "ruins", "reef", "mansion");
     static final Set<String> TEAMS = Set.of("red", "blue", "green", "yellow");
     static final List<String> TEAM_LIST = List.of("red", "blue", "green", "yellow");
     static final String[] BOT_NAMES = {"Rex", "Mia", "Zed", "Pip", "Kai", "Nova", "Bolt", "Dot", "Juno", "Otto"};
 
     static class Player {
-        String id, name, team = "red", token, sid;
+        String id, name, team = "red", token, sid, uid = ""; // uid: anonymous id kept in the browser, used only for the leaderboard
         int character;
         boolean ready, bot;
         WsContext ctx;          // null for bots and while a player is reconnecting
@@ -51,6 +51,8 @@ public class Main {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
         Javalin app = Javalin.create(c -> c.staticFiles.add("/public", Location.CLASSPATH));
         app.get("/health", ctx -> ctx.result("ok")); // for uptime pings (keeps Render awake)
+        Db.init();
+        app.get("/api/leaderboard", ctx -> ctx.contentType("application/json").result(Db.leaderboardJson(ctx.queryParam("uid"))));
         app.ws("/ws", ws -> {
             ws.onConnect(ctx -> ctx.enableAutomaticPings(20, TimeUnit.SECONDS));
             ws.onMessage(ctx -> {
@@ -98,6 +100,8 @@ public class Main {
                 p.id = UUID.randomUUID().toString().substring(0, 6);
                 p.token = UUID.randomUUID().toString();
                 p.name = uniqueName(r, name);
+                String uid = m.path("uid").asText("").replaceAll("[^A-Za-z0-9_-]", "");
+                p.uid = uid.length() > 40 ? uid.substring(0, 40) : uid;
                 p.ctx = ctx;
                 p.sid = ctx.sessionId();
                 p.room = r;
@@ -137,7 +141,7 @@ public class Main {
                     if (r.host != p || r.game != null) return;
                     String map = m.path("map").asText(r.map), mode = m.path("mode").asText(r.mode);
                     if (MAPS.contains(map)) r.map = map;
-                    if (mode.equals("solo") || mode.equals("team") || mode.equals("blitz") || mode.equals("shrink")) r.mode = mode;
+                    if (mode.equals("solo") || mode.equals("team") || mode.equals("blitz") || mode.equals("shrink") || mode.equals("potato")) r.mode = mode;
                     r.target = Math.max(1, Math.min(10, m.path("target").asInt(r.target)));
                     broadcast(r);
                 }

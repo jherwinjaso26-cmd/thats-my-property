@@ -2,7 +2,7 @@
 
 /* Settings: saved in this browser. Used by sounds, music, screen shake and vibration. */
 const Settings=(()=>{
-const v={music:.5,sfx:.8,musicOn:true,shake:true,vibe:true,gfx3d:true,gfx:'auto',cam:'tilt',amb:.5},ls=[];
+const v={music:.5,sfx:.8,musicOn:true,shake:true,vibe:true,gfx3d:true,gfx:'auto',cam:'tilt',amb:.5,lefty:false,btn:1,cb:false,big:false},ls=[];
 try{Object.assign(v,JSON.parse(localStorage.getItem('tmp_settings')||'{}'))}catch(e){}
 return{get:k=>v[k],on:fn=>ls.push(fn),
  set(k,x){v[k]=x;try{localStorage.setItem('tmp_settings',JSON.stringify(v))}catch(e){}ls.forEach(f=>f(k))}};
@@ -45,7 +45,10 @@ const S={
  pw_trap:()=>{tone(220,.12,'square',.1);tone(160,.14,'square',.1,0,.1)},pw_smoke:()=>sweep(.6,.25,1500,200,'lowpass'),
  pw_decoy:()=>{tone(600,.1,'triangle',.1);tone(600,.1,'triangle',.1,0,.12);tone(900,.2,'triangle',.1,0,.24)},
  drown:()=>{sweep(.6,.3,1800,150,'lowpass');tone(300,.5,'sine',.08,-200)},
- pop:()=>tone(520,.07,'sine',.12,500)};
+ pop:()=>tone(520,.07,'sine',.12,500),
+ pw_magnet:()=>{tone(200,.5,'sawtooth',.08,500);tone(400,.4,'triangle',.08,200,.05)},pw_jump:()=>{tone(300,.25,'square',.08,900);sweep(.25,.18,400,2500)},
+ pw_reveal:()=>[880,1175,1568].forEach((f,i)=>tone(f,.25,'sine',.1,0,i*.07)),
+ fanfare:()=>[523,659,784].forEach((f,i)=>tone(f,.22,'triangle',.1,0,i*.1))};
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>ctx()));
 return{play:n=>{try{if(S[n])S[n]()}catch(e){}},
  /* play a sound that fades with distance from the listener */
@@ -74,7 +77,11 @@ const D=[
  {b:'#1f2937',bl:'#f8fafc',ear:'none',face:'#f8fafc',beak:'#fb923c',feet:'#fb923c',limb:'#1f2937'},   // 16 penguin
  {b:'#fde047',bl:'#fef08a',ear:'none',beak:'#fb923c',feet:'#fb923c',limb:'#fde047'},                  // 17 chick
  {b:'#f5f3ff',bl:'#ffffff',ear:'tri',ei:'#f9a8d4',m:'#ffffff',n:'#f472b6',horn:'#fde047',tail:'#f0abfc'}, // 18 unicorn
- {b:'#94a3b8',bl:'#cbd5e1',ear:'none',ant:'#ef4444',ew:'#67e8f9',limb:'#64748b'}];                   // 19 robot
+ {b:'#94a3b8',bl:'#cbd5e1',ear:'none',ant:'#ef4444',ew:'#67e8f9',limb:'#64748b'},                    // 19 robot
+ {b:'#a16207',bl:'#fde68a',ear:'tri',ei:'#78350f',face:'#fef3c7',beak:'#f59e0b',limb:'#854d0e'},       // 20 owl
+ {b:'#a78bfa',bl:'#ddd6fe',ear:'circ',ec:'#a78bfa',ei:'#f9a8d4',es:.8,snout:'#c4b5fd',tail:'#a78bfa'}, // 21 hippo
+ {b:'#22c55e',bl:'#bbf7d0',ear:'none',horn:'#fde047',m:'#bbf7d0',n:'#14532d',tail:'#22c55e',tip:'#f97316'}, // 22 dragon
+ {b:'#facc15',bl:'#fef08a',ear:'none',ant:'#1f2937',stripes:'#1f2937',m:'#fef08a',n:'#1f2937',limb:'#1f2937'}];  // 23 bee
 const el=(c,x,y,rx,ry,f,rot)=>{c.fillStyle=f;c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,7);c.fill()};
 function draw(c,i,x,y,t,mv,fx,fy,dash){
  const d=D[i%D.length],sw=mv?Math.sin(t*.02):0,bob=mv?-Math.abs(Math.sin(t*.02))*2.5:Math.sin(t*.004)*-1,limb=d.limb||d.b,side=fx>=0?1:-1,hy=-9+bob;
@@ -136,7 +143,7 @@ const AmbSound=(()=>{
 let src=null,g=null,lfo=null,lg=null,map='';
 const P={forest:['bandpass',420,.8,.05,.12,.03],desert:['bandpass',700,.5,.07,.08,.04],snow:['bandpass',900,.4,.05,.1,.03],lava:['lowpass',160,1,.13,.2,.05],
  swamp:['lowpass',260,1.2,.08,.15,.03],beach:['lowpass',700,.7,.1,.11,.07],candy:['bandpass',2400,2,.012,.3,.01],space:['lowpass',90,1.5,.13,.05,.02],
- autumn:['bandpass',600,.6,.05,.1,.03],ruins:['bandpass',350,.5,.05,.07,.02]};
+ autumn:['bandpass',600,.6,.05,.1,.03],ruins:['bandpass',350,.5,.05,.07,.02],reef:['lowpass',520,.8,.11,.12,.06],mansion:['bandpass',240,.9,.07,.06,.03]};
 const lvl=()=>SFX.muted?0:Settings.get('amb')*Settings.get('sfx')*2.2;
 function start(m){stop();const a=SFX.ctx();if(!a)return;map=m;const p=P[m]||P.forest;
  const n=a.sampleRate*3|0,b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);let last=0;
@@ -287,7 +294,7 @@ return{want(b,tr){wanted=!!b;if(tr&&tr!==track){track=tr;SPB=60/TR[tr].bpm/4;CHO
 /* Settings panel (opened from the home and lobby screens) and the lobby music button. */
 (function(){
  const g=id=>document.getElementById(id),m=g('settings');if(!m)return;
- const sync=()=>{g('sMusic').value=Settings.get('music')*100;g('sSfx').value=Settings.get('sfx')*100;g('sMusicOn').checked=Settings.get('musicOn');g('sShake').checked=Settings.get('shake');g('sVibe').checked=Settings.get('vibe');g('sAmb').value=Settings.get('amb')*100;g('sGfx3d').checked=Settings.get('gfx3d')!==false;g('sGfx').value=Settings.get('gfx');g('sCam').value=Settings.get('cam')};
+ const sync=()=>{g('sMusic').value=Settings.get('music')*100;g('sSfx').value=Settings.get('sfx')*100;g('sMusicOn').checked=Settings.get('musicOn');g('sShake').checked=Settings.get('shake');g('sVibe').checked=Settings.get('vibe');g('sAmb').value=Settings.get('amb')*100;g('sGfx3d').checked=Settings.get('gfx3d')!==false;g('sGfx').value=Settings.get('gfx');g('sCam').value=Settings.get('cam');g('sLefty').checked=!!Settings.get('lefty');g('sBtn').value=Settings.get('btn')*100;g('sCb').checked=!!Settings.get('cb');g('sBig').checked=!!Settings.get('big')};
  const open=()=>{sync();m.style.display='flex'};
  ['gearH','gearL'].forEach(i=>{const b=g(i);if(b)b.onclick=open});
  g('sClose').onclick=()=>m.style.display='none';
@@ -299,6 +306,10 @@ return{want(b,tr){wanted=!!b;if(tr&&tr!==track){track=tr;SPB=60/TR[tr].bpm/4;CHO
  g('sGfx3d').onchange=e=>Settings.set('gfx3d',e.target.checked);
  g('sGfx').onchange=e=>Settings.set('gfx',e.target.value);
  g('sCam').onchange=e=>Settings.set('cam',e.target.value);
+ g('sLefty').onchange=e=>Settings.set('lefty',e.target.checked);
+ g('sBtn').oninput=e=>Settings.set('btn',e.target.value/100);
+ g('sCb').onchange=e=>Settings.set('cb',e.target.checked);
+ g('sBig').onchange=e=>Settings.set('big',e.target.checked);
  g('sMusicOn').onchange=e=>Settings.set('musicOn',e.target.checked);
  g('sShake').onchange=e=>Settings.set('shake',e.target.checked);
  g('sVibe').onchange=e=>{Settings.set('vibe',e.target.checked);if(e.target.checked&&navigator.vibrate)try{navigator.vibrate(60)}catch(x){}};

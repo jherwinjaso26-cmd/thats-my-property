@@ -128,4 +128,16 @@ class GameRulesTest {
         g.flood(System.currentTimeMillis());
         assertTrue(g.fx > 0 && g.fy > 0);
     }
+
+    @Test
+    void newPowerUpsExist() {
+        java.util.List<String> l = java.util.Arrays.asList(Game.POWERS);
+        assertTrue(l.contains("magnet") && l.contains("jump") && l.contains("reveal"));
+    }
+
+    @Test
+    void potatoModeIsRecognised() {
+        Game g = match(room(2, "potato"));
+        assertTrue(g.potato);
+    }
 }

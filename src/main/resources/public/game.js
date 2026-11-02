@@ -12,9 +12,11 @@ const TH={
  candy:{g:['#f9a8d4','#f472b6','#fbcfe8'],acc:'#fde047',tuft:'#db2777',ob:['🍭','🧁']},
  space:{g:['#1e1b4b','#312e81','#27235f'],acc:'#fde68a',tuft:'#4338ca',ob:['🌑','🛸']},
  autumn:{g:['#b45309','#c2610c','#9a4a08'],acc:'#fbbf24',tuft:'#7c2d12',ob:['🍁','🎃'],leaf:['#c2410c','#d97706','#9a3412']},
- ruins:{g:['#4b5563','#525c6b','#3f4753'],acc:'#a1a1aa',tuft:'#27272a',ob:['🏛️','🪨']}};
+ ruins:{g:['#4b5563','#525c6b','#3f4753'],acc:'#a1a1aa',tuft:'#27272a',ob:['🏛️','🪨']},
+ reef:{g:['#e9d5a1','#f1e2b4','#d9c58c'],acc:'#fb7185',tuft:'#2dd4bf',ob:['🪸','🐚'],edge:'rgba(14,165,233,.5)'},
+ mansion:{g:['#3b2f4f','#463a5c','#2f2540'],acc:'#a78bfa',tuft:'#1e1830',ob:['🪦','🎃'],leaf:['#4c3a6e','#5b4682','#3b2d58']}};
 const PW={speed:['⚡','Speed Boost!','#facc15'],shield:['🛡️','Shield up!','#38bdf8'],trap:['🪤','Bear trap! Press E or tap 🪤 to place it','#cbd5e1'],freeze:['🥶','You froze yourself for 3s!','#bae6fd'],
- smoke:['💨','Smoke bomb! You are hard to see for 4s','#e2e8f0'],swap:['🔀','Swapped places with another player!','#c084fc'],decoy:['👥','Decoy placed! It looks just like you','#fde68a']};
+ smoke:['💨','Smoke bomb! You are hard to see for 4s','#e2e8f0'],swap:['🔀','Swapped places with another player!','#c084fc'],decoy:['👥','Decoy placed! It looks just like you','#fde68a'],magnet:['🧲','Magnet! Longer steal reach for 6s','#f87171'],jump:['🦘','Super jump!','#34d399'],reveal:['👁️','Reveal! You can see everyone for 6s','#fde047']};
 const DIS={METEOR:['☄️','Meteor Shower','Red circles show where meteors land. Move out before they hit.'],
  LIGHTNING:['⚡','Lightning Storm','Yellow circles mark lightning strikes. They hit fast!'],
  TORNADO:['🌪️','Tornado','Tornadoes chase the nearest player. Keep moving and dash away.'],
@@ -25,12 +27,24 @@ const DIS={METEOR:['☄️','Meteor Shower','Red circles show where meteors land
 const MODS={NIGHT:['🌙','Night round','You can only see what is close to you. Other players hide in the dark.'],SPEEDY:['💨','Speedy round','Everyone moves 30% faster!']};
 const MAPTIP={forest:'🌿 Bushes hide you from players who are far away.',desert:'🏜️ Quicksand slows you down.',snow:'🧊 Ice patches make you slide.',lava:'🔥 Lava pools burn. Stay out!',
  swamp:'🟫 Mud slows you down.',beach:'🌊 Tide pools slow you down.',candy:'🍬 Bounce pads launch you forward.',space:'🌀 Portals teleport you to their twin.',
- autumn:'🍂 Leaf piles hide you from players who are far away.',ruins:'🌀 Ancient gates teleport you to their twin.'};
-const EMO=['👋','😂','😡','😱','😎','🙏'];
-const MODE={blitz:['⚡','Blitz','15 second rounds and everyone is speedy. Fast and furious!'],shrink:['🌊','Shrinking Arena','The water closes in during every round. Stay in the middle!']};
-const PWS={speed:'pw_speed',shield:'pw_shield',trap:'pw_trap',freeze:'bad',smoke:'pw_smoke',swap:'swap',decoy:'pw_decoy'};
+ autumn:'🍂 Leaf piles hide you from players who are far away.',ruins:'🌀 Ancient gates teleport you to their twin.',reef:'🫧 Bubble jets launch you forward.',mansion:'👻 Dark curtains hide you from players who are far away.'};
+const EMO=['👋','😂','😡','😱','😎','🙏','🔥','😭','GG!','Nice!','Oops!','Help!'];
+let streak=0,lastRobber=null;
+/* lifetime stats and a daily challenge, kept on this device */
+const Stats=(()=>{const K='tmp_stats',D='tmp_daily',GOALS=[['steals',5,'Steal the property 5 times'],['blocks',3,'Open 3 lucky blocks'],['matches',2,'Play 2 matches']];
+ let s={steals:0,blocks:0,matches:0},d=null;
+ try{Object.assign(s,JSON.parse(localStorage.getItem(K)||'{}'));d=JSON.parse(localStorage.getItem(D)||'null')}catch(e){}
+ const day=()=>new Date().toISOString().slice(0,10),save=()=>{try{localStorage.setItem(K,JSON.stringify(s));localStorage.setItem(D,JSON.stringify(d))}catch(e){}};
+ function fresh(){if(!d||d.day!==day()){const n=[...day()].reduce((a,c)=>a+c.charCodeAt(0),0)%GOALS.length;d={day:day(),g:n,prog:0,done:false};save()}return d}
+ return{add(k,n){s[k]=(s[k]||0)+n;const c=fresh(),g=GOALS[c.g];if(!c.done&&g[0]===k){c.prog+=n;if(c.prog>=g[1]){c.done=true;setTimeout(()=>{banner('🎯 Daily challenge complete!');SFX.play('win')},1200)}}save()},
+  line(){const c=fresh(),g=GOALS[c.g];return '📊 Steals '+s.steals+' · Matches '+s.matches+' · 🎯 '+g[2]+': '+(c.done?'done ✅':Math.min(c.prog,g[1])+'/'+g[1])}}})();
+function applyCb(){const c=Settings.get('cb');TEAMS.red=c?'#e69f00':'#ef4444';TEAMS.blue=c?'#56b4e9':'#3b82f6'}
+function tutorial(){let seen=false;try{seen=localStorage.getItem('tmp_tut')==='1'}catch(e){}if(seen)return;try{localStorage.setItem('tmp_tut','1')}catch(e){}
+ ['🕹️ Drag on the screen to move (or use WASD)','⚡ Tap ⚡ (or press Space) to dash','🏠 Touch the glowing holder to steal the property!','🎁 Grab lucky blocks for power-ups'].forEach((t,i)=>setTimeout(()=>{if(active)banner(t)},9000+i*5200))}
+const MODE={potato:['🥔','Hot Potato','The longer you hold the property, the slower you get. Pass it on!'],blitz:['⚡','Blitz','15 second rounds and everyone is speedy. Fast and furious!'],shrink:['🌊','Shrinking Arena','The water closes in during every round. Stay in the middle!']};
+const PWS={speed:'pw_speed',shield:'pw_shield',trap:'pw_trap',freeze:'bad',smoke:'pw_smoke',swap:'swap',decoy:'pw_decoy',magnet:'pw_magnet',jump:'pw_jump',reveal:'pw_reveal'};
 const WARN={m:{ms:1600,c:'239,68,68',s:'#ef4444'},l:{ms:900,c:'250,204,21',s:'#facc15'},h:{ms:1000,c:'147,197,253',s:'#93c5fd'},s:{ms:1800,c:'161,98,7',s:'#d97706'}};
-let el,cv,ctx,traps=[],zones=[],decals=[],emotes=[],mod='',disaster='METEOR',flashes=[],spec=null,active=false,raf=0,lt=0,init=null,st=null,obs=[],pos={},names={},rows=[],bg=null,parts=[],shake=0,lastKey='',lastSent='',lastSendAt=0,camX=0,camY=0,vw=0,vh=700,use3d=false;
+let el,cv,ctx,traps=[],zones=[],decals=[],emotes=[],mod='',disaster='METEOR',flashes=[],spec=null,active=false,raf=0,lt=0,init=null,st=null,obs=[],pos={},names={},rows=[],bg=null,parts=[],shake=0,lastKey='',lastSent='',lastSendAt=0,camX=0,camY=0,vw=0,vh=700,use3d=false,revealUntil=0;
 const keys=new Set(),joy={on:false,id:null,ox:0,oy:0,x:0,y:0};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const nm=id=>(names[id]||{}).name||'?';
@@ -46,9 +60,9 @@ function build(){
  el=document.createElement('section');el.id='game';el.className='screen';
  el.innerHTML=`<canvas></canvas>
  <div id="hPulse" class="ov"></div><div id="hHeld" class="ov"></div><div id="hTop" class="ov"><span id="hRound"></span><div id="hTimer"><span id="hT">30</span><i id="hBar"></i></div><span id="hHold"></span></div>
- <div id="hNet" class="ov"></div><div id="hFeed" class="ov"></div><div id="hScores" class="ov"></div><div id="hFx" class="ov"></div><button id="hLeave" class="ghost">Leave</button><button id="hMute" class="ghost">🔊</button><button id="hCam" class="ghost" title="Camera">📷</button>
+ <div id="hNet" class="ov"></div><div id="hFeed" class="ov"></div><div id="hScores" class="ov"></div><div id="hFx" class="ov"></div><button id="hLeave" class="ghost">Leave</button><button id="hMute" class="ghost">🔊</button><button id="hCam" class="ghost" title="Camera">📷</button><button id="hSnap" class="ghost" title="Screenshot">📸</button>
  <div id="popup" class="ov"></div><div id="banner" class="ov"></div><div id="sb" class="ov"></div>
- <div id="hEm">${EMO.map((e,i)=>`<button data-e="${i}" aria-label="Emote ${i+1}">${e}</button>`).join('')}</div>
+ <div id="hEm">${EMO.map((e,i)=>`<button data-e="${i}" class="${e.length>2?'ph':''}" aria-label="Emote ${i+1}">${e}</button>`).join('')}</div>
  <button id="hSpec" class="ghost" style="display:none">👁 Next player</button><button id="hItem" style="display:none">🪤<small>E</small></button><button id="hDash">⚡<small></small></button><div id="joy"><i></i></div>`;
  document.body.append(el);el.append(FS.button('fs-game'));cv=el.querySelector('canvas');ctx=cv.getContext('2d');R3D.attach(el,cv);
  addEventListener('resize',resize);
@@ -60,11 +74,13 @@ function build(){
  q('#hDash').addEventListener('pointerdown',e=>{e.preventDefault();tryDash()});
  q('#hSpec').onclick=specNext;
  q('#hMute').textContent=SFX.muted?'🔇':'🔊';q('#hMute').onclick=()=>{q('#hMute').textContent=SFX.toggle()?'🔇':'🔊';Music.want(true,'match')};
+ const sideSet=()=>{el.classList.toggle('lefty',!!Settings.get('lefty'));el.classList.toggle('bigtext',!!Settings.get('big'));el.style.setProperty('--bs',Settings.get('btn')||1);applyCb()};sideSet();Settings.on(k=>{if(k==='lefty'||k==='btn'||k==='cb'||k==='big')sideSet()});
+ q('#hSnap').onclick=()=>{if(!use3d){banner('📸 Screenshots work in 3D mode');return}R3D.snapshot(c=>{if(!c){banner('Could not take a screenshot');return}c.toBlob(b=>{if(!b)return;const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='thats-my-property.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)});banner('📸 Saved!')})};
  q('#hCam').onclick=()=>{const o=['tilt','top','close'],n=o[(o.indexOf(Settings.get('cam'))+1)%3];Settings.set('cam',n);banner('📷 Camera: '+{tilt:'Tilted',top:'Top-down',close:'Close-up'}[n])};
  q('#hItem').addEventListener('pointerdown',e=>{e.preventDefault();go({t:'use'})});
  q('#hEm').addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(b){e.preventDefault();go({t:'emote',e:+b.dataset.e})}});
  q('#hLeave').onclick=()=>{go({t:'leave'});S=null;clearTok();stop();if(ws)ws.close();show('home')};
- el.addEventListener('pointerdown',e=>{const p=Orient.pt(e);if(e.pointerType==='mouse'||e.target.closest('button')||joy.on||p.x>Orient.w()*.6)return;
+ el.addEventListener('pointerdown',e=>{const p=Orient.pt(e);if(e.pointerType==='mouse'||e.target.closest('button')||joy.on||(Settings.get('lefty')?p.x<Orient.w()*.4:p.x>Orient.w()*.6))return;
   joy.on=true;joy.id=e.pointerId;joy.ox=p.x;joy.oy=p.y;const j=q('#joy');j.style.display='block';j.style.left=p.x+'px';j.style.top=p.y+'px'});
  addEventListener('pointermove',e=>{if(!joy.on||e.pointerId!==joy.id)return;const p=Orient.pt(e),dx=p.x-joy.ox,dy=p.y-joy.oy,l=Math.hypot(dx,dy),k=Math.min(1,l/50);
   joy.x=l?dx/l*k:0;joy.y=l?dy/l*k:0;const n=q('#joy i');n.style.transform=`translate(${joy.x*35}px,${joy.y*35}px)`});
@@ -75,7 +91,7 @@ function resize(){const d=Math.min(devicePixelRatio||1,2)*qual;cv.width=Math.rou
  if(use3d)R3D.resize(Orient.w(),Orient.h(),Math.min(devicePixelRatio||1,R3D.quality>=3?2:R3D.quality===2?1.5:1)*qual)}
 function fallback2D(){use3d=false;R3D.stop();if(init)bake(1);resize()}
 const feed=t=>{const f=q('#hFeed'),d=document.createElement('div');d.textContent=t;f.append(d);while(f.children.length>4)f.firstChild.remove();setTimeout(()=>d.remove(),5200)};
-function visAlpha(p,g,watcher){const other=p.id!==S.you,far=other&&watcher?Math.hypot(g.sx-watcher.sx,g.sy-watcher.sy):0;
+function visAlpha(p,g,watcher){if(performance.now()<revealUntil)return p.sm>0?.55:1;const other=p.id!==S.you,far=other&&watcher?Math.hypot(g.sx-watcher.sx,g.sy-watcher.sy):0;
  if(other&&watcher&&mod==='NIGHT'&&far>340)return -1;if(other&&watcher&&far>140&&p.a&&inBush(g))return -1;
  return p.sm>0?(other&&far>100?.15:.55):(p.id===S.you&&inBush(g)?.75:1)}
 /* Weak phones: if frames stay slow, quietly lower the canvas resolution (down to 60%); also shows ping + fps in the corner. */
@@ -96,13 +112,13 @@ function bake(sc){
 }
 
 function on(m){
- if(m.t==='init'){init=m;if(m.you&&!S)S={you:m.you};names={};m.players.forEach(p=>names[p.id]={name:p.name,ch:p.character,team:p.team});
+ if(m.t==='init'){if(!active){applyCb();streak=0;lastRobber=null;Stats.add('matches',1);tutorial()}init=m;if(m.you&&!S)S={you:m.you};names={};m.players.forEach(p=>names[p.id]={name:p.name,ch:p.character,team:p.team});
   pos={};st=null;obs=[];rows=[];parts=[];zones=[];decals=[];emotes=[];mod='';lastKey='';use3d=R3D.available();
   if(use3d){bake(Math.min(1,2048/Math.max(m.w,m.h)));use3d=R3D.init(Object.assign({},m,{you:(S&&S.you)||m.you}),bg)}
   if(!use3d){R3D.hide();bake(1)}
   Ambient.init(m.map);AmbSound.start(m.map);active=true;show('game');resize();lt=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)}
  else if(!init)return;
- else if(m.t==='round'){obs=m.obstacles;traps=m.traps;zones=m.zones||[];mod=m.mod||'';disaster=m.disaster;flashes=[];decals=[];spec=null;lastKey='';if(use3d){try{R3D.setRound(m)}catch(e){console.error(e);fallback2D()}}}
+ else if(m.t==='round'){obs=m.obstacles;traps=m.traps;zones=m.zones||[];mod=m.mod||'';disaster=m.disaster;flashes=[];decals=[];spec=null;lastKey='';SFX.play('fanfare');if(m.round%4===0)setTimeout(()=>banner('🌧️ It is raining!'),1600);if(use3d){try{R3D.setRound(m)}catch(e){console.error(e);fallback2D()}}}
  else if(m.t==='state'){
   m.p=m.p.map(a=>({id:a[0],x:a[1],y:a[2],dc:a[3],d:!!a[4],a:!!a[5],sp:a[6],sh:a[7],fz:a[8],tr:a[9],it:!!a[10],wt:a[11],sm:a[12],off:!!a[13]}));
   ['ho','lb','bt'].forEach(k=>{if(m[k]===undefined)m[k]=st?st[k]:[]}); // the server only resends these when they change
@@ -110,13 +126,13 @@ function on(m){
  else if(m.t==='ev'){
   const dd=(x,y)=>{const g=pos[S.you];return g?Math.hypot(x-g.sx,y-g.sy):0};
   if(use3d){try{R3D.fx(m,pos,S.you)}catch(e){console.error(e)}}
-  if(m.k==='steal'||m.k==='pass'){SFX.play('steal');const g=pos[m.to];if(g){burst(g.sx,g.sy,'#facc15',28);shk(m.k==='steal'?14:6)}banner('🏠 '+nm(m.to)+(m.k==='steal'?' stole the property!':' got the property!'));feed(m.k==='steal'?'🏠 '+nm(m.to)+' stole it from '+nm(m.from):'🏠 '+nm(m.to)+' got the property');if(m.to===S.you||m.from===S.you)vib(80)}
+  if(m.k==='steal'||m.k==='pass'){SFX.play('steal');if(m.k==='steal'){if(m.to===S.you){streak++;Stats.add('steals',1);if(m.from===lastRobber){lastRobber=null;setTimeout(()=>{banner('😈 Revenge!');SFX.play('point')},900)}else if(streak>=2)setTimeout(()=>{banner('🔥 '+streak+' steals in a row!');SFX.play('point')},900)}if(m.from===S.you){streak=0;lastRobber=m.to}}const g=pos[m.to];if(g){burst(g.sx,g.sy,'#facc15',28);shk(m.k==='steal'?14:6)}banner('🏠 '+nm(m.to)+(m.k==='steal'?' stole the property!':' got the property!'));feed(m.k==='steal'?'🏠 '+nm(m.to)+' stole it from '+nm(m.from):'🏠 '+nm(m.to)+' got the property');if(m.to===S.you||m.from===S.you)vib(80)}
   else if(m.k==='die'){const g=pos[m.id];SFX.at('die',g?dd(g.sx,g.sy):0);if(g)burst(g.sx,g.sy,'#ef4444',30);feed('💀 '+nm(m.id)+' died');if(m.id===S.you){vib([120,60,200]);banner('💀 You died — spectating until next round');el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),450)}}
   else if(m.k==='boom'){const bm={m:['boom',16,'#fb923c'],s:['boom',12,'#a16207'],h:['zap',5,'#bfdbfe'],l:['zap',8,'#fef08a']}[m.hk]||['zap',8,'#fef08a'],d=dd(m.x,m.y);
    if(m.hk!=='h'||Math.random()<.3){SFX.at(bm[0],d);if(m.hk==='l'){SFX.at('crack',d);setTimeout(()=>SFX.at('thunder',d+500),120+d*.35)}}
    if(!use3d)flashes.push({x:m.x,y:m.y,r:m.r,t:m.hk,l:24});shk(bm[1]*(d<600?1:.4));burst(m.x,m.y,bm[2],m.hk==='h'?10:24);
    if(m.hk!=='s'&&!use3d){decals.push({x:m.x,y:m.y,r:m.r*(m.hk==='h'?.8:1),k:m.hk});if(decals.length>70)decals.shift()}}
-  else if(m.k==='power'){const g=pos[m.id];if(g)burst(g.sx,g.sy,PW[m.pw][2],22);if(m.id===S.you){SFX.play(PWS[m.pw]||'power');banner(PW[m.pw][0]+' '+PW[m.pw][1])}else if(g)SFX.at('pop',dd(g.sx,g.sy))}
+  else if(m.k==='power'){const g=pos[m.id];if(g)burst(g.sx,g.sy,PW[m.pw][2],22);if(m.id===S.you){Stats.add('blocks',1);if(m.pw==='reveal')revealUntil=performance.now()+6000;SFX.play(PWS[m.pw]||'power');banner(PW[m.pw][0]+' '+PW[m.pw][1])}else if(g)SFX.at('pop',dd(g.sx,g.sy))}
   else if(m.k==='snap'){SFX.at('snap',dd(m.x,m.y));burst(m.x,m.y,'#cbd5e1',18);shk(8);feed('🪤 '+nm(m.id)+' got trapped');if(m.id===S.you){vib(150);banner('🪤 Trapped for 3s!')}}
   else if(m.k==='bounce'){burst(m.x,m.y,'#f472b6',16);if(near(m.x,m.y))SFX.play('bounce')}
   else if(m.k==='tp'){burst(m.fromx,m.fromy,'#a78bfa',22);burst(m.x,m.y,'#67e8f9',22);if(m.id===S.you){SFX.play('tp');banner('🌀 Teleported!')}else if(near(m.x,m.y))SFX.play('tp')}
@@ -134,7 +150,7 @@ function showScores(m){
  const html=m.rows.map((r,i)=>`<div class="r"><i class="md">${['🥇','🥈','🥉'][i]||''}</i><span style="font-size:22px;flex:none">${r.team?`<i class="tdot" style="background:${TEAMS[r.team]}">${TSH[r.team]||''}</i>`:CH[r.ch]}</span><span>${esc(r.label)}</span><b>${r.pts}</b></div>`).join('');
  const aw=(m.awards||[]).map(a=>`<div class="aw"><span>${a.icon}</span><div><b>${esc(a.title)}</b><br>${esc(a.name)} · ${esc(a.val)}</div></div>`).join('');
  const note=m.winner?'Returning to lobby…':m.holderName?`🏠 ${esc(m.holderName)} kept the property. Next round starting…`:'Next round starting…';
- q('#sb').innerHTML=`<div class="card"><h2>${m.winner?'🏆 '+esc(m.winner)+' wins!':m.none?'💀 No survivors — no point':'Round '+m.round+' complete'}</h2>${html}${aw?`<div class="awards">${aw}</div>`:''}<p>${note}</p></div>`;
+ q('#sb').innerHTML=`<div class="card"><h2>${m.winner?'🏆 '+esc(m.winner)+' wins!':m.none?'💀 No survivors — no point':'Round '+m.round+' complete'}</h2>${html}${aw?`<div class="awards">${aw}</div>`:''}<p>${note}</p><p class="stat">${Stats.line()}</p></div>`;
  q('#hScores').innerHTML=m.rows.map(r=>`${r.team?`<b style="color:${TEAMS[r.team]}">${TSH[r.team]||'●'}</b>`:CH[r.ch]} ${r.pts}`).join('<br>');q('#hScores').style.display='block';
 }
 

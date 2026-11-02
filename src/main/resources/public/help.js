@@ -35,6 +35,9 @@ const TABS={
   ${row('🪤','Bear Trap','Place it on the ground (item button or E). The next player who steps on it is stuck for 3 seconds. It does not catch you.')}
   ${row('💨','Smoke Bomb','For 4 seconds you are hard to see.')}
   ${row('👥','Decoy','Leaves a fake copy of you for 8 seconds to confuse everyone.')}
+  ${row('🧲','Magnet','For 6 seconds you can steal from further away.')}
+  ${row('🦘','Super jump','A free long leap, and your dash is ready again.')}
+  ${row('👁️','Reveal','For 6 seconds you can see everyone, even in bushes and the dark.')}
   ${row('🔀','Swap','Instantly trade places with another player who is still alive.')}
   ${row('🥶','Freeze (bad luck!)','You freeze yourself for 3 seconds. Ouch.')}`,
  'Obstacles & traps':`<p>The map is not empty. Learn what is on it and use it!</p>
@@ -71,11 +74,17 @@ TABS['Modes']=`<p>The host picks the mode in the lobby.</p>
   ${row('🧍','Solo','Everyone for themselves. Hold the property for 30 seconds to score a point.')}
   ${row('🎨','Team colors','Teammates cannot steal from each other and share one score.')}
   ${row('⚡','Blitz','Rounds last only 15 seconds and everybody runs fast. Quick and chaotic.')}
-  ${row('🌊','Shrinking Arena','Water closes in from every edge during the round. Stay near the middle or you will drown!')}`;
+  ${row('🌊','Shrinking Arena','Water closes in from every edge during the round. Stay near the middle or you will drown!')}
+  ${row('🎓','Practice','On the home screen, Practice starts a short match against 3 bots so you can learn the controls.')}
+  ${row('🏆','Leaderboard','Shows the top players and your own totals once the server has a database. Your results are saved under an anonymous id kept in this browser.')}
+  ${row('🥔','Hot Potato','The longer you hold the property, the slower you get. Pass it on before you are caught!')}`;
 TABS['3D & settings']=`<p>The game is now in 3D! If it runs slowly on your device, open ⚙️ Settings.</p>
   ${row('📷','Camera','Tap the camera button in a match to switch between Tilted, Top-down and Close-up.')}
   ${row('🎨','Graphics quality','Auto picks for you. Low turns off shadows and some effects for older phones.')}
   ${row('🕹️','Classic 2D','Untick “3D graphics” in Settings to play the original 2D view.')}
+  ${row('🎮','Controls','Settings lets you make the buttons bigger or smaller, switch to left-handed controls, and use colorblind-friendly team colors.')}
+  ${row('📸','Screenshot','Tap the camera-flash button in a match to save a picture of the 3D view.')}
+  ${row('🎯','Daily challenge','A new goal every day. Your stats show on the scoreboard after each round.')}
   ${row('🌬️','Sounds','Every map has its own ambient sound. Music gets faster in the last 5 seconds of a round.')}`;
 const css=document.createElement('style');
 css.textContent=`#help{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:#000b;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}

@@ -12,7 +12,7 @@ final class MapFeatures {
             case "swamp" -> { kind = "slow"; speedFactor = 0.5; }       // mud
             case "desert" -> { kind = "slow"; speedFactor = 0.45; }     // quicksand
             case "beach" -> { kind = "slow"; speedFactor = 0.65; }      // tide pools
-            case "candy" -> kind = "bounce";                            // launch pads
+            case "candy", "reef" -> kind = "bounce";                            // launch pads
             case "space", "ruins" -> kind = "portal";                   // teleport pairs
             case "lava" -> kind = "lava";                               // deadly pools
             default -> kind = "bush";                                   // forest, autumn: hide from far players

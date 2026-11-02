@@ -22,6 +22,7 @@ button:hover:not(:disabled){filter:brightness(1.2)}button:active:not(:disabled){
 .chk{flex-direction:row;align-items:center;gap:10px}.chk input{width:auto}
 .gear{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));z-index:2}
 #settings{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:#000a}
+#settings .card{max-height:90vh;max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .rdy{margin-left:auto;font-size:13px;color:#86efac;white-space:nowrap}.off{opacity:.5}
 .tsh{font-size:15px;color:#0b1220;font-weight:900}
 .pri{background:linear-gradient(135deg,#facc15,#f59e0b);color:#1a1200}
@@ -63,9 +64,12 @@ html.lsx #rotate{display:none!important}
   <h1>That’s My <span>Property</span></h1><p class="sub">Hold it. Steal it. Keep it.</p>
   <input id="name" maxlength="12" placeholder="Username" autocomplete="off">
   <button id="create" class="pri">Host Room</button>
+  <button id="practice">🎓 Practice vs bots</button>
   <p id="iosTip" class="sub" style="display:none;font-size:13px">📱 iPhone tip: tap Share → <b>Add to Home Screen</b> to play full screen with no browser bars.</p>
   <div class="row"><input id="code" maxlength="4" placeholder="CODE" autocomplete="off"><button id="join">Join Room</button></div>
+  <button id="lbBtn" class="ghost">🏆 Leaderboard</button>
 </div></section>
+<div id="lb"><div class="card"><h1 style="font-size:24px">🏆 Leaderboard</h1><div id="lbBody" class="sub"></div><button id="lbClose" class="pri">Close</button></div></div>
 
 <section id="lobby" class="screen">
   <header><div>Room<b id="rc"></b><button id="copy" class="ghost">Copy</button><button id="invite" class="ghost">Invite</button><button id="mus" class="ghost">🎵</button><button id="gearL" class="ghost" title="Settings">⚙</button></div><button id="leave" class="ghost">Leave</button></header>
@@ -75,8 +79,8 @@ html.lsx #rotate{display:none!important}
       <h2>Character</h2><canvas id="prev" title="Your character"></canvas><div id="chars" class="chips"></div>
       <h2>Team color</h2><div id="teams" class="chips"></div>
       <h2>Match</h2>
-      <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option></select></label>
-      <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option><option value="blitz">⚡ Blitz (15s rounds)</option><option value="shrink">🌊 Shrinking Arena</option></select></label>
+      <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option><option value="reef">🪸 Coral Reef</option><option value="mansion">👻 Haunted Mansion</option></select></label>
+      <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option><option value="blitz">⚡ Blitz (15s rounds)</option><option value="shrink">🌊 Shrinking Arena</option><option value="potato">🥔 Hot Potato</option></select></label>
       <p id="modeInfo" class="minfo"></p>
       <label class="field">Race to: <b id="tv"></b><input id="target" type="range" min="1" max="10"></label>
       <button id="addbot" class="ghost" style="margin-bottom:8px">🤖 Add bot</button>
@@ -97,11 +101,15 @@ html.lsx #rotate{display:none!important}
   <label class="field">📷 Camera<select id="sCam"><option value="tilt">Tilted (default)</option><option value="top">Top-down</option><option value="close">Close-up</option></select></label>
   <label class="field chk"><input id="sShake" type="checkbox"> Screen shake</label>
   <label class="field chk"><input id="sVibe" type="checkbox"> Vibration (phones)</label>
+  <label class="field chk"><input id="sLefty" type="checkbox"> Left-handed controls (joystick on the right)</label>
+  <label class="field">🎮 Button size<input id="sBtn" type="range" min="70" max="150"></label>
+  <label class="field chk"><input id="sCb" type="checkbox"> Colorblind-friendly team colors</label>
+  <label class="field chk"><input id="sBig" type="checkbox"> Bigger text on the game screen</label>
   <button id="sClose" class="pri">Done</button></div></div>
 
 <script>
-const CH=['🐱','🐶','🦊','🐼','🐸','🐵','🐰','🐻','🐯','🦁','🐷','🐮','🐨','🐭','🐺','🦝','🐧','🐥','🦄','🤖'],
-CHN=['Cat','Dog','Fox','Panda','Frog','Monkey','Bunny','Bear','Tiger','Lion','Pig','Cow','Koala','Mouse','Wolf','Raccoon','Penguin','Chick','Unicorn','Robot'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'},TSH={red:'●',blue:'■',green:'▲',yellow:'◆'};
+const CH=['🐱','🐶','🦊','🐼','🐸','🐵','🐰','🐻','🐯','🦁','🐷','🐮','🐨','🐭','🐺','🦝','🐧','🐥','🦄','🤖','🦉','🦛','🐲','🐝'],
+CHN=['Cat','Dog','Fox','Panda','Frog','Monkey','Bunny','Bear','Tiger','Lion','Pig','Cow','Koala','Mouse','Wolf','Raccoon','Penguin','Chick','Unicorn','Robot','Owl','Hippo','Dragon','Bee'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'},TSH={red:'●',blue:'■',green:'▲',yellow:'◆'};
 const $=id=>document.getElementById(id);
 const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 if(IOS){document.querySelectorAll('#rotate .ios').forEach(e=>e.style.display='block');if(!navigator.standalone)$('iosTip').style.display='block'}
@@ -146,7 +154,7 @@ function on(m){
   else if(['init','round','state','ev','scores'].includes(m.t))GameUI.on(m);
   else if(m.t==='chat'){const d=document.createElement('div'),b=document.createElement('b');b.textContent=m.from+': ';d.append(b,m.text);const l=$('log');l.append(d);l.scrollTop=l.scrollHeight}
   else if(m.t==='pong'){Net.ping=Date.now()-m.ts}
-  else if(m.t==='welcome'){setTok(m.token);if(rc){rc=0;toast('Reconnected ✅')}}
+  else if(m.t==='welcome'){setTok(m.token);if(rc){rc=0;toast('Reconnected ✅')}if(practice){practice=false;for(let i=0;i<3;i++)go({t:'addbot'});go({t:'settings',map:'forest',mode:'solo',target:2});go({t:'start'})}}
   else if(m.t==='resumefail'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg);if(ws)ws.close()}
   else if(m.t==='kicked'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg)}
   else if(m.t==='error'){toast(m.msg);if(!S&&!rc&&ws)ws.close()}
@@ -170,9 +178,9 @@ function render(){
     const b=btn('chip'+(me.character===i?' sel':'')+(taken?' taken':''),e,()=>go({t:'profile',character:i}));b.title=CHN[i]+(taken?' (taken)':'');b.disabled=taken;ch.append(b)});
   const tm=$('teams');tm.innerHTML='';
   Object.keys(TEAMS).forEach(k=>{const b=btn('dot'+(me.team===k?' sel':''),'',()=>go({t:'profile',team:k}));b.style.background=TEAMS[k];b.textContent=TSH[k];b.className+=' tsh';b.disabled=!team;tm.append(b)});
-  const MI={solo:'Everyone for themselves. Hold the property for 30 seconds to score.',team:'Teammates never steal from each other. Your team shares the score.',blitz:'⚡ 15 second rounds and everyone is fast. Pure chaos!',shrink:'🌊 Water closes in every round. Hold the middle to survive!'};
+  const MI={solo:'Everyone for themselves. Hold the property for 30 seconds to score.',team:'Teammates never steal from each other. Your team shares the score.',blitz:'⚡ 15 second rounds and everyone is fast. Pure chaos!',shrink:'🌊 Water closes in every round. Hold the middle to survive!',potato:'🥔 The longer you hold the property, the slower you get. Pass it on!'};
   $('modeInfo').textContent=MI[S.mode]||'';
-  if(typeof R3D!=='undefined'){if(!render.pv){render.pv=1;if(!R3D.previewStart($('prev')))$('prev').style.display='none'}R3D.previewSet(me.character,team?TEAMS[me.team]:'#334155')}
+  if(typeof R3D!=='undefined'){if(!render.pv){render.pv=1;if(!R3D.previewStart($('prev')))$('prev').style.display='none'}R3D.previewSet(me.character,team?TEAMS[me.team]:'#334155',me.id)}
   $('map').value=S.map;$('mode').value=S.mode;$('target').value=S.target;$('tv').textContent=S.target;
   ['map','mode','target'].forEach(i=>$(i).disabled=!host);
   const nr=S.players.filter(p=>p.ready||p.bot).length;
@@ -183,9 +191,24 @@ function render(){
 const settings=()=>go({t:'settings',map:$('map').value,mode:$('mode').value,target:+$('target').value});
 ['map','mode','target'].forEach(i=>$(i).onchange=settings);
 $('target').oninput=()=>$('tv').textContent=$('target').value;
-$('create').onclick=()=>go({t:'create',name:$('name').value});
+let practice=false;
+const UID=(()=>{let u='';try{u=localStorage.getItem('tmp_uid')||''}catch(e){}if(!u){u=((window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now().toString(36)).replace(/[^A-Za-z0-9]/g,'');try{localStorage.setItem('tmp_uid',u)}catch(e){}}return u})();
+$('create').onclick=()=>go({t:'create',name:$('name').value,uid:UID});
+$('practice').onclick=()=>{practice=true;go({t:'create',name:$('name').value,uid:UID})};
+$('lbBtn').onclick=()=>{$('lb').classList.add('on');const b=$('lbBody');b.textContent='Loading…';
+ fetch('/api/leaderboard?uid='+encodeURIComponent(UID)).then(r=>r.json()).then(d=>{
+  b.textContent='';const add=(t,c)=>{const p=document.createElement('div');p.className=c||'lbr';p.textContent=t;b.append(p);return p};
+  if(!d.on){add('The leaderboard is not set up yet. The server owner needs to add a database.','sub');return}
+  if(d.error){add('Could not load the leaderboard. Try again soon.','sub');return}
+  if(d.me)add('You: '+d.me.wins+' wins · '+d.me.matches+' matches · '+d.me.steals+' steals · '+d.me.blocks+' lucky blocks','lbme');
+  add('Top players','lbh');
+  if(!d.top.length)add('No matches recorded yet. Play one!','sub');
+  d.top.forEach((r,i)=>add((['🥇','🥈','🥉'][i]||(i+1)+'.')+' '+r.name+' — '+r.wins+' wins ('+r.matches+' matches, '+r.steals+' steals)'));
+  if(d.recent&&d.recent.length){add('Recent matches','lbh');d.recent.forEach(r=>add('🗺️ '+r.map+' · '+r.mode+' · winner '+r.winner+' · '+r.players+' players'))}
+ }).catch(()=>{b.textContent='Could not load the leaderboard.'})};
+$('lbClose').onclick=()=>$('lb').classList.remove('on');
 $('code').addEventListener('input',e=>{const c=e.target;c.value=c.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4)});
-$('join').onclick=()=>{const code=$('code').value.toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4){toast('Enter the 4-letter room code');return}go({t:'join',name:$('name').value,code})};
+$('join').onclick=()=>{const code=$('code').value.toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4){toast('Enter the 4-letter room code');return}go({t:'join',name:$('name').value,code,uid:UID})};
 $('ready').onclick=()=>go({t:'ready'});
 $('addbot').onclick=()=>go({t:'addbot'});
 $('invite').onclick=()=>{const url=location.origin+location.pathname+'?code='+S.code;

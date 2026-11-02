@@ -20,3 +20,15 @@ The client now renders in 3D with [Three.js](https://threejs.org) (r128), loaded
 - Sound: per-map ambient beds, spatial (distance-faded) effects, thunder, footsteps, per-power-up sounds, and a faster in-match music track
   that speeds up in the last 5 seconds.
 - The server protocol is unchanged apart from `init.hold` (round length in seconds) and the two new `mode` values.
+
+## More features
+- Power-ups: magnet, super jump, reveal. Modes: Hot Potato. Maps: Coral Reef, Haunted Mansion (12 maps total).
+- Cute reaction faces, 11 accessories, winner victory dance, steal camera punch, day/sunset/dusk lighting.
+- 8 emotes, streak and revenge banners, first-match tutorial, daily challenge and stats (stored on the device).
+- Settings: left-handed controls, button size, colorblind-friendly team colors.
+- 24 characters (new: owl, hippo, dragon, bee), screenshot button, bigger-text option, scrollable settings.
+
+## Database (optional)
+Add a Render PostgreSQL database, then on the web service add an environment variable `DATABASE_URL` with the database's **Internal Database URL**.
+On start the server creates its two tables (`players`, `matches`) by itself. Without `DATABASE_URL` everything still works and the leaderboard just says it is not set up.
+Players are identified by an anonymous random id stored in their browser (no passwords, no personal data). Match results are saved when a match ends.

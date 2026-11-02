@@ -12,7 +12,7 @@ class Game {
     static final long DASH_MS = 180, DASH_CD = 3000, HOLD_MS = 30_000, STEAL_GRACE = 1500, BACK_LOCK = 3000, DROWN_MS = 2500;
     static final String[] DISASTERS = {"METEOR", "LIGHTNING", "TORNADO", "FLOOD", "SINKHOLE", "HAIL", "BOULDER"};
     static final String[] MODS = {"NIGHT", "SPEEDY"};
-    static final String[] POWERS = {"speed", "shield", "trap", "freeze", "smoke", "swap", "decoy"};
+    static final String[] POWERS = {"speed", "shield", "trap", "freeze", "smoke", "swap", "decoy", "magnet", "jump", "reveal"};
     static final ScheduledExecutorService SCH = Executors.newScheduledThreadPool(2, r -> {
         Thread t = new Thread(r, "game-tick");
         t.setDaemon(true);
@@ -25,7 +25,7 @@ class Game {
         Main.Player p;
         double x, y, dx, dy, fx = 1, fy = 0, ddx = 1, ddy = 0, vx, vy;
         double skill = 0.6 + Math.random() * 0.4, wander = Math.random() * 6.28; // bot behaviour
-        long dashUntil, dashReady, speedUntil, shieldUntil, frozenUntil, trappedUntil, wetSince, padUntil, tpUntil, smokeUntil, heldMs;
+        long dashUntil, dashReady, speedUntil, shieldUntil, frozenUntil, trappedUntil, wetSince, padUntil, tpUntil, smokeUntil, magnetUntil, heldMs;
         boolean alive = true, hasTrap, off;
         int steals, deaths, blocks; // stats for the end-of-match awards
     }
@@ -62,7 +62,7 @@ class Game {
 
     final Main.Room room;
     final double W, H;
-    final boolean team, blitz, shrink;
+    final boolean team, blitz, shrink, potato;
     final long holdMs;
     final int target;
     final Random rnd = new Random();
@@ -95,6 +95,7 @@ class Game {
         team = room.mode.equals("team");
         blitz = room.mode.equals("blitz");     // short 15s rounds, everyone always speedy
         shrink = room.mode.equals("shrink");   // the arena closes in every round
+        potato = room.mode.equals("potato");   // the longer you hold the property, the slower you get
         holdMs = blitz ? 15_000 : HOLD_MS;
         target = room.target;
         for (Main.Player p : room.players) { Gp g = new Gp(); g.p = p; gp.put(p.id, g); }
@@ -240,6 +241,7 @@ class Game {
             if (g.wetSince > 0) mul *= 0.55;
             if (now < g.speedUntil) mul *= 1.6;
             if (g.p.id.equals(holder)) mul *= PROT_BONUS; // the protector is slightly quicker
+            if (potato && g.p.id.equals(holder)) mul *= Math.max(0.55, 1.0 - (now - lastSwap) / 50000.0); // hot potato gets heavy
             if (dashing) {
                 g.vx = g.ddx * DASH_SPEED;
                 g.vy = g.ddy * DASH_SPEED;
@@ -286,7 +288,8 @@ class Game {
             if (g == h || !g.alive || g.off) continue;
             if (team && g.p.team.equals(h.p.team)) continue;                          // teammates don't steal from each other
             if (g.p.id.equals(prevHolder) && now < backLockUntil) continue;          // no instant steal-back
-            if (Math.hypot(g.x - h.x, g.y - h.y) < 2 * R + 4) {
+            double reach = now < g.magnetUntil ? 2 * R + 60 : 2 * R + 4; // magnet power-up
+            if (Math.hypot(g.x - h.x, g.y - h.y) < reach) {
                 broadcast(evt("steal").put("from", holder).put("to", g.p.id));
                 prevHolder = holder;
                 backLockUntil = now + BACK_LOCK;
@@ -507,6 +510,13 @@ class Game {
             case "smoke" -> g.smokeUntil = now + 4000;
             case "decoy" -> { Dc d = new Dc(); d.x = g.x; d.y = g.y; d.owner = g; d.until = now + 8000; decoys.add(d); }
             case "freeze" -> g.frozenUntil = now + 3000; // bad luck: you freeze yourself
+            case "magnet" -> g.magnetUntil = now + 6000; // longer reach when stealing
+            case "jump" -> { // a free super leap, and your dash is ready again
+                double l = Math.hypot(g.dx, g.dy);
+                if (l > 0.1) { g.ddx = g.dx / l; g.ddy = g.dy / l; } else { g.ddx = g.fx; g.ddy = g.fy; }
+                g.dashUntil = now + 420;
+                g.dashReady = 0;
+            }
             default -> { } // swap already happened above
         }
         broadcast(evt("power").put("id", g.p.id).put("pw", pw));
@@ -566,6 +576,23 @@ class Game {
         }
         lastScores = n;
         broadcast(n);
+        if (won) recordToDb(hg);
+    }
+
+    /** Saves the finished match to the optional database (does nothing when there is none). */
+    void recordToDb(Gp winnerGp) {
+        if (!Db.on) return;
+        try {
+            List<Db.Rec> recs = new ArrayList<>();
+            for (Gp g : gp.values()) {
+                if (g.p.bot || g.p.uid == null || g.p.uid.isEmpty()) continue;
+                boolean w = team ? g.p.team.equals(winnerGp.p.team) : g == winnerGp;
+                recs.add(new Db.Rec(g.p.uid, g.p.name, w, g.steals, g.blocks, g.deaths, g.heldMs));
+            }
+            Db.recordMatch(room.map, room.mode, winnerGp.p.name, round, gp.size(), recs);
+        } catch (Exception e) {
+            // the game never depends on the database
+        }
     }
 
     void startRound() {
@@ -577,7 +604,7 @@ class Game {
         for (Gp g : gp.values()) {
             double[] s = sp.get(i++);
             g.x = s[0]; g.y = s[1]; g.dx = g.dy = g.vx = g.vy = 0; g.dashUntil = 0; g.dashReady = 0; g.alive = true; // everyone revives
-            g.speedUntil = g.shieldUntil = g.frozenUntil = g.trappedUntil = g.wetSince = g.padUntil = g.tpUntil = g.smokeUntil = 0;
+            g.speedUntil = g.shieldUntil = g.frozenUntil = g.trappedUntil = g.wetSince = g.padUntil = g.tpUntil = g.smokeUntil = g.magnetUntil = 0;
             g.hasTrap = false;
         }
         placeTraps(sp);
@@ -662,7 +689,7 @@ class Game {
     }
 
     void emote(Main.Player p, int e) {
-        if (e < 0 || e > 5 || !gp.containsKey(p.id)) return;
+        if (e < 0 || e > 11 || !gp.containsKey(p.id)) return;
         broadcast(evt("emote").put("id", p.id).put("e", e));
     }
 
