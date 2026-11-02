@@ -140,4 +140,21 @@ class GameRulesTest {
         Game g = match(room(2, "potato"));
         assertTrue(g.potato);
     }
+
+    @Test
+    void mansionHasMovingFloors() {
+        Main.Room r = room(2, "solo");
+        r.map = "mansion";
+        Game g = match(r);
+        assertTrue(g.zones.stream().anyMatch(z -> z.k.equals("belt")));
+    }
+
+    @Test
+    void everyFifthRoundHasAGiantTornado() {
+        Game g = match(room(2, "solo"));
+        g.round = 5;
+        g.disaster = "TORNADO";
+        g.startDisaster();
+        assertTrue(g.hz.stream().anyMatch(h -> h.r > 90));
+    }
 }

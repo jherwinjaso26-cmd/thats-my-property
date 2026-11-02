@@ -111,3 +111,11 @@ h1{background:linear-gradient(120deg,#fde047,#fb923c,#f472b6,#fde047);background
 .lbr{padding:6px 8px;border-radius:8px;background:#0b122099;font-size:13px;margin-bottom:4px}
 .lbh{font-weight:800;margin:8px 0 4px;color:#facc15}
 .lbme{padding:8px;border-radius:10px;background:#1e3a5f;font-size:13px;font-weight:700}
+
+/* emote drawer: a side button that opens a small panel, never over the middle of the screen */
+#hEmT{position:absolute;left:max(8px,env(safe-area-inset-left));top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;padding:0;font-size:20px;line-height:1;display:none;align-items:center;justify-content:center;z-index:3;background:#0b1220cc;border:1px solid #334155}
+#hEm{position:absolute;left:calc(max(8px,env(safe-area-inset-left)) + 50px);top:50%;bottom:auto;transform:translateY(-50%);max-width:none;display:none;grid-template-columns:repeat(4,auto);gap:6px;z-index:3;pointer-events:none}
+#hEm.open{display:grid}
+#hEm button{pointer-events:auto;justify-self:center;touch-action:none}
+#game.lefty #hEmT{left:auto;right:max(8px,env(safe-area-inset-right))}
+#game.lefty #hEm{left:auto;right:calc(max(8px,env(safe-area-inset-right)) + 50px)}

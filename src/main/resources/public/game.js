@@ -27,7 +27,7 @@ const DIS={METEOR:['☄️','Meteor Shower','Red circles show where meteors land
 const MODS={NIGHT:['🌙','Night round','You can only see what is close to you. Other players hide in the dark.'],SPEEDY:['💨','Speedy round','Everyone moves 30% faster!']};
 const MAPTIP={forest:'🌿 Bushes hide you from players who are far away.',desert:'🏜️ Quicksand slows you down.',snow:'🧊 Ice patches make you slide.',lava:'🔥 Lava pools burn. Stay out!',
  swamp:'🟫 Mud slows you down.',beach:'🌊 Tide pools slow you down.',candy:'🍬 Bounce pads launch you forward.',space:'🌀 Portals teleport you to their twin.',
- autumn:'🍂 Leaf piles hide you from players who are far away.',ruins:'🌀 Ancient gates teleport you to their twin.',reef:'🫧 Bubble jets launch you forward.',mansion:'👻 Dark curtains hide you from players who are far away.'};
+ autumn:'🍂 Leaf piles hide you from players who are far away.',ruins:'🌀 Ancient gates teleport you to their twin.',reef:'🫧 Bubble jets launch you forward.',mansion:'👻 Moving floors push you along. Watch the arrows!'};
 const EMO=['👋','😂','😡','😱','😎','🙏','🔥','😭','GG!','Nice!','Oops!','Help!'];
 let streak=0,lastRobber=null;
 /* lifetime stats and a daily challenge, kept on this device */
@@ -62,6 +62,7 @@ function build(){
  <div id="hPulse" class="ov"></div><div id="hHeld" class="ov"></div><div id="hTop" class="ov"><span id="hRound"></span><div id="hTimer"><span id="hT">30</span><i id="hBar"></i></div><span id="hHold"></span></div>
  <div id="hNet" class="ov"></div><div id="hFeed" class="ov"></div><div id="hScores" class="ov"></div><div id="hFx" class="ov"></div><button id="hLeave" class="ghost">Leave</button><button id="hMute" class="ghost">🔊</button><button id="hCam" class="ghost" title="Camera">📷</button><button id="hSnap" class="ghost" title="Screenshot">📸</button>
  <div id="popup" class="ov"></div><div id="banner" class="ov"></div><div id="sb" class="ov"></div>
+ <button id="hEmT" class="ghost" aria-label="Emotes">💬</button>
  <div id="hEm">${EMO.map((e,i)=>`<button data-e="${i}" class="${e.length>2?'ph':''}" aria-label="Emote ${i+1}">${e}</button>`).join('')}</div>
  <button id="hSpec" class="ghost" style="display:none">👁 Next player</button><button id="hItem" style="display:none">🪤<small>E</small></button><button id="hDash">⚡<small></small></button><div id="joy"><i></i></div>`;
  document.body.append(el);el.append(FS.button('fs-game'));cv=el.querySelector('canvas');ctx=cv.getContext('2d');R3D.attach(el,cv);
@@ -78,7 +79,9 @@ function build(){
  q('#hSnap').onclick=()=>{if(!use3d){banner('📸 Screenshots work in 3D mode');return}R3D.snapshot(c=>{if(!c){banner('Could not take a screenshot');return}c.toBlob(b=>{if(!b)return;const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='thats-my-property.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)});banner('📸 Saved!')})};
  q('#hCam').onclick=()=>{const o=['tilt','top','close'],n=o[(o.indexOf(Settings.get('cam'))+1)%3];Settings.set('cam',n);banner('📷 Camera: '+{tilt:'Tilted',top:'Top-down',close:'Close-up'}[n])};
  q('#hItem').addEventListener('pointerdown',e=>{e.preventDefault();go({t:'use'})});
- q('#hEm').addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(b){e.preventDefault();go({t:'emote',e:+b.dataset.e})}});
+ let emTimer=0;const emOpen=on=>{const p=q('#hEm');p.classList.toggle('open',on);clearTimeout(emTimer);if(on)emTimer=setTimeout(()=>p.classList.remove('open'),5000)};
+ q('#hEmT').addEventListener('pointerdown',e=>{e.preventDefault();emOpen(!q('#hEm').classList.contains('open'))});
+ q('#hEm').addEventListener('pointerdown',e=>{const b=e.target.closest('button');if(b){e.preventDefault();go({t:'emote',e:+b.dataset.e});emOpen(true)}});
  q('#hLeave').onclick=()=>{go({t:'leave'});S=null;clearTok();stop();if(ws)ws.close();show('home')};
  el.addEventListener('pointerdown',e=>{const p=Orient.pt(e);if(e.pointerType==='mouse'||e.target.closest('button')||joy.on||(Settings.get('lefty')?p.x<Orient.w()*.4:p.x>Orient.w()*.6))return;
   joy.on=true;joy.id=e.pointerId;joy.ox=p.x;joy.oy=p.y;const j=q('#joy');j.style.display='block';j.style.left=p.x+'px';j.style.top=p.y+'px'});
@@ -126,7 +129,7 @@ function on(m){
  else if(m.t==='ev'){
   const dd=(x,y)=>{const g=pos[S.you];return g?Math.hypot(x-g.sx,y-g.sy):0};
   if(use3d){try{R3D.fx(m,pos,S.you)}catch(e){console.error(e)}}
-  if(m.k==='steal'||m.k==='pass'){SFX.play('steal');if(m.k==='steal'){if(m.to===S.you){streak++;Stats.add('steals',1);if(m.from===lastRobber){lastRobber=null;setTimeout(()=>{banner('😈 Revenge!');SFX.play('point')},900)}else if(streak>=2)setTimeout(()=>{banner('🔥 '+streak+' steals in a row!');SFX.play('point')},900)}if(m.from===S.you){streak=0;lastRobber=m.to}}const g=pos[m.to];if(g){burst(g.sx,g.sy,'#facc15',28);shk(m.k==='steal'?14:6)}banner('🏠 '+nm(m.to)+(m.k==='steal'?' stole the property!':' got the property!'));feed(m.k==='steal'?'🏠 '+nm(m.to)+' stole it from '+nm(m.from):'🏠 '+nm(m.to)+' got the property');if(m.to===S.you||m.from===S.you)vib(80)}
+  if(m.k==='steal'||m.k==='pass'){SFX.play('steal');if(m.k==='steal'){if(m.to===S.you){streak++;Stats.add('steals',1);if(m.from===lastRobber){lastRobber=null;setTimeout(()=>{banner('😈 Revenge! 🛡️ Short shield');SFX.play('point')},900)}else if(streak>=2)setTimeout(()=>{banner('🔥 '+streak+' steals in a row!'+(streak%3===0?' ⚡ Speed boost!':''));SFX.play('point')},900)}if(m.from===S.you){streak=0;lastRobber=m.to}}const g=pos[m.to];if(g){burst(g.sx,g.sy,'#facc15',28);shk(m.k==='steal'?14:6)}banner('🏠 '+nm(m.to)+(m.k==='steal'?' stole the property!':' got the property!'));feed(m.k==='steal'?'🏠 '+nm(m.to)+' stole it from '+nm(m.from):'🏠 '+nm(m.to)+' got the property');if(m.to===S.you||m.from===S.you)vib(80)}
   else if(m.k==='die'){const g=pos[m.id];SFX.at('die',g?dd(g.sx,g.sy):0);if(g)burst(g.sx,g.sy,'#ef4444',30);feed('💀 '+nm(m.id)+' died');if(m.id===S.you){vib([120,60,200]);banner('💀 You died — spectating until next round');el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),450)}}
   else if(m.k==='boom'){const bm={m:['boom',16,'#fb923c'],s:['boom',12,'#a16207'],h:['zap',5,'#bfdbfe'],l:['zap',8,'#fef08a']}[m.hk]||['zap',8,'#fef08a'],d=dd(m.x,m.y);
    if(m.hk!=='h'||Math.random()<.3){SFX.at(bm[0],d);if(m.hk==='l'){SFX.at('crack',d);setTimeout(()=>SFX.at('thunder',d+500),120+d*.35)}}
@@ -138,11 +141,13 @@ function on(m){
   else if(m.k==='tp'){burst(m.fromx,m.fromy,'#a78bfa',22);burst(m.x,m.y,'#67e8f9',22);if(m.id===S.you){SFX.play('tp');banner('🌀 Teleported!')}else if(near(m.x,m.y))SFX.play('tp')}
   else if(m.k==='swap'){const a=pos[m.a],b=pos[m.b];if(a)burst(a.sx,a.sy,'#c084fc',20);if(b)burst(b.sx,b.sy,'#c084fc',20);feed('🔀 '+nm(m.a)+' swapped with '+nm(m.b));
    if(m.a===S.you||m.b===S.you){SFX.play('swap');banner('🔀 Swapped with '+nm(m.a===S.you?m.b:m.a)+'!')}}
+  else if(m.k==='boss'){banner('🌪️ BOSS ROUND! A giant tornado is hunting you');feed('🌪️ Boss round: giant tornado!');SFX.play('warn');setTimeout(()=>SFX.play('thunder'),300);shk(14)}
+  else if(m.k==='role'){const nmR={sprinter:['⚡','Sprinter','+15% speed this round'],grabber:['🧤','Grabber','longer steal reach this round']}[m.role];if(nmR){if(m.id===S.you){banner(nmR[0]+' You are the '+nmR[1]+': '+nmR[2]);SFX.play('pw_speed')}else feed(nmR[0]+' '+nm(m.id)+' is the '+nmR[1])}}
   else if(m.k==='emote'){emotes.push({id:m.id,e:m.e,t:performance.now()});if(emotes.length>24)emotes.shift();if(m.id!==S.you)SFX.at('emote',dd((pos[m.id]||{sx:0}).sx||0,(pos[m.id]||{sy:0}).sy||0))}}
  else if(m.t==='scores'){rows=m.rows;showScores(m);SFX.play(m.winner?'win':'point')}
 }
 function near(x,y){const me=pos[S.you];return !me||Math.hypot(x-me.sx,y-me.sy)<700}
-function stop(){active=false;AmbSound.stop();Music.tense(false);try{R3D.stop()}catch(e){}use3d=false;cancelAnimationFrame(raf);init=null;st=null;pos={};keys.clear();joy.on=false;if(el){['#popup','#sb','#hScores','#hEm'].forEach(s=>{q(s).style.display='none';q(s)._display=undefined})}}
+function stop(){active=false;AmbSound.stop();Music.tense(false);try{R3D.stop()}catch(e){}use3d=false;cancelAnimationFrame(raf);init=null;st=null;pos={};keys.clear();joy.on=false;if(el){['#popup','#sb','#hScores','#hEmT'].forEach(s=>{q(s).style.display='none';q(s)._display=undefined})}}
 function banner(t){const b=q('#banner');b.textContent=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
 function burst(x,y,c,n){if(use3d)return;for(let i=0;i<n;i++){const a=Math.random()*6.3,s=1+Math.random()*4;parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:30,m:30,c,s:2+Math.random()*3})}}
 
@@ -276,7 +281,7 @@ function hud(me,dead){
  if(ph==='PLAY'&&secs<=5&&secs!==hud.ls){hud.ls=secs;if(!hold)SFX.play('tick')}tm.classList.toggle('low',ph==='PLAY'&&secs<=5);Music.tense(ph==='PLAY'&&secs<=5);setS(q('#hBar'),'width',(ph==='PLAY'?Math.round(left/HOLD*1000)/10:100)+'%');
  setS(q('#popup'),'display',(ph==='ROLE'||ph==='COUNT')?'flex':'none');
  setS(q('#sb'),'display',(ph==='SCORE'||ph==='OVER')?'flex':'none');
- setS(q('#hEm'),'display',(ph==='PLAY'||ph==='SCORE')?'flex':'none');
+ {const emOk=(ph==='PLAY'||ph==='SCORE');setS(q('#hEmT'),'display',emOk?'flex':'none');if(!emOk)q('#hEm').classList.remove('open')}
  const key=ph+(ph==='COUNT'?Math.ceil(left):'')+(ph==='ROLE'?st.holder:'');
  if(key!==lastKey){lastKey=key;const pop=q('#popup');SFX.play(ph==='PLAY'?'go':ph==='COUNT'?'count':ph==='ROLE'?'round':'');
   if(ph==='ROLE')pop.innerHTML=`<div class="role ${prot?'p':'s'}"><div class="big">${prot?'🛡️':'🥷'}</div><h2>You are ${prot?'the PROTECTOR':'a STEALER'}</h2><p>${prot?'Keep the property! Run from everyone — if you’re touched, you become a stealer.':'Touch the protector ('+esc(nm(st.holder))+') to steal the property and become the protector.'}</p><p style="margin-top:8px;color:#fca5a5">⚠️ Disaster: ${DIS[disaster][0]} ${DIS[disaster][1]}</p><p>${DIS[disaster][2]}</p>${MODE[init.mode]?`<p style="margin-top:6px;color:#fdba74">${MODE[init.mode][0]} <b>${MODE[init.mode][1]}:</b> ${MODE[init.mode][2]}</p>`:''}${mod?`<p style="margin-top:6px;color:#c4b5fd">${MODS[mod][0]} <b>${MODS[mod][1]}:</b> ${MODS[mod][2]}</p>`:''}<p style="margin-top:6px;color:#86efac">${MAPTIP[init.map]||''}</p><p style="color:#94a3b8">Avoid spike traps — dying means spectating until next round.</p></div>`;
@@ -302,6 +307,7 @@ function drawZones(t){
  zones.forEach((z,i)=>{if(!visible(z.x,z.y,z.r+20))return;const{x,y,r}=z;
   if(z.k==='ice'){ctx.fillStyle='rgba(186,230,253,.5)';ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y,r,r*.78,0,0,7);ctx.fill();ctx.stroke();
    ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=2;for(let k=0;k<5;k++){const a=k*1.7+x,gx=x+Math.cos(a)*r*.5,gy=y+Math.sin(a)*r*.35;ctx.beginPath();ctx.moveTo(gx-8,gy+4);ctx.lineTo(gx+8,gy-4);ctx.stroke()}}
+  else if(z.k==='belt'){const a=(z.l&3)*Math.PI/2,o=(t*.06)%40;ctx.save();ctx.translate(x,y);ctx.rotate(a);ctx.fillStyle='rgba(30,41,59,.85)';ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.fill();ctx.strokeStyle='#facc15';ctx.lineWidth=4;ctx.stroke();ctx.fillStyle='#fde047';for(let k=-1;k<=1;k++){const ax=-r*.6+((o+k*40+120)%(r*1.2));ctx.beginPath();ctx.moveTo(ax+14,0);ctx.lineTo(ax-4,-12);ctx.lineTo(ax-4,12);ctx.fill()}ctx.restore()}
   else if(z.k==='slow'){const g=ctx.createRadialGradient(x,y,r*.1,x,y,r);g.addColorStop(0,th.mud||'#4a3417');g.addColorStop(1,'rgba(0,0,0,0)');ctx.globalAlpha=.85;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();ctx.globalAlpha=1;
    ctx.strokeStyle='rgba(255,255,255,.28)';ctx.lineWidth=2;for(let k=0;k<2;k++){const f=((t*.0004+k*.5+i*.13)%1);ctx.globalAlpha=1-f;ctx.beginPath();ctx.arc(x,y,r*.25+f*r*.6,0,7);ctx.stroke()}ctx.globalAlpha=1}
   else if(z.k==='bounce'){const pu=1+Math.sin(t*.008+i)*.08;ctx.fillStyle='rgba(244,114,182,.9)';ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,r*pu,0,7);ctx.fill();ctx.stroke();

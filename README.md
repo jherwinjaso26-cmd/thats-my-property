@@ -32,3 +32,6 @@ The client now renders in 3D with [Three.js](https://threejs.org) (r128), loaded
 Add a Render PostgreSQL database, then on the web service add an environment variable `DATABASE_URL` with the database's **Internal Database URL**.
 On start the server creates its two tables (`players`, `matches`) by itself. Without `DATABASE_URL` everything still works and the leaderboard just says it is not set up.
 Players are identified by an anonymous random id stored in their browser (no passwords, no personal data). Match results are saved when a match ends.
+- Special roles (Sprinter / Grabber), steal streak speed boost and revenge shield, moving floors on the Haunted Mansion map, Halloween and Christmas seasonal looks.
+- Emote drawer: a 💬 button at the side opens a small panel (never over the middle of the screen); emotes work while moving.
+- Boss round: every 5th round has a giant tornado.

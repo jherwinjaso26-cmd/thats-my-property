@@ -77,6 +77,10 @@ TABS['Modes']=`<p>The host picks the mode in the lobby.</p>
   ${row('🌊','Shrinking Arena','Water closes in from every edge during the round. Stay near the middle or you will drown!')}
   ${row('🎓','Practice','On the home screen, Practice starts a short match against 3 bots so you can learn the controls.')}
   ${row('🏆','Leaderboard','Shows the top players and your own totals once the server has a database. Your results are saved under an anonymous id kept in this browser.')}
+  ${row('🌪️','Boss round','Every 5th round a giant tornado hunts everyone. Keep moving and use the bushes and obstacles!')}
+  ${row('💬','Emotes','Tap the 💬 button at the side of the screen to open the emote drawer. You can tap emotes while you are still moving.')}
+  ${row('⚡','Special roles','Each round one player may be the Sprinter (+15% speed) or the Grabber (longer steal reach).')}
+  ${row('🔥','Streaks and revenge','Three steals in a row give a speed boost. Stealing back from whoever robbed you gives a short shield.')}
   ${row('🥔','Hot Potato','The longer you hold the property, the slower you get. Pass it on before you are caught!')}`;
 TABS['3D & settings']=`<p>The game is now in 3D! If it runs slowly on your device, open ⚙️ Settings.</p>
   ${row('📷','Camera','Tap the camera button in a match to switch between Tilted, Top-down and Close-up.')}

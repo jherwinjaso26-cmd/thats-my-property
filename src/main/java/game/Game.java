@@ -28,6 +28,8 @@ class Game {
         long dashUntil, dashReady, speedUntil, shieldUntil, frozenUntil, trappedUntil, wetSince, padUntil, tpUntil, smokeUntil, magnetUntil, heldMs;
         boolean alive = true, hasTrap, off;
         int steals, deaths, blocks; // stats for the end-of-match awards
+        int streak;                 // steals in a row (3 in a row = speed boost)
+        String lastRobber;          // who last stole from this player (stealing back = revenge shield)
     }
 
     /** Hazard: "m" meteor, "l" lightning, "h" hail, "s" sinkhole (warn, then hit; sinkholes stay open), "t" tornado (chases players), "b" boulder (warns, then rolls across the map). */
@@ -64,6 +66,8 @@ class Game {
     final double W, H;
     final boolean team, blitz, shrink, potato;
     final long holdMs;
+    String roleId;              // this round's special-role player (null = nobody)
+    String role = "";            // "sprinter" (+15% speed) or "grabber" (longer steal reach)
     final int target;
     final Random rnd = new Random();
     final int seed = rnd.nextInt();
@@ -242,6 +246,7 @@ class Game {
             if (now < g.speedUntil) mul *= 1.6;
             if (g.p.id.equals(holder)) mul *= PROT_BONUS; // the protector is slightly quicker
             if (potato && g.p.id.equals(holder)) mul *= Math.max(0.55, 1.0 - (now - lastSwap) / 50000.0); // hot potato gets heavy
+            if (g.p.id.equals(roleId) && role.equals("sprinter")) mul *= 1.15;
             if (dashing) {
                 g.vx = g.ddx * DASH_SPEED;
                 g.vy = g.ddy * DASH_SPEED;
@@ -252,6 +257,11 @@ class Game {
                     g.vx += (tvx - g.vx) * k;
                     g.vy += (tvy - g.vy) * k;
                 } else { g.vx = tvx; g.vy = tvy; }
+            }
+            if (z != null && z.k.equals("belt") && !dashing) { // moving floor pushes you along (link = 0 right, 1 down, 2 left, 3 up)
+                int d = z.link & 3;
+                g.vx += (d == 0 ? 130 : d == 2 ? -130 : 0);
+                g.vy += (d == 1 ? 130 : d == 3 ? -130 : 0);
             }
             g.x = clamp(g.x + g.vx * dt, R, W - R);
             g.y = clamp(g.y + g.vy * dt, R, H - R);
@@ -289,6 +299,7 @@ class Game {
             if (team && g.p.team.equals(h.p.team)) continue;                          // teammates don't steal from each other
             if (g.p.id.equals(prevHolder) && now < backLockUntil) continue;          // no instant steal-back
             double reach = now < g.magnetUntil ? 2 * R + 60 : 2 * R + 4; // magnet power-up
+            if (g.p.id.equals(roleId) && role.equals("grabber")) reach += 30;
             if (Math.hypot(g.x - h.x, g.y - h.y) < reach) {
                 broadcast(evt("steal").put("from", holder).put("to", g.p.id));
                 prevHolder = holder;
@@ -296,6 +307,12 @@ class Game {
                 holder = g.p.id;
                 lastSwap = now;
                 g.steals++;
+                boolean revenge = h.p.id.equals(g.lastRobber); // stealing back from whoever robbed you
+                h.streak = 0;
+                h.lastRobber = g.p.id;
+                g.streak++;
+                if (revenge) { g.lastRobber = null; g.shieldUntil = Math.max(g.shieldUntil, now + 2000); }
+                if (g.streak >= 3) { g.streak = 0; g.speedUntil = Math.max(g.speedUntil, now + 3000); }
                 return;
             }
         }
@@ -316,6 +333,18 @@ class Game {
                 if (far) break;
             }
             hz.add(h);
+        }
+        if (round % 5 == 0) { // boss: one giant tornado, started far from everyone
+            Hz b = new Hz();
+            b.id = ++hzId; b.k = "t"; b.r = 95;
+            for (int tries = 0; tries < 40; tries++) {
+                b.x = 120 + rnd.nextDouble() * (W - 240); b.y = 120 + rnd.nextDouble() * (H - 240);
+                boolean far = true;
+                for (Gp g : gp.values()) if (Math.hypot(g.x - b.x, g.y - b.y) < 400) { far = false; break; }
+                if (far) break;
+            }
+            hz.add(b);
+            broadcast(evt("boss"));
         }
     }
 
@@ -606,6 +635,8 @@ class Game {
             g.x = s[0]; g.y = s[1]; g.dx = g.dy = g.vx = g.vy = 0; g.dashUntil = 0; g.dashReady = 0; g.alive = true; // everyone revives
             g.speedUntil = g.shieldUntil = g.frozenUntil = g.trappedUntil = g.wetSince = g.padUntil = g.tpUntil = g.smokeUntil = g.magnetUntil = 0;
             g.hasTrap = false;
+            g.streak = 0;
+            g.lastRobber = null;
         }
         placeTraps(sp);
         hz.clear(); blocks.clear(); bears.clear(); holes.clear(); decoys.clear();
@@ -613,13 +644,23 @@ class Game {
         String next;
         do { next = DISASTERS[rnd.nextInt(DISASTERS.length)]; } while (next.equals(disaster)); // never the same twice in a row
         disaster = next;
+        if (round % 5 == 0) disaster = "TORNADO"; // every 5th round is a boss round with a giant tornado
         mod = blitz ? "SPEEDY" : (round >= 2 && rnd.nextDouble() < 0.4) ? MODS[rnd.nextInt(MODS.length)] : ""; // some rounds add a twist
         holder = new ArrayList<>(gp.keySet()).get(rnd.nextInt(gp.size())); // exactly one protector
         prevHolder = null;
+        roleId = null;
+        role = "";
+        if (gp.size() >= 3) { // one lucky non-holder gets a special role this round
+            List<String> ids = new ArrayList<>(gp.keySet());
+            ids.remove(holder);
+            roleId = ids.get(rnd.nextInt(ids.size()));
+            role = rnd.nextBoolean() ? "sprinter" : "grabber";
+        }
         ph = Ph.ROLE;
         phaseEnd = now + 3000;
         lastSwap = now;
         broadcast(roundMsg());
+        if (roleId != null) broadcast(evt("role").put("id", roleId).put("role", role));
     }
 
     void addObstacles(int k) {

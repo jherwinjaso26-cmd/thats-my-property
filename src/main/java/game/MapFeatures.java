@@ -13,6 +13,7 @@ final class MapFeatures {
             case "desert" -> { kind = "slow"; speedFactor = 0.45; }     // quicksand
             case "beach" -> { kind = "slow"; speedFactor = 0.65; }      // tide pools
             case "candy", "reef" -> kind = "bounce";                            // launch pads
+            case "mansion" -> kind = "belt";                            // moving floors
             case "space", "ruins" -> kind = "portal";                   // teleport pairs
             case "lava" -> kind = "lava";                               // deadly pools
             default -> kind = "bush";                                   // forest, autumn: hide from far players
@@ -28,6 +29,12 @@ final class MapFeatures {
                     if (b == null) { G.zones.remove(a); continue; }
                     a.link = G.zones.indexOf(b);
                     b.link = G.zones.indexOf(a);
+                }
+            }
+            case "belt" -> {
+                for (int i = 0; i < n; i++) {
+                    Game.Zn b = place(G, "belt", 70 + G.rnd.nextDouble() * 30, 1, true, null, 0);
+                    if (b != null) b.link = G.rnd.nextInt(4);
                 }
             }
             case "lava" -> { for (int i = 0; i < Math.max(2, n / 2); i++) place(G, "lava", 55 + G.rnd.nextDouble() * 30, 1, true, null, 0); }
