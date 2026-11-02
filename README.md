@@ -35,3 +35,4 @@ Players are identified by an anonymous random id stored in their browser (no pas
 - Special roles (Sprinter / Grabber), steal streak speed boost and revenge shield, moving floors on the Haunted Mansion map, Halloween and Christmas seasonal looks.
 - Emote drawer: a 💬 button at the side opens a small panel (never over the middle of the screen); emotes work while moving.
 - Boss round: every 5th round has a giant tornado.
+- Accessory picker in the lobby (shared with other players), and every animal now has its own 3D features (tails, whiskers, horns, wings, spots...).

@@ -157,7 +157,7 @@ class Game {
         if (you != null) init.put("you", you);
         ArrayNode a = init.putArray("players");
         for (Gp g : gp.values())
-            a.addObject().put("id", g.p.id).put("name", g.p.name).put("character", g.p.character).put("team", g.p.team);
+            a.addObject().put("id", g.p.id).put("name", g.p.name).put("character", g.p.character).put("team", g.p.team).put("acc", g.p.acc);
         return init;
     }
 

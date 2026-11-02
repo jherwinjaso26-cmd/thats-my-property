@@ -32,6 +32,7 @@ public class Main {
     static class Player {
         String id, name, team = "red", token, sid, uid = ""; // uid: anonymous id kept in the browser, used only for the leaderboard
         int character;
+        int acc = -1;   // chosen accessory 0..11 (-1 = automatic)
         boolean ready, bot;
         WsContext ctx;          // null for bots and while a player is reconnecting
         Room room;
@@ -135,6 +136,7 @@ public class Main {
                     else p.character = ch;
                     String team = m.path("team").asText(p.team);
                     if (TEAMS.contains(team)) p.team = team;
+                    if (m.has("acc")) p.acc = Math.max(-1, Math.min(11, m.path("acc").asInt(-1)));
                     broadcast(r);
                 }
                 case "settings" -> {
@@ -295,7 +297,7 @@ public class Main {
         ArrayNode arr = n.putArray("players");
         for (Player q : r.players) {
             arr.addObject().put("id", q.id).put("name", q.name)
-                    .put("character", q.character).put("team", q.team)
+                    .put("character", q.character).put("team", q.team).put("acc", q.acc)
                     .put("ready", q.ready).put("bot", q.bot).put("off", q.ctx == null && !q.bot);
         }
         send(viewer.ctx, n);

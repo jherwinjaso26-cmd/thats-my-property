@@ -88,6 +88,7 @@ TABS['3D & settings']=`<p>The game is now in 3D! If it runs slowly on your devic
   ${row('🕹️','Classic 2D','Untick “3D graphics” in Settings to play the original 2D view.')}
   ${row('🎮','Controls','Settings lets you make the buttons bigger or smaller, switch to left-handed controls, and use colorblind-friendly team colors.')}
   ${row('📸','Screenshot','Tap the camera-flash button in a match to save a picture of the 3D view.')}
+  ${row('🎀','Accessories','Pick your accessory in the lobby under Character. 🎲 means surprise me. Everyone in the match sees the one you chose.')}
   ${row('🎯','Daily challenge','A new goal every day. Your stats show on the scoreboard after each round.')}
   ${row('🌬️','Sounds','Every map has its own ambient sound. Music gets faster in the last 5 seconds of a round.')}`;
 const css=document.createElement('style');

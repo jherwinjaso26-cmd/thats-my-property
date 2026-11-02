@@ -114,7 +114,7 @@ const OBJ={
  grave:r=>[box('#6b7280',0,0,0,r*1,r*.2,r*.6),box('#9ca3af',0,r*.2,0,r*.7,r*1.1,r*.25),part(G.cyl,'#9ca3af',[0,r*1.3,0],[r*.35,r*.25,r*.35],[PI/2,0,0]),box('#4b5563',0,r*.9,r*.14,r*.08,r*.4,r*.04),box('#4b5563',0,r*1,r*.14,r*.3,r*.07,r*.04),ball('#3b6b2a',0,r*.1,r*.3,r*.45,r*.12,r*.2)]};
 
 /* ---------- characters ---------- */
-const hsh=k=>{let h=0;for(const c of String(k))h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)},accOf=id=>hsh(id)%12; // 0 bow,1 party hat,2 glasses,3 flower,4 star clips,5 crown,6 top hat,7 cat band,8 halo,9 sunglasses,10 wizard hat,11 none
+const hsh=k=>{let h=0;for(const c of String(k))h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)},accOf=id=>hsh(id)%12,accPick=(p,id)=>(p&&p.acc>=0)?p.acc:accOf(id); // 0 bow,1 party hat,2 glasses,3 flower,4 star clips,5 crown,6 top hat,7 cat band,8 halo,9 sunglasses,10 wizard hat,11 none
 function accParts(a,d){
  const o=[];
  if(a===0){o.push(ball('#f472b6',-8.8,10.2,5,3.8,2.8,2),ball('#f472b6',-13.2,10.8,4,3.4,2.4,1.8),ball('#ec4899',-11,10.4,5.4,1.7))}
@@ -129,47 +129,88 @@ function accParts(a,d){
  else if(a===9){for(const q of[-1,1])o.push(box('#111827',q*5.6,-2.4,13.1,7.4,4.6,1.4));o.push(box('#111827',0,-.4,13.1,3,1,1))}
  else if(a===10){o.push(cone('#6d28d9',0,11,0,8.6,18),cyl('#5b21b6',0,10.4,0,10.8,1.1),ball('#fde047',0,29.5,0,1.5))}
  return o}
+/* per-animal extras so each one reads as its own animal: whiskers, tails, horns, wings, spots... */
+const whisk=(c,y)=>{const o=[];for(const q of[-1,1])for(let k=0;k<3;k++)o.push(part(G.box,c,[q*11.2,y+(k-1)*1.7,11.2],[7.5,.5,.45],[0,q*.45,q*(k-1)*.2]));return o};
+const chain=a=>a.map(v=>ball(v[4],v[0],v[1],v[2],v[3]));
+function ex(ci,d){
+ const E={pre:[],post:[],body:[],tail:null,sz:1};
+ const sides=f=>{for(const q of[-1,1])f(q)};
+ switch(ci){
+ case 0:E.post.push(...whisk('#ffffff',-3.6),box('#c2410c',-3.2,8.6,8.2,1.1,3.4,.6),box('#c2410c',0,9.2,7.8,1.1,3.8,.6),box('#c2410c',3.2,8.6,8.2,1.1,3.4,.6));E.tail=chain([[0,2,-5,3.2,d.b],[0,5,-9,3.2,d.b],[0,10,-11,3.2,d.b],[0,16,-10,3.2,d.b],[0,20,-7,3.4,'#c2410c']]);break;
+ case 1:E.pre.push(ball(d.ei,5.8,1.2,10.2,5.6,6,2.4));E.post.push(ball('#fb7185',0,-7.6,10,2.2,3.2,1));E.tail=chain([[0,3,-7,3,d.b],[0,8,-9,3,d.b],[0,13,-8,3.2,d.b]]);break;
+ case 2:sides(q=>E.pre.push(part(G.cone,'#fff7ed',[q*11,-3.6,5.5],[3.6,6,3.6],[0,0,-q*1.4])));E.post.push(ball('#fff7ed',0,-3.4,12.6,4.2,3.4,5.2),ball(d.n,0,-2.3,17.4,2.2,1.7,1.6));E.tail=chain([[0,2,-6,4.5,d.b],[0,4,-11,6,d.b],[0,6,-16,6.4,'#ffffff']]);break;
+ case 3:E.body.push(ball('#1f2937',0,29,0,12.4,3.6,10.8));E.tail=chain([[0,2,-5,3.4,'#ffffff']]);break;
+ case 4:E.post.push(ball('#15803d',-5,8,6.5,1.8,1.2,1.4),ball('#15803d',4,9.4,5.4,1.6,1.1,1.3),ball('#15803d',1,6,8.2,1.3,.9,1.2));E.body.push(ball('#15803d',-4,26,-8,2.2,2.6,1),ball('#15803d',5,22,-9,2.4,2.8,1));break;
+ case 5:E.pre.push(ball(d.m,0,-1.5,8.6,9.4,8.4,4.2));E.tail=chain([[0,2,-5,2.6,d.b],[0,6,-9,2.6,d.b],[2,11,-9,2.6,d.b],[4,15,-6,2.6,d.b],[2,17,-3,2.9,d.b]]);break;
+ case 6:E.earLen=15;E.post.push(box('#ffffff',-1,-8,11.8,1.8,2.4,.7),box('#ffffff',1,-8,11.8,1.8,2.4,.7));E.tail=chain([[0,3,-9,5.4,'#ffffff']]);break;
+ case 7:E.sz=1.04;break;
+ case 8:E.post.push(box('#7c2d12',-3.2,8.6,8.2,1.1,3.4,.6),box('#7c2d12',0,9.2,7.8,1.1,3.8,.6),box('#7c2d12',3.2,8.6,8.2,1.1,3.4,.6),...whisk('#ffffff',-3.6));sides(q=>E.post.push(ball(d.bl,q*11,-3.4,5,3.4,3,2.6)));E.tail=chain([[0,2,-6,3.4,d.b],[0,6,-10,3.4,'#7c2d12'],[0,11,-12,3.4,d.b],[0,16,-11,3.4,'#7c2d12']]);break;
+ case 9:E.tail=chain([[0,2,-6,2.2,d.b],[0,3,-12,2.2,d.b],[0,4,-17,2.2,d.b],[0,5,-21,4.6,'#b45f1c']]);break;
+ case 10:E.tail=[ball(d.b,0,2,-6,2.4),part(G.tor,'#f472b6',[0,5,-8.5],[3.8,3.8,3.8],[0,PI/2,0])];break;
+ case 11:E.msz=1.35;sides(q=>E.post.push(part(G.cone,'#fef3c7',[q*7,13.6,0],[2.4,6.4,2.4],[0,0,-q*.5])));E.tail=chain([[0,2,-6,2,'#f8fafc'],[0,1,-12,2,'#f8fafc'],[0,0,-17,3.8,'#1f2937']]);break;
+ case 12:E.nsz=1.9;break;
+ case 13:E.sz=.92;E.post.push(...whisk('#e5e7eb',-3.6),box('#ffffff',-1,-8,11.8,1.6,2,.6),box('#ffffff',1,-8,11.8,1.6,2,.6));E.tail=chain([[0,2,-5,1.6,'#f9a8d4'],[0,1.4,-9,1.5,'#f9a8d4'],[0,.8,-13,1.5,'#f9a8d4'],[0,.4,-17,1.4,'#f9a8d4'],[0,1.2,-21,1.4,'#f9a8d4'],[0,2.4,-24,1.3,'#f9a8d4']]);break;
+ case 14:E.sz=1.02;E.post.push(ball(d.m,0,-3.4,12.8,4.2,3.4,5),ball(d.n,0,-2.4,17.6,2.2,1.7,1.6));E.body.push(ball('#e2e8f0',0,25,8,6,5.5,3.4));E.tail=chain([[0,2,-6,4.2,d.b],[0,3,-11,5.4,d.b],[0,3,-16,5,'#e2e8f0']]);break;
+ case 15:E.tail=chain([[0,3,-7,5,'#9ca3af'],[0,5,-12,5.4,'#374151'],[0,8,-16,5.2,'#9ca3af'],[0,12,-19,5,'#374151']]);break;
+ case 17:E.sz=.92;E.post.push(part(G.cone,d.b,[0,16,0],[1.6,5,1.6]),part(G.cone,d.b,[2,15.6,0],[1.4,4.4,1.4],[0,0,-.5]),part(G.cone,d.b,[-2,15.6,0],[1.4,4.4,1.4],[0,0,.5]));break;
+ case 18:E.post.push(ball('#f472b6',0,7,-11,4.6,4.6,3.6),ball('#a78bfa',0,0,-12.4,4.6,4.6,3.6),ball('#60a5fa',0,-7,-11,4.2,4.2,3.4));E.tail=chain([[0,4,-8,4.2,'#f472b6'],[0,2,-12,3.8,'#a78bfa'],[0,-1,-14.5,3.2,'#60a5fa']]);break;
+ case 19:sides(q=>E.post.push(part(G.cyl,'#475569',[q*13.8,0,0],[2.4,2.8,2.4],[0,0,PI/2])));for(let k=0;k<3;k++)E.post.push(box('#1e293b',0,-7.2+k*1.7,12.3,7,.6,.6));
+  E.body.push(box('#334155',0,12,10.2,10,8,1),ball('#ef4444',-3,18,11.2,1.2),ball('#facc15',0,18,11.2,1.2),ball('#22c55e',3,18,11.2,1.2));break;
+ case 20:E.eyeBig=true;E.body.push(ball('#fde68a',-3.6,22,9.5,3.2,2,1.1),ball('#fde68a',3.6,22,9.5,3.2,2,1.1),ball('#fde68a',0,17,10,3.4,2,1.1));E.tail=chain([[0,2,-6,3.6,'#854d0e']]);break;
+ case 21:E.sz=1.1;E.ssz=1.5;break;
+ case 22:E.noHorn=true;sides(q=>{E.post.push(part(G.cone,'#fde047',[q*7,12.8,2],[2.2,6,2.2],[.25,0,-q*.4]));E.body.push(part(G.sph,'#16a34a',[q*12.5,27,-7],[1.5,8,6],[0,0,q*.5]))});
+  for(let i=0;i<4;i++)E.body.push(cone('#f97316',0,30-i*5.5,-8-i*.9,1.8,4.2));E.tail=chain([[0,2,-6,5,d.b],[0,3,-12,4,d.b],[0,5,-17,3,d.b],[0,8,-21,2.2,'#f97316']]);break;
+ case 23:sides(q=>E.body.push(part(G.sph,'#e0f2fe',[q*5,34,-9],[1.2,8,4.4],[0,0,q*.5])));E.body.push(part(G.cone,'#1f2937',[0,14,-13],[2,5,2],[-PI/2,0,0]));break;
+ }
+ return E}
+
 function buildChar(ci,ak){
- const D=Sprites.D,d=D[ci%D.length],limb=d.limb||d.b,feet=d.feet||limb;
- const mat=new T.MeshLambertMaterial({vertexColors:true}),anchor=new T.Group(),root=new T.Group(),pivot=new T.Group();anchor.add(root);root.add(pivot);
+ const D=Sprites.D,d=D[ci%D.length],limb=d.limb||d.b,feet=d.feet||limb,X=ex(ci%D.length,d);
+ const mat=new T.MeshLambertMaterial({vertexColors:true}),anchor=new T.Group(),root=new T.Group(),pivot=new T.Group();anchor.add(root);root.add(pivot);root.scale.setScalar(X.sz);
  const bp=[ball(d.b,0,20,0,11.8,12.6,10.6)];
  if(d.bl!==d.b)bp.push(ball(d.bl,0,19,5.2,7.8,8.8,5.6));
  if(d.spots){bp.push(ball(d.spots,-4.5,24,7,4,4.6,3),ball(d.spots,6,15,7,3.2,3.8,3))}
  if(d.stripes)for(const yy of[11,16,21,26]){bp.push(box(d.stripes,10.8,yy,0,2.6,1.6,6),box(d.stripes,-10.8,yy,0,2.6,1.6,6))}
+ X.body.forEach(x=>bp.push(x));
  const bodyM=mk(bp,true,mat);pivot.add(bodyM);
- const hy=0,hp=[ball(d.b,0,hy,0,13.5,12.5,12.5)];
+ const hy=0,hp=[ball(d.b,0,hy,0,13.5,12.5,12.5)],ez=d.face?1.8:0;
  if(d.mane)hp.push(ball(d.mane,0,hy,-3,19,18,9));
+ X.pre.forEach(x=>hp.push(x));
+ const EL=X.earLen||11;
  for(const s of[-1,1]){
   if(d.ear==='tri'){hp.push(part(G.cone,d.b,[s*8,hy+14,0],[4.8,10,4.8],[0,0,-s*.35]),part(G.cone,d.ei,[s*8,hy+13.2,1.4],[3,7,3],[0,0,-s*.35]))}
   else if(d.ear==='flop')hp.push(part(G.sph,d.ei,[s*13,hy+1,0],[4,9,5],[0,0,s*.3]));
-  else if(d.ear==='long')hp.push(ball(d.b,s*6,hy+19,0,3.8,11,3),ball(d.ei,s*6,hy+19,1.6,1.8,8,1.4));
+  else if(d.ear==='long')hp.push(ball(d.b,s*6,hy+8+EL,0,3.8,EL,3),ball(d.ei,s*6,hy+8+EL,1.6,1.8,EL*.73,1.4));
   else if(d.ear==='circ'){const k=d.es||1;hp.push(ball(d.ec,s*9.5,hy+10,0,5*k,5*k,3.6),ball(d.ei,s*9.5,hy+10,2,2.6*k,2.6*k,1.6))}}
  if(d.face)hp.push(ball(d.face,0,hy-1,7.5,9.8,9,6));
  if(d.mask)hp.push(ball(d.mask,0,hy+1.5,9.4,11.2,3.8,4));
  if(d.ear==='eyes'){for(const s of[-1,1])hp.push(ball(d.b,s*7,hy+11,3,5.8),ball('#fff',s*7,hy+11,6.6,4.3,4.3,2.2),ball('#16161d',s*7,hy+11,8.6,2.6,2.6,1.2),ball('#fff',s*7+.9,hy+12,9.7,.9,.9,.5));for(const s of[-1,1])hp.push(ball('#fb7185',s*10,hy-3,8,2.9,1.8,1.2))}
  else for(const s of[-1,1]){if(d.patch)hp.push(ball(d.patch,s*5.6,hy+1,9.6,5.8,6.6,2.8));
-  hp.push(ball(d.ew||'#16161d',s*5.6,hy+.8,10.6,4,4.8,2.6),ball('#fff',s*5.6+1.3,hy+2.8,12.8,1.6,1.6,.8),ball('#fff',s*5.6-1.1,hy-.9,12.7,.85,.85,.5));
+  if(X.eyeBig)hp.push(ball('#fff',s*5.6,hy+.8,10.2+ez,5.4,5.4,2.4),ball('#facc15',s*5.6,hy+.8,11.4+ez,3.5,3.5,1.6),ball('#16161d',s*5.6,hy+.8,12.6+ez,2.2,2.2,1),ball('#fff',s*5.6+.9,hy+2,13.4+ez,.9,.9,.5));
+  else hp.push(ball(d.ew||'#16161d',s*5.6,hy+.8,10.6+ez,4,4.8,2.6),ball('#fff',s*5.6+1.3,hy+2.8,12.8+ez,1.6,1.6,.8),ball('#fff',s*5.6-1.1,hy-.9,12.7+ez,.85,.85,.5));
   if(!d.ant)hp.push(ball('#fb7185',s*9.4,hy-3.4,9.2,2.9,1.8,1.2))}
- if(d.m)hp.push(ball(d.m,0,hy-3.2,9.5,6.6,4.6,4));
- if(d.n)hp.push(ball(d.n,0,hy-1.2,13,2.4,1.7,1.4));
- if(d.snout)hp.push(ball(d.snout,0,hy-3,11.5,6.8,4.8,4),ball('#9d174d',-2.3,hy-3,15,1.1,1.5,.8),ball('#9d174d',2.3,hy-3,15,1.1,1.5,.8));
- if(d.beak)hp.push(part(G.cone,d.beak,[0,hy-3,13.5],[3.6,6,3.6],[PI/2,0,0]));
+ if(d.m){const k=X.msz||1;hp.push(ball(d.m,0,hy-3.2,9.5,6.6*k,4.6*k,4*k))}
+ if(d.n){const k=X.nsz||1;hp.push(ball(d.n,0,hy-1.2,13,2.4*k,1.7*k,1.4*k))}
+ if(d.snout){const k=X.ssz||1;hp.push(ball(d.snout,0,hy-3,11.5,6.8*k,4.8*k*.9,4*k),ball('#9d174d',-2.3*k,hy-3,15.2*(k>1?1.08:1),1.1,1.5,.8),ball('#9d174d',2.3*k,hy-3,15.2*(k>1?1.08:1),1.1,1.5,.8))}
+ if(d.beak)hp.push(part(G.cone,d.beak,[0,hy-3,13.5+ez*.6],[3.6,6,3.6],[PI/2,0,0]));
  if(!d.m&&!d.beak&&!d.snout)hp.push(box('#1f2937',0,hy-5.6,11.9,d.ear==='eyes'?8:3.2,.8,1));
- if(d.horn)hp.push(part(G.cone,d.horn,[0,hy+19,4],[2.8,14,2.8],[.3,0,0]));
+ if(d.horn&&!X.noHorn)hp.push(part(G.cone,d.horn,[0,hy+19,4],[2.8,14,2.8],[.3,0,0]));
  if(d.ant)hp.push(cyl('#94a3b8',0,hy+11,0,.9,8),ball(d.ant,0,hy+21,0,2.8));
+ X.post.forEach(x=>hp.push(x));
  accParts(ak,d).forEach(x=>hp.push(x));
  const headMesh=mk(hp,true,mat),headM=new T.Group();headM.add(headMesh);headM.position.y=40;headM.scale.setScalar(1.3);pivot.add(headM);
  const faces={};
  faces.sur=mk([ball('#3b1020',0,-5.8,12.8,2.3,3,1.3),ball('#fff',-7.4,6.2,12.2,.9,.9,.5)],false,mat);
  faces.hap=mk([ball('#3b1020',0,-5.4,12.9,3.8,2.3,1.3),ball('#fb7185',0,-6.4,13.5,2,1,.5)],false,mat);
- const dz=[];for(const q of[-1,1]){dz.push(ball(d.b,q*5.6,.8,13.4,5,5.4,.8),part(G.box,'#16161d',[q*5.6,.8,14.2],[6.4,1.1,.6],[0,0,.78]),part(G.box,'#16161d',[q*5.6,.8,14.2],[6.4,1.1,.6],[0,0,-.78]))}faces.diz=mk(dz,false,mat);
+ const dz=[];for(const q of[-1,1]){dz.push(ball(d.b,q*5.6,.8,13.4+ez,5,5.4,.8),part(G.box,'#16161d',[q*5.6,.8,14.2+ez],[6.4,1.1,.6],[0,0,.78]),part(G.box,'#16161d',[q*5.6,.8,14.2+ez],[6.4,1.1,.6],[0,0,-.78]))}faces.diz=mk(dz,false,mat);
  for(const k in faces){faces[k].visible=false;headM.add(faces[k])}
  const legs=[],arms=[];
  for(const s of[-1,1]){
   const lg=new T.Group();lg.position.set(s*5.6,11.4,0);lg.add(mk([cyl(limb,0,-7,0,3.9,7),ball(feet,0,-8,2,5.3,3.7,6.3)],true,mat));pivot.add(lg);legs.push(lg);
   const ar=new T.Group();ar.position.set(s*12.2,28,0);ar.add(mk([ball(limb,s*1.6,-5,0,3.9,6.2,3.9)],false,mat));pivot.add(ar);arms.push(ar)}
  let tail=null;
- if(d.tail){tail=new T.Group();tail.position.set(0,13,-9);const tp=[ball(d.tail,0,2,-5,5,5,6.5)];if(d.tip)tp.push(ball(d.tip,0,4,-10,3,3,3));tail.add(mk(tp,false,mat));pivot.add(tail)}
+ const tp=X.tail||(d.tail?(()=>{const t=[ball(d.tail,0,2,-5,5,5,6.5)];if(d.tip)t.push(ball(d.tip,0,4,-10,3,3,3));return t})():null);
+ if(tp){tail=new T.Group();tail.position.set(0,13,-9);tail.add(mk(tp,false,mat));pivot.add(tail)}
  return{anchor,root,pivot,bodyM,headM,headY:40,faces,ak,legs,arms,tail,mat,yaw:0,ph:Math.random()*6,seed:Math.random()*6.28,al:1}}
 
 function buildHouse(){
@@ -375,8 +416,8 @@ function init(m,bgc){
   names={};chars={};
   buildStatics(m,bgc);
   const holder=new T.Group();sc.add(holder);
-  m.players.forEach(p=>{names[p.id]={name:p.name,ch:p.character,team:p.team};
-   const c=buildChar(p.character,accOf(p.id));sc.add(c.anchor);chars[p.id]=c;
+  m.players.forEach(p=>{names[p.id]={name:p.name,ch:p.character,team:p.team,acc:p.acc};
+   const c=buildChar(p.character,accPick(p,p.id));sc.add(c.anchor);chars[p.id]=c;
    const sh2=new T.Mesh(G.circ,flatMat('#000',shadowsOn?.18:.3));sh2.rotation.x=-PI/2;sh2.position.y=.5;sh2.scale.set(20,20,1);c.anchor.add(sh2);c.blob=sh2;
    const team=m.mode==='team'?(TEAMS[p.team]||'#fff'):null;
    if(team){const tr=new T.Mesh(keep(new T.RingGeometry(21,26,28)),keep(flatMat(team,.9)));tr.rotation.x=-PI/2;tr.position.y=.7;c.anchor.add(tr)}
@@ -511,7 +552,7 @@ function frame(f){
  dcs.forEach((d,i)=>{const ch0=d[2];let o=P.decoys[i];
   if(watcher&&f.mod==='NIGHT'&&Math.hypot(d[0]-watcher.sx,d[1]-watcher.sy)>340)return;
   const info=names[d[4]]||{name:'?',team:'red'},tsh=I.mode==='team'&&TSH[info.team]?' '+TSH[info.team]:'';
-  if(!o||o.c.ci!==ch0||o.c.nm!==info.name){if(o){P.decoyG.remove(o.g)}o=makeDecoy(ch0,info.name,tsh,accOf(d[4]));P.decoys[i]=o;P.decoyG.add(o.g)}
+  if(!o||o.c.ci!==ch0||o.c.nm!==info.name){if(o){P.decoyG.remove(o.g)}o=makeDecoy(ch0,info.name,tsh,accPick(info,d[4]));P.decoys[i]=o;P.decoyG.add(o.g)}
   o.g.visible=true;o.g.position.set(d[0],0,d[1]);o.c.house.g.visible=!!d[3];if(d[3]){o.c.house.g.position.y=104+Math.sin(t*3)*3.5;o.c.house.g.rotation.y=t*1.4}
   o.c.pivot.position.y=Math.sin(t*2.2+i)*.5;o.c.arms[0].rotation.x=Math.sin(t*2+i)*.08;o.c.arms[1].rotation.x=-Math.sin(t*2+i)*.08});
  /* hazards, pickups, water */
@@ -595,7 +636,7 @@ function previewStart(canvas){
    const t=(now-pv.t0)/1000;if(pv.char){pv.char.root.rotation.y=t*.9;pv.char.pivot.position.y=Math.abs(Math.sin(t*3))*3;pv.char.arms[0].rotation.z=-.5+Math.sin(t*3)*.3;pv.char.arms[1].rotation.z=.5-Math.sin(t*3)*.3;if(pv.char.tail)pv.char.tail.rotation.y=Math.sin(t*8)*.5}
    r.render(s,c)};
   pv.raf=requestAnimationFrame(loop);return true}catch(e){console.error('preview failed',e);pv=null;return false}}
-function previewSet(ci,color,id){if(!pv)return;const ak=id==null?99:accOf(id);if(ci!==pv.ci||ak!==pv.ak){if(pv.char)pv.s.remove(pv.char.anchor);pv.char=buildChar(ci,ak);pv.s.add(pv.char.anchor);pv.ci=ci;pv.ak=ak;pv.char.faces.hap.visible=true}if(color)pv.ringM.color.set(color)}
+function previewSet(ci,color,id,acc){if(!pv)return;const ak=id==null?99:accPick({acc},id);if(ci!==pv.ci||ak!==pv.ak){if(pv.char)pv.s.remove(pv.char.anchor);pv.char=buildChar(ci,ak);pv.s.add(pv.char.anchor);pv.ci=ci;pv.ak=ak;pv.char.faces.hap.visible=true}if(color)pv.ringM.color.set(color)}
 function previewStop(){if(!pv)return;cancelAnimationFrame(pv.raf);try{pv.r.dispose()}catch(e){}pv=null}
 
 const snapshot=cb=>{snapReq=cb};

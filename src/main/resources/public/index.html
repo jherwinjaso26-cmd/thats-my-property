@@ -77,6 +77,7 @@ html.lsx #rotate{display:none!important}
     <div class="panel"><h2>Players <span id="pc"></span></h2><div id="plist"></div><button id="ready" class="pri" style="margin-top:auto">I’m ready</button></div>
     <div class="panel">
       <h2>Character</h2><canvas id="prev" title="Your character"></canvas><div id="chars" class="chips"></div>
+      <h2>Accessory</h2><div id="accs" class="chips"></div>
       <h2>Team color</h2><div id="teams" class="chips"></div>
       <h2>Match</h2>
       <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option><option value="reef">🪸 Coral Reef</option><option value="mansion">👻 Haunted Mansion</option></select></label>
@@ -154,7 +155,7 @@ function on(m){
   else if(['init','round','state','ev','scores'].includes(m.t))GameUI.on(m);
   else if(m.t==='chat'){const d=document.createElement('div'),b=document.createElement('b');b.textContent=m.from+': ';d.append(b,m.text);const l=$('log');l.append(d);l.scrollTop=l.scrollHeight}
   else if(m.t==='pong'){Net.ping=Date.now()-m.ts}
-  else if(m.t==='welcome'){setTok(m.token);if(rc){rc=0;toast('Reconnected ✅')}if(practice){practice=false;for(let i=0;i<3;i++)go({t:'addbot'});go({t:'settings',map:'forest',mode:'solo',target:2});go({t:'start'})}}
+  else if(m.t==='welcome'){setTok(m.token);if(rc){rc=0;toast('Reconnected ✅')}try{const a=localStorage.getItem('tmp_acc');if(a!==null&&a!=='-1')go({t:'profile',acc:+a})}catch(e){}if(practice){practice=false;for(let i=0;i<3;i++)go({t:'addbot'});go({t:'settings',map:'forest',mode:'solo',target:2});go({t:'start'})}}
   else if(m.t==='resumefail'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg);if(ws)ws.close()}
   else if(m.t==='kicked'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg)}
   else if(m.t==='error'){toast(m.msg);if(!S&&!rc&&ws)ws.close()}
@@ -176,11 +177,14 @@ function render(){
   const ch=$('chars');ch.innerHTML='';
   CH.forEach((e,i)=>{const taken=S.players.some(p=>p.id!==S.you&&p.character===i);
     const b=btn('chip'+(me.character===i?' sel':'')+(taken?' taken':''),e,()=>go({t:'profile',character:i}));b.title=CHN[i]+(taken?' (taken)':'');b.disabled=taken;ch.append(b)});
+  const ac=$('accs');ac.innerHTML='';const myAcc=me.acc==null?-1:me.acc;
+  const accBtn=(lbl,title,val)=>{const b=btn('chip'+(myAcc===val?' sel':''),lbl,()=>{try{localStorage.setItem('tmp_acc',String(val))}catch(e){}go({t:'profile',acc:val})});b.title=title;ac.append(b)};
+  accBtn('🎲','Surprise me (automatic)',-1);ACC.forEach((a,i)=>accBtn(a[0],a[1],i));
   const tm=$('teams');tm.innerHTML='';
   Object.keys(TEAMS).forEach(k=>{const b=btn('dot'+(me.team===k?' sel':''),'',()=>go({t:'profile',team:k}));b.style.background=TEAMS[k];b.textContent=TSH[k];b.className+=' tsh';b.disabled=!team;tm.append(b)});
   const MI={solo:'Everyone for themselves. Hold the property for 30 seconds to score.',team:'Teammates never steal from each other. Your team shares the score.',blitz:'⚡ 15 second rounds and everyone is fast. Pure chaos!',shrink:'🌊 Water closes in every round. Hold the middle to survive!',potato:'🥔 The longer you hold the property, the slower you get. Pass it on!'};
   $('modeInfo').textContent=MI[S.mode]||'';
-  if(typeof R3D!=='undefined'){if(!render.pv){render.pv=1;if(!R3D.previewStart($('prev')))$('prev').style.display='none'}R3D.previewSet(me.character,team?TEAMS[me.team]:'#334155',me.id)}
+  if(typeof R3D!=='undefined'){if(!render.pv){render.pv=1;if(!R3D.previewStart($('prev')))$('prev').style.display='none'}R3D.previewSet(me.character,team?TEAMS[me.team]:'#334155',me.id,me.acc)}
   $('map').value=S.map;$('mode').value=S.mode;$('target').value=S.target;$('tv').textContent=S.target;
   ['map','mode','target'].forEach(i=>$(i).disabled=!host);
   const nr=S.players.filter(p=>p.ready||p.bot).length;
@@ -191,6 +195,7 @@ function render(){
 const settings=()=>go({t:'settings',map:$('map').value,mode:$('mode').value,target:+$('target').value});
 ['map','mode','target'].forEach(i=>$(i).onchange=settings);
 $('target').oninput=()=>$('tv').textContent=$('target').value;
+const ACC=[['🎀','Bow'],['🎉','Party hat'],['👓','Glasses'],['🌸','Flower'],['⭐','Star clips'],['👑','Crown'],['🎩','Top hat'],['🐱','Cat band'],['😇','Halo'],['🕶️','Sunglasses'],['🧙','Wizard hat'],['🚫','No accessory']];
 let practice=false;
 const UID=(()=>{let u='';try{u=localStorage.getItem('tmp_uid')||''}catch(e){}if(!u){u=((window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now().toString(36)).replace(/[^A-Za-z0-9]/g,'');try{localStorage.setItem('tmp_uid',u)}catch(e){}}return u})();
 $('create').onclick=()=>go({t:'create',name:$('name').value,uid:UID});
