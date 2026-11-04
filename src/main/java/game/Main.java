@@ -31,6 +31,7 @@ public class Main {
 
     static class Player {
         String id, name, team = "red", token, sid, uid = ""; // uid: anonymous id kept in the browser, used only for the leaderboard
+        String acct = "";   // logged-in account username ("" = playing as a guest)
         int character;
         int acc = -1;   // chosen accessory 0..11 (-1 = automatic)
         boolean ready, bot;
@@ -53,6 +54,7 @@ public class Main {
         Javalin app = Javalin.create(c -> c.staticFiles.add("/public", Location.CLASSPATH));
         app.get("/health", ctx -> ctx.result("ok")); // for uptime pings (keeps Render awake)
         Db.init();
+        AccountApi.routes(app);
         app.get("/api/leaderboard", ctx -> ctx.contentType("application/json").result(Db.leaderboardJson(ctx.queryParam("uid"))));
         app.ws("/ws", ws -> {
             ws.onConnect(ctx -> ctx.enableAutomaticPings(20, TimeUnit.SECONDS));
@@ -103,6 +105,8 @@ public class Main {
                 p.name = uniqueName(r, name);
                 String uid = m.path("uid").asText("").replaceAll("[^A-Za-z0-9_-]", "");
                 p.uid = uid.length() > 40 ? uid.substring(0, 40) : uid;
+                Account acct = Accounts.DEFAULT.byToken(m.path("acct").asText(""));   // logged in? then results are saved to the account
+                if (acct != null) { p.acct = acct.username(); p.uid = "acc_" + acct.username(); }
                 p.ctx = ctx;
                 p.sid = ctx.sessionId();
                 p.room = r;
@@ -143,7 +147,8 @@ public class Main {
                     if (r.host != p || r.game != null) return;
                     String map = m.path("map").asText(r.map), mode = m.path("mode").asText(r.mode);
                     if (MAPS.contains(map)) r.map = map;
-                    if (mode.equals("solo") || mode.equals("team") || mode.equals("blitz") || mode.equals("shrink") || mode.equals("potato")) r.mode = mode;
+                    if (mode.equals("solo") || mode.equals("team") || mode.equals("blitz") || mode.equals("shrink") || mode.equals("potato") || mode.equals("double")
+                            || mode.equals("survivor") || mode.equals("hotswap") || mode.equals("arena") || mode.equals("chaos")) r.mode = mode;
                     r.target = Math.max(1, Math.min(10, m.path("target").asInt(r.target)));
                     broadcast(r);
                 }
@@ -201,6 +206,7 @@ public class Main {
                 case "input" -> { if (r.game != null) r.game.input(p, m.path("x").asDouble(), m.path("y").asDouble()); }
                 case "dash" -> { if (r.game != null) r.game.dash(p); }
                 case "use" -> { if (r.game != null) r.game.use(p); }
+                case "ability" -> { if (r.game != null) r.game.ability(p); }
                 case "leave" -> { leave(p); }
                 default -> { } // "active" heartbeat only refreshes lastActive
             }

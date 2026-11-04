@@ -48,6 +48,7 @@ const S={
  pop:()=>tone(520,.07,'sine',.12,500),
  pw_magnet:()=>{tone(200,.5,'sawtooth',.08,500);tone(400,.4,'triangle',.08,200,.05)},pw_jump:()=>{tone(300,.25,'square',.08,900);sweep(.25,.18,400,2500)},
  pw_reveal:()=>[880,1175,1568].forEach((f,i)=>tone(f,.25,'sine',.1,0,i*.07)),
+ pw_ghost:()=>{tone(700,.4,'sine',.1,-300);tone(500,.5,'sine',.08,-200,.1)},pw_tele:()=>{sweep(.3,.2,300,3000);tone(900,.2,'triangle',.1,400,.1)},pw_mine:()=>{tone(150,.15,'square',.1);tone(120,.2,'square',.08,0,.15)},
  fanfare:()=>[523,659,784].forEach((f,i)=>tone(f,.22,'triangle',.1,0,i*.1))};
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>ctx()));
 return{play:n=>{try{if(S[n])S[n]()}catch(e){}},
@@ -172,7 +173,7 @@ const Minimap={draw(c,o){
  const HC={t:'#cbd5e1',m:'#ef4444',l:'#facc15',h:'#93c5fd',s:'#a16207',b:'#94a3b8'};
  for(const h of st.hz){c.strokeStyle=HC[h.k]||'#facc15';c.lineWidth=1.5*u;c.beginPath();c.arc(x0+h.x*k,y0+h.y*k,Math.max(2,h.r*k),0,7);c.stroke()}
  for(const p of st.p){if(!p.a)continue;
-  const g=pos[p.id],inf=names[p.id]||{ch:0,team:'red'},hold=st.holder===p.id,col=I.mode==='team'?TEAMS[inf.team]:Sprites.color(inf.ch);
+  const g=pos[p.id],inf=names[p.id]||{ch:0,team:'red'},hold=st.holder===p.id||st.holder2===p.id,col=I.mode==='team'?TEAMS[inf.team]:Sprites.color(inf.ch);
   const px=x0+(g?g.sx:p.x)*k,py=y0+(g?g.sy:p.y)*k;
   c.fillStyle=col;c.beginPath();c.arc(px,py,(hold?4.5:3)*u,0,7);c.fill();
   if(hold){c.strokeStyle='#facc15';c.lineWidth=2*u;c.stroke()}
@@ -319,3 +320,30 @@ return{want(b,tr){wanted=!!b;if(tr&&tr!==track){track=tr;SPB=60/TR[tr].bpm/4;CHO
 
 /* soft click on every button (except the dash button, which has its own sound) */
 document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('button');if(b&&!b.disabled&&b.id!=='hDash'&&b.id!=='hTrap')SFX.play('click')},{passive:true});
+
+/* every animal's special move: [icon, name, description, recharge seconds, colour, effect radius, effects, effect ms]. Must match Abilities.java on the server. */
+const ABIL=[
+ ['🐱','Pounce','A fast leap forward.',9,'#fb923c',90,'dash'],
+ ['🐶','Sniff Out','See every player, even in bushes and the dark, for 6 seconds.',16,'#fde047',90,'reveal',6000],
+ ['🦊','Fox Decoy','Leave a fake copy of yourself for 8 seconds.',16,'#f97316',90,'decoy'],
+ ['🐼','Bamboo Guard','A shield blocks steals for 3.5 seconds.',18,'#38bdf8',90,'shield'],
+ ['🐸','Long Tongue','Steal from further away for 4.5 seconds.',15,'#4ade80',90,'magnet'],
+ ['🐵','Banana Trap','Drop a trap that holds the first victim for 3 seconds.',14,'#facc15',90,'trap'],
+ ['🐰','Super Hop','Run much faster for 3.5 seconds.',14,'#f9a8d4',90,'speed'],
+ ['🐻','Bear Roar','Freezes nearby players for 1.2 seconds.',20,'#b45309',170,'stun'],
+ ['🐯','Tiger Strike','A leap that also lengthens your steal reach.',15,'#f97316',100,'dash magnet'],
+ ['🦁','Mighty Roar','Blasts nearby players away.',20,'#fbbf24',200,'push'],
+ ['🐷','Truffle Bomb','Drops a mine that throws back whoever steps on it.',16,'#f472b6',90,'mine'],
+ ['🐮','Stampede','A burst of speed and a short shield.',18,'#e5e7eb',90,'speed shield'],
+ ['🐨','Tree Climb','Walk through obstacles for 3.5 seconds.',18,'#94a3b8',90,'ghost'],
+ ['🐭','Squeak Escape','Teleports you to a random free spot.',16,'#fda4af',90,'tele'],
+ ['🐺','Pack Howl','Speed up and see every player for 3 seconds.',17,'#cbd5e1',90,'speed reveal',3000],
+ ['🦝','Sneaky Smoke','Hide in smoke for 4.5 seconds.',15,'#9ca3af',90,'smoke'],
+ ['🐧','Belly Slide','A long slide with a brief shield.',14,'#7dd3fc',100,'dash shield'],
+ ['🐥','Peck Frenzy','Quick speed and a longer steal reach.',14,'#fde047',90,'speed magnet'],
+ ['🦄','Rainbow Dash','A long rainbow sprint with a shield.',18,'#c084fc',100,'speed shield'],
+ ['🤖','Radar Scan','See every player for 8 seconds.',22,'#67e8f9',90,'reveal',8000],
+ ['🦉','Wing Gust','A gust pushes players away and speeds you up.',16,'#a8a29e',150,'push speed'],
+ ['🦛','Splash Stomp','Freezes nearby players and shields you.',20,'#a78bfa',150,'stun shield'],
+ ['🐲','Fire Breath','Burns nearby players: they freeze and are pushed back.',18,'#fb923c',220,'stun push'],
+ ['🐝','Buzz Sting','A burst of speed and a mine behind you.',15,'#facc15',90,'speed mine']];

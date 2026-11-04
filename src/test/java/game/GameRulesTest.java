@@ -157,4 +157,43 @@ class GameRulesTest {
         g.startDisaster();
         assertTrue(g.hz.stream().anyMatch(h -> h.r > 90));
     }
+
+    @Test
+    void doubleModeHasTwoDifferentHolders() {
+        Game g = match(room(4, "double"));
+        assertTrue(g.holder2 != null && !g.holder2.equals(g.holder));
+        assertTrue(g.isHolder(g.holder) && g.isHolder(g.holder2));
+    }
+
+    @Test
+    void newPowerUpsExistToo() {
+        java.util.List<String> l = java.util.Arrays.asList(Game.POWERS);
+        assertTrue(l.contains("ghost") && l.contains("tele") && l.contains("mine"));
+    }
+
+    @Test
+    void abilityHasACooldownAndSpeedBoostWorks() {
+        Game g = match(room(2, "solo"));
+        g.ph = Game.Ph.PLAY;
+        Main.Player p = g.room.players.get(0);
+        p.character = 6; // bunny: Super Hop (speed boost)
+        Game.Gp gp = g.gp.get(p.id);
+        long before = System.currentTimeMillis();
+        g.ability(p);
+        assertTrue(gp.speedUntil > before);
+        assertTrue(gp.abilityReady > before);
+        long ready = gp.abilityReady;
+        g.ability(p); // still cooling down: nothing changes
+        assertEquals(ready, gp.abilityReady);
+    }
+
+    @Test
+    void newModesAreRecognised() {
+        assertTrue(match(room(3, "survivor")).survivor);
+        assertTrue(match(room(3, "hotswap")).hotswap);
+        assertTrue(match(room(3, "chaos")).chaos);
+        Game small = match(room(3, "arena"));
+        Game normal = match(room(3, "solo"));
+        assertTrue(small.W < normal.W);
+    }
 }

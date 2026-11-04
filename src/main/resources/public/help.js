@@ -35,6 +35,9 @@ const TABS={
   ${row('🪤','Bear Trap','Place it on the ground (item button or E). The next player who steps on it is stuck for 3 seconds. It does not catch you.')}
   ${row('💨','Smoke Bomb','For 4 seconds you are hard to see.')}
   ${row('👥','Decoy','Leaves a fake copy of you for 8 seconds to confuse everyone.')}
+  ${row('👻','Ghost','For 4 seconds you can walk straight through obstacles.')}
+  ${row('🌀','Teleport','Instantly jumps you to a random free spot on the map.')}
+  ${row('💣','Mine','Drops a mine. Anyone who steps on it (except you) is thrown back and stunned for a moment.')}
   ${row('🧲','Magnet','For 6 seconds you can steal from further away.')}
   ${row('🦘','Super jump','A free long leap, and your dash is ready again.')}
   ${row('👁️','Reveal','For 6 seconds you can see everyone, even in bushes and the dark.')}
@@ -81,6 +84,11 @@ TABS['Modes']=`<p>The host picks the mode in the lobby.</p>
   ${row('💬','Emotes','Tap the 💬 button at the side of the screen to open the emote drawer. You can tap emotes while you are still moving.')}
   ${row('⚡','Special roles','Each round one player may be the Sprinter (+15% speed) or the Grabber (longer steal reach).')}
   ${row('🔥','Streaks and revenge','Three steals in a row give a speed boost. Stealing back from whoever robbed you gives a short shield.')}
+  ${row('🏆','Last Survivor','The arena closes in. The last player standing wins the round.')}
+  ${row('🔀','Hot Swap','The property jumps to a random player every 9 seconds.')}
+  ${row('🥊','Small Arena','A tiny map for non-stop action.')}
+  ${row('🎪','Chaos','Lucky blocks twice as often, and special moves recharge twice as fast.')}
+  ${row('🏠🏠','Two Properties','Two properties are in play. Hold either one until time runs out to score. You can only hold one at a time.')}
   ${row('🥔','Hot Potato','The longer you hold the property, the slower you get. Pass it on before you are caught!')}`;
 TABS['3D & settings']=`<p>The game is now in 3D! If it runs slowly on your device, open ⚙️ Settings.</p>
   ${row('📷','Camera','Tap the camera button in a match to switch between Tilted, Top-down and Close-up.')}
@@ -89,8 +97,10 @@ TABS['3D & settings']=`<p>The game is now in 3D! If it runs slowly on your devic
   ${row('🎮','Controls','Settings lets you make the buttons bigger or smaller, switch to left-handed controls, and use colorblind-friendly team colors.')}
   ${row('📸','Screenshot','Tap the camera-flash button in a match to save a picture of the 3D view.')}
   ${row('🎀','Accessories','Pick your accessory in the lobby under Character. 🎲 means surprise me. Everyone in the match sees the one you chose.')}
+  ${row('👤','Account','On the home screen you can create an account, log in, edit your profile, log out or delete it. Your matches, wins and steals are saved to your account.')}
   ${row('🎯','Daily challenge','A new goal every day. Your stats show on the scoreboard after each round.')}
   ${row('🌬️','Sounds','Every map has its own ambient sound. Music gets faster in the last 5 seconds of a round.')}`;
+TABS['Special moves']=`<p>Every animal has its own special move. Press <b>Q</b> or tap the purple button in a match.</p>${ABIL.map(a=>row(a[0],a[1],a[2]+' ('+a[3]+'s)')).join('')}`;
 const css=document.createElement('style');
 css.textContent=`#help{position:fixed;inset:0;z-index:45;display:none;align-items:center;justify-content:center;background:#000b;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
 #help.on{display:flex}

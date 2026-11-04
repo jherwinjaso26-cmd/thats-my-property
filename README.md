@@ -36,3 +36,12 @@ Players are identified by an anonymous random id stored in their browser (no pas
 - Emote drawer: a 💬 button at the side opens a small panel (never over the middle of the screen); emotes work while moving.
 - Boss round: every 5th round has a giant tornado.
 - Accessory picker in the lobby (shared with other players), and every animal now has its own 3D features (tails, whiskers, horns, wings, spots...).
+- Two Properties mode, new power-ups (ghost, teleport, mine), emote animations, and a victory pose for each animal.
+
+## Accounts, special moves and more modes
+- **Accounts (CRUD):** register, login/logout, view profile, edit profile (name, favorite animal, password), delete account. Stored by the server in `data/accounts.json`
+  (set `ACCOUNTS_FILE` to change the path; on Render use a persistent disk path such as `/data/accounts.json`). Passwords are stored only as salted SHA-256 hashes.
+  Routes: `POST /api/account/register`, `POST /api/account/login`, `POST /api/account/logout`, `GET /api/account`, `PUT /api/account`, `DELETE /api/account`.
+- **Special moves:** each of the 24 animals has its own ability (key Q or the purple button). Java: abstract class `Ability` with subclasses (`SpeedAbility`, `StunAbility`, ...), see `Ability.java` and `Abilities.java`.
+- **Modes:** Last Survivor, Hot Swap, Small Arena, Chaos (plus Solo, Team, Blitz, Shrinking Arena, Hot Potato, Two Properties).
+- **Big matches:** fewer network updates, no shadows and smaller render size with 10+ players, off-screen characters are skipped, shared 3D geometry.
