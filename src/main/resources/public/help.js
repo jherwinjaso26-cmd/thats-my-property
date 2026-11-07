@@ -92,6 +92,8 @@ TABS['Modes']=`<p>The host picks the mode in the lobby.</p>
   ${row('🥔','Hot Potato','The longer you hold the property, the slower you get. Pass it on before you are caught!')}`;
 TABS['3D & settings']=`<p>The game is now in 3D! If it runs slowly on your device, open ⚙️ Settings.</p>
   ${row('📷','Camera','Tap the camera button in a match to switch between Tilted, Top-down and Close-up.')}
+  ${row('📶','Lag check','The corner label shows ping (network), fps (your screen) and srv (server work per step). High ping means Wi-Fi trouble, low fps means a slow phone, and high srv means a busy server.')}
+  ${row('🔋','Battery saver','Draws 30 frames per second instead of 60. It switches on by itself if your phone cannot keep up.')}
   ${row('🎨','Graphics quality','Auto picks for you. Low turns off shadows and some effects for older phones.')}
   ${row('🕹️','Classic 2D','Untick “3D graphics” in Settings to play the original 2D view.')}
   ${row('🎮','Controls','Settings lets you make the buttons bigger or smaller, switch to left-handed controls, and use colorblind-friendly team colors.')}

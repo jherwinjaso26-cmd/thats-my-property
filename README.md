@@ -45,3 +45,5 @@ Players are identified by an anonymous random id stored in their browser (no pas
 - **Special moves:** each of the 24 animals has its own ability (key Q or the purple button). Java: abstract class `Ability` with subclasses (`SpeedAbility`, `StunAbility`, ...), see `Ability.java` and `Abilities.java`.
 - **Modes:** Last Survivor, Hot Swap, Small Arena, Chaos (plus Solo, Team, Blitz, Shrinking Arena, Hot Potato, Two Properties).
 - **Big matches:** fewer network updates, no shadows and smaller render size with 10+ players, off-screen characters are skipped, shared 3D geometry.
+- Speed: no backdrop blur over the live game, shadows redrawn every other frame, no per-frame allocations in the 3D loop, idle particle systems skipped, optional battery saver (30 fps, automatic as a last resort), lobby preview at 30 fps, compressed static files.
+- Network: every player's messages are sent from their own queue on a background thread (`Outbox.java`), so one slow phone cannot stall the game for the others; slow connections skip old position updates and catch up. The corner label shows ping, fps and server step time to help find lag.

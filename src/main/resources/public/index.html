@@ -7,14 +7,12 @@
 <title>That’s My Property</title>
 <style>
 *{box-sizing:border-box;margin:0}
-:root{--vw:1vw;--vh:1vh}
-@supports (height:1dvh){:root{--vh:1dvh}}
 html,body{height:100%;font-family:system-ui,Segoe UI,Roboto,sans-serif;color:#f1f5f9;background:radial-gradient(circle at 20% 10%,#1e3a5f,#0b1220 70%);overflow:hidden}
-.screen{display:none;height:calc(100*var(--vh));padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.screen{display:none;height:100dvh;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
 .screen.on{display:flex}
 #home{align-items:center;justify-content:center}
-.card{background:#111c2fcc;border:1px solid #334155;border-radius:20px;padding:clamp(16px,calc(4*var(--vh)),32px);width:min(420px,calc(92*var(--vw)));display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px #0008;backdrop-filter:blur(8px)}
-h1{font-size:clamp(26px,calc(6*var(--vh)),40px);text-align:center;letter-spacing:.5px}h1 span{color:#facc15}
+.card{background:#111c2fcc;border:1px solid #334155;border-radius:20px;padding:clamp(16px,4vh,32px);width:min(420px,92vw);display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px #0008;backdrop-filter:blur(8px)}
+h1{font-size:clamp(26px,6vh,40px);text-align:center;letter-spacing:.5px}h1 span{color:#facc15}
 .sub{text-align:center;color:#94a3b8;margin-bottom:4px}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin:4px 0 8px}
 input,select{background:#0b1220;border:1px solid #334155;color:inherit;border-radius:10px;padding:11px 12px;font-size:16px;width:100%;min-width:0}
@@ -24,7 +22,7 @@ button:hover:not(:disabled){filter:brightness(1.2)}button:active:not(:disabled){
 .chk{flex-direction:row;align-items:center;gap:10px}.chk input{width:auto}
 .gear{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));z-index:2}
 #settings{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:#000a}
-#settings .card{max-height:calc(90*var(--vh));max-height:calc(90*var(--vh));overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#settings .card{max-height:90vh;max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .rdy{margin-left:auto;font-size:13px;color:#86efac;white-space:nowrap}.off{opacity:.5}
 .tsh{font-size:15px;color:#0b1220;font-weight:900}
 .pri{background:linear-gradient(135deg,#facc15,#f59e0b);color:#1a1200}
@@ -59,7 +57,7 @@ html.lsx #rotate{display:none!important}
 @keyframes pop{from{transform:scale(.9);opacity:0}}
 </style>
 <link rel="stylesheet" href="game.css"></head><body>
-<div id="rotate"><div><div>📱↻</div><p>Rotate your device to landscape</p><p class="ios" style="display:none;color:#facc15;max-width:calc(80*var(--vw));margin:10px auto 0">iPhone: swipe down from the top-right corner and turn OFF “Portrait Orientation Lock”, then turn your phone sideways.</p></div></div>
+<div id="rotate"><div><div>📱↻</div><p>Rotate your device to landscape</p><p class="ios" style="display:none;color:#facc15;max-width:80vw;margin:10px auto 0">iPhone: swipe down from the top-right corner and turn OFF “Portrait Orientation Lock”, then turn your phone sideways.</p></div></div>
 <div id="toast"></div>
 
 <section id="home" class="screen on"><button id="gearH" class="ghost gear" title="Settings">⚙</button><div class="card">
@@ -111,6 +109,7 @@ html.lsx #rotate{display:none!important}
   <label class="field">🎮 Button size<input id="sBtn" type="range" min="70" max="150"></label>
   <label class="field chk"><input id="sCb" type="checkbox"> Colorblind-friendly team colors</label>
   <label class="field chk"><input id="sBig" type="checkbox"> Bigger text on the game screen</label>
+  <label class="field chk"><input id="sFps30" type="checkbox"> Battery saver: draw 30 frames per second</label>
   <button id="sClose" class="pri">Done</button></div></div>
 
 <script>
@@ -121,11 +120,7 @@ const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='M
 if(IOS){document.querySelectorAll('#rotate .ios').forEach(e=>e.style.display='block');if(!navigator.standalone)$('iosTip').style.display='block'}
 /* Forced landscape: if the phone is upright, rotate the UI with CSS and translate touch coordinates to match. */
 const Orient=(()=>{const de=document.documentElement;let on=false;
-  function apply(){const w=innerWidth,h=innerHeight,ae=document.activeElement;
-    if(ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&de.dataset.o)return;
-    on=h>w&&w<=900;de.dataset.o='1';de.classList.toggle('lsx',on);
-    if(on){de.style.setProperty('--lw',h+'px');de.style.setProperty('--lh',w+'px')}
-    de.style.setProperty('--vw',(on?h:w)/100+'px');de.style.setProperty('--vh',(on?w:h)/100+'px')}
+  function apply(){const w=innerWidth,h=innerHeight;on=h>w&&w<=900;de.classList.toggle('lsx',on);if(on){de.style.setProperty('--lw',h+'px');de.style.setProperty('--lh',w+'px')}}
   addEventListener('resize',apply);addEventListener('orientationchange',()=>setTimeout(apply,200));apply();
   return{on:()=>on,w:()=>on?innerHeight:innerWidth,h:()=>on?innerWidth:innerHeight,pt:e=>on?{x:e.clientY,y:innerWidth-e.clientX}:{x:e.clientX,y:e.clientY}}})();
 const Net={ping:-1};

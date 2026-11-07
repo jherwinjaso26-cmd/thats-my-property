@@ -123,9 +123,13 @@ class Game {
 
     int sendCount = 0;
 
+    double tickMs;   // how long a game step takes (shown on screen so lag can be traced)
+
     void tick() {
         synchronized (Main.LOCK) {
+            long t0 = System.nanoTime();
             try { step(); } catch (Exception e) { e.printStackTrace(); }
+            tickMs = tickMs * 0.9 + (System.nanoTime() - t0) / 1e6 * 0.1;
         }
     }
 
@@ -192,7 +196,7 @@ class Game {
     /** Players are compact arrays: id, x, y, dashCooldown, dashing, alive, speed, shield, frozen, trapped, hasTrap, wet, smoke, offline. */
     ObjectNode stateMsg(long now) {
         ObjectNode n = Main.JSON.createObjectNode();
-        n.put("t", "state").put("ph", ph.name()).put("left", Math.max(0, phaseEnd - now) / 1000.0)
+        n.put("t", "state").put("ms", (int) Math.round(tickMs)).put("ph", ph.name()).put("left", Math.max(0, phaseEnd - now) / 1000.0)
             .put("round", round).put("holder", holder).put("holder2", holder2).put("fx", (int) fx).put("fy", (int) fy);
         ArrayNode a = n.putArray("p");
         for (Gp g : gp.values())
@@ -899,7 +903,8 @@ class Game {
 
     void broadcast(ObjectNode n) {
         String s = n.toString(); // serialize once, send to everyone
-        for (Gp g : gp.values()) Main.sendRaw(g.p.ctx, s);
+        boolean state = "state".equals(n.path("t").asText()); // position updates may be skipped for slow connections
+        for (Gp g : gp.values()) Main.sendRaw(g.p.ctx, s, state);
     }
 
     static double clamp(double v, double lo, double hi) { return Math.max(lo, Math.min(hi, v)); }

@@ -44,7 +44,7 @@ function tutorial(){let seen=false;try{seen=localStorage.getItem('tmp_tut')==='1
 const MODE={survivor:['🏆','Last Survivor','The arena closes in. The last player standing wins the round!'],hotswap:['🔀','Hot Swap','The property jumps to a random player every 9 seconds.'],arena:['🥊','Small Arena','A tiny map with non-stop action.'],chaos:['🎪','Chaos','Lucky blocks twice as often and special moves recharge twice as fast.'],double:['🏠🏠','Two Properties','Two properties are in play at once. Hold one until time runs out to score!'],potato:['🥔','Hot Potato','The longer you hold the property, the slower you get. Pass it on!'],blitz:['⚡','Blitz','15 second rounds and everyone is speedy. Fast and furious!'],shrink:['🌊','Shrinking Arena','The water closes in during every round. Stay in the middle!']};
 const PWS={speed:'pw_speed',shield:'pw_shield',trap:'pw_trap',freeze:'bad',smoke:'pw_smoke',swap:'swap',decoy:'pw_decoy',magnet:'pw_magnet',jump:'pw_jump',reveal:'pw_reveal',ghost:'pw_ghost',tele:'pw_tele',mine:'pw_mine'};
 const WARN={m:{ms:1600,c:'239,68,68',s:'#ef4444'},l:{ms:900,c:'250,204,21',s:'#facc15'},h:{ms:1000,c:'147,197,253',s:'#93c5fd'},s:{ms:1800,c:'161,98,7',s:'#d97706'}};
-let el,cv,ctx,traps=[],zones=[],decals=[],emotes=[],mod='',disaster='METEOR',flashes=[],spec=null,active=false,raf=0,lt=0,init=null,st=null,obs=[],pos={},names={},rows=[],bg=null,parts=[],shake=0,lastKey='',lastSent='',lastSendAt=0,camX=0,camY=0,vw=0,vh=700,use3d=false,revealUntil=0;
+let el,cv,ctx,traps=[],zones=[],decals=[],emotes=[],mod='',disaster='METEOR',flashes=[],spec=null,active=false,raf=0,lt=0,init=null,st=null,obs=[],pos={},names={},rows=[],bg=null,parts=[],shake=0,lastKey='',lastSent='',lastSendAt=0,camX=0,camY=0,vw=0,vh=700,use3d=false,revealUntil=0,accDt=0,fSkip=false,autoHalf=false;
 const keys=new Set(),joy={on:false,id:null,ox:0,oy:0,x:0,y:0};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
 const nm=id=>(names[id]||{}).name||'?';
@@ -92,7 +92,7 @@ function build(){
  const up=e=>{if(joy.on&&e.pointerId===joy.id){joy.on=false;joy.x=joy.y=0;q('#joy').style.display='none'}};
  addEventListener('pointerup',up);addEventListener('pointercancel',up);
 }
-function resize(){const d=Math.min(devicePixelRatio||1,2)*qual;cv.width=Math.round(Orient.w()*d);cv.height=Math.round(Orient.h()*d);
+function resize(){const d=Math.min(devicePixelRatio||1,use3d?1.25:2)*qual;cv.width=Math.round(Orient.w()*d);cv.height=Math.round(Orient.h()*d);
  if(use3d)R3D.resize(Orient.w(),Orient.h(),Math.min(devicePixelRatio||1,Math.min(R3D.quality>=3?2:R3D.quality===2?1.5:1,R3D.crowd?1.25:9))*qual)}
 function fallback2D(){use3d=false;R3D.stop();if(init)bake(1);resize()}
 const feed=t=>{const f=q('#hFeed'),d=document.createElement('div');d.textContent=t;f.append(d);while(f.children.length>4)f.firstChild.remove();setTimeout(()=>d.remove(),5200)};
@@ -101,9 +101,9 @@ function visAlpha(p,g,watcher){if(performance.now()<revealUntil)return p.sm>0?.5
  return p.sm>0?(other&&far>100?.15:.55):(p.id===S.you&&inBush(g)?.75:1)}
 /* Weak phones: if frames stay slow, quietly lower the canvas resolution (down to 60%); also shows ping + fps in the corner. */
 function perf(t,raw){fpsN++;ema=ema*.95+Math.min(raw,100)*.05;
- if(ema>(use3d?30:40)){if(++slow>(use3d?150:240)){slow=0;if(use3d&&R3D.lower()){}else if(qual>(use3d?.6:.8)){qual=Math.max(use3d?.6:.8,qual-.1);resize()}}}else slow=0; // only for really slow devices (under ~25fps for several seconds)
+ if(ema>(use3d?30:40)){if(++slow>(use3d?150:240)){slow=0;if(use3d&&R3D.lower()){}else if(qual>(use3d?.6:.8)){qual=Math.max(use3d?.6:.8,qual-.1);resize()}else if(use3d)autoHalf=true}}else slow=0; // as a last resort draw 30 frames per second // only for really slow devices (under ~25fps for several seconds)
  if(t-fpsT>500){fps=Math.round(fpsN*1000/(t-fpsT));fpsN=0;fpsT=t;const p=Net.ping,c=p<0?'#94a3b8':p<80?'#86efac':p<160?'#fde047':'#f87171';
-  const n=q('#hNet');setT(n,(p<0?'📶 …':'📶 '+p+'ms')+' · '+fps+'fps'+(use3d?' · 3D':'')+(qual<1?' · low-res':''));setS(n,'color',c)}}
+  const n=q('#hNet');setT(n,(p<0?'📶 …':'📶 '+p+'ms')+' · '+fps+'fps'+(st&&st.ms!=null?' · srv '+st.ms+'ms':'')+(use3d?' · 3D':'')+(qual<1?' · low-res':''));setS(n,'color',c)}}
 
 function bake(sc){
  const W=init.w,H=init.h,t=TH[init.map]||TH.forest,r=mulberry(init.seed);
@@ -118,7 +118,7 @@ function bake(sc){
 
 function on(m){
  if(m.t==='init'){if(!active){applyCb();streak=0;lastRobber=null;Stats.add('matches',1);tutorial()}init=m;if(m.you&&!S)S={you:m.you};names={};m.players.forEach(p=>names[p.id]={name:p.name,ch:p.character,team:p.team});
-  pos={};st=null;obs=[];rows=[];parts=[];zones=[];decals=[];emotes=[];mod='';lastKey='';use3d=R3D.available();
+  pos={};st=null;obs=[];rows=[];parts=[];zones=[];decals=[];emotes=[];mod='';lastKey='';autoHalf=false;accDt=0;use3d=R3D.available();
   if(use3d){bake(Math.min(1,2048/Math.max(m.w,m.h)));use3d=R3D.init(Object.assign({},m,{you:(S&&S.you)||m.you}),bg)}
   if(!use3d){R3D.hide();bake(1)}
   Ambient.init(m.map);AmbSound.start(m.map);active=true;show('game');resize();lt=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)}
@@ -201,7 +201,7 @@ function frame(t){
  let ox=0,oy=0;if(shake>0){ox=(Math.random()-.5)*shake;oy=(Math.random()-.5)*shake;shake*=.85;if(shake<.3)shake=0}
  camX=cx-vw/2+ox;camY=cy-vh/2+oy;
  const watcher=dead?null:me;
- if(use3d){try{R3D.frame({t,dt,st,pos,you:S.you,mine,dead,watcher,mod,disaster,emotes,EMO,dash:!!(mine&&mine.d),view:{x:view?view.sx:W/2,y:view?view.sy:H/2},shake:shake>0?[ox,oy]:null,vis:(p,g)=>visAlpha(p,g,watcher)})}catch(err){console.error('3D renderer failed, switching to 2D',err);fallback2D()}}
+ if(use3d){try{accDt+=dt;fSkip=!fSkip;if(!((Settings.get('fps30')||autoHalf)&&fSkip)){R3D.frame({t,dt:accDt,st,pos,you:S.you,mine,dead,watcher,mod,disaster,emotes,EMO,dash:!!(mine&&mine.d),view:{x:view?view.sx:W/2,y:view?view.sy:H/2},shake:shake>0?[ox,oy]:null,vis:(p,g)=>visAlpha(p,g,watcher)});accDt=0}}catch(err){console.error('3D renderer failed, switching to 2D',err);fallback2D()}}
  if(!use3d){
  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
  ctx.drawImage(bg,camX,camY,vw,vh,0,0,cv.width,cv.height);

@@ -10,9 +10,12 @@ const PI=Math.PI,EF='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",san
 let failed=false,rd=null,sc=null,cam=null,sun=null,hemi=null,glCv=null,I=null,map='forest',TMH=null,active=false,quality=2,shadowsOn=false;
 let chars={},names={},own=[],dyn=null,statics=null,cw=16,ch=9,tNow=0;
 const season=(()=>{const d=new Date(),mo=d.getMonth()+1,dd=d.getDate();if((mo===10&&dd>=24)||(mo===11&&dd<=2))return 'halloween';if((mo===12&&dd>=15)||(mo===1&&dd<=2))return 'xmas';return ''})();
-let crowd=false,rainy=false,snapReq=null,tod=0,punch=0,fcx=0,fcz=0,fcInit=false,zoom=1.4,orbit=0,fovK=0,flash=0,nightK=0,shakeAmt=0;
+let wTick=0,shTick=0,crowd=false,rainy=false,snapReq=null,tod=0,punch=0,fcx=0,fcz=0,fcInit=false,zoom=1.4,orbit=0,fovK=0,flash=0,nightK=0,shakeAmt=0;
 const V=(x,y,z)=>new T.Vector3(x,y,z);
 const _e=new T.Euler(),_q=new T.Quaternion(),_c=new T.Color();
+/* colours reused every frame (no allocations in the render loop) */
+const KC={night:new T.Color('#050818'),sunset:new T.Color('#ff9a62'),dusk:new T.Color('#4a3a7a'),rain:new T.Color('#6b7a8f'),hal:new T.Color('#4a2368'),xmas:new T.Color('#dff1ff'),meteor:new T.Color('#7a2d10'),storm:new T.Color('#3a4252'),hail:new T.Color('#aebccb'),sunSet:new T.Color('#ffb070'),hemSet:new T.Color('#ffd2a8'),sunDusk:new T.Color('#b9a8ff'),hemDusk:new T.Color('#9a90d8')};
+const _bg=new T.Color(),skyC=new T.Color(),fogC=new T.Color(),sunC=new T.Color(),hemC=new T.Color(),fogMix=new T.Color();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const mul=(a,b)=>{const m=new T.Matrix4();m.multiplyMatrices(a,b);return m};
@@ -221,7 +224,7 @@ function buildTomb(){return new T.Mesh(sharedGeo('tomb',()=>merge([box('#9ca3af'
 function buildTrapModel(){const o=[cyl('#475569',0,0,0,17,3),cyl('#94a3b8',0,3,0,11,1.4)];for(let i=0;i<10;i++){const a=i/10*PI*2;o.push(part(G.cone,'#e2e8f0',[Math.cos(a)*14,7,Math.sin(a)*14],[2.4,8,2.4],[Math.sin(a)*.5,0,-Math.cos(a)*.5]))}return o}
 
 /* ---------- particles (one point cloud, ring buffer) ---------- */
-const NP=900;let PP,PC,PV,PL,PM,PB,PG,pI=0,pts=null,pcol=null,ppos=null;
+const NP=900;let PP,PC,PV,PL,PM,PB,PG,pI=0,pAny=false,pts=null,pcol=null,ppos=null;
 function initParticles(){
  PP=new Float32Array(NP*3).fill(-9999);PC=new Float32Array(NP*3);PV=new Float32Array(NP*3);PL=new Float32Array(NP);PM=new Float32Array(NP).fill(1);PB=new Float32Array(NP*3);PG=new Float32Array(NP);pI=0;
  const g=keep(new T.BufferGeometry());ppos=new T.BufferAttribute(PP,3);ppos.setUsage(T.DynamicDrawUsage);pcol=new T.BufferAttribute(PC,3);pcol.setUsage(T.DynamicDrawUsage);
@@ -229,18 +232,20 @@ function initParticles(){
  const m=keep(new T.PointsMaterial({size:15,map:texDot(),vertexColors:true,transparent:true,blending:T.AdditiveBlending,depthWrite:false,sizeAttenuation:true}));
  pts=new T.Points(g,m);pts.frustumCulled=false;sc.add(pts)}
 function burst(x,y,c,n,o){
- if(!pts)return;o=o||{};_c.set(c);const lim=quality===1?.5:1;n=Math.max(1,Math.round(n*lim));
+ if(!pts)return;pAny=true;o=o||{};_c.set(c);const lim=quality===1?.5:1;n=Math.max(1,Math.round(n*lim));
  for(let i=0;i<n;i++){const k=pI++%NP,a=Math.random()*6.283,s=(o.spd||1)*rnd(50,230);
   PP[k*3]=x+(o.sx?rnd(-o.sx,o.sx):0);PP[k*3+1]=(o.h==null?14:o.h)+rnd(0,8);PP[k*3+2]=y+(o.sx?rnd(-o.sx,o.sx):0);
   PV[k*3]=Math.cos(a)*s*(o.flat||1);PV[k*3+1]=(o.up==null?1:o.up)*rnd(40,190);PV[k*3+2]=Math.sin(a)*s*(o.flat||1);
   PM[k]=PL[k]=(o.life||.6)*rnd(.7,1.2);PG[k]=o.g==null?420:o.g;PB[k*3]=_c.r;PB[k*3+1]=_c.g;PB[k*3+2]=_c.b}}
 function updParticles(dt){
+ if(!pAny)return; // nothing alive: skip the loop and the GPU upload
+ let alive=0;
  for(let k=0;k<NP;k++){
   if(PL[k]<=0){if(PP[k*3+1]>-9000){PP[k*3+1]=-9999;PC[k*3]=PC[k*3+1]=PC[k*3+2]=0}continue}
-  PL[k]-=dt;PV[k*3+1]-=PG[k]*dt;PP[k*3]+=PV[k*3]*dt;PP[k*3+1]+=PV[k*3+1]*dt;PP[k*3+2]+=PV[k*3+2]*dt;
+  alive++;PL[k]-=dt;PV[k*3+1]-=PG[k]*dt;PP[k*3]+=PV[k*3]*dt;PP[k*3+1]+=PV[k*3+1]*dt;PP[k*3+2]+=PV[k*3+2]*dt;
   if(PP[k*3+1]<1){PP[k*3+1]=1;PV[k*3+1]*=-.35;PV[k*3]*=.7;PV[k*3+2]*=.7}
   const f=Math.max(0,PL[k]/PM[k]);PC[k*3]=PB[k*3]*f;PC[k*3+1]=PB[k*3+1]*f;PC[k*3+2]=PB[k*3+2]*f}
- ppos.needsUpdate=true;pcol.needsUpdate=true}
+ pAny=alive>0;ppos.needsUpdate=true;pcol.needsUpdate=true}
 
 /* weather around the camera */
 let wx=null,wpos=null,wcol=null,WP=null,WV=null,WB=null,WN=0,wcfg=null,wBlink=false;
@@ -405,9 +410,9 @@ function setRound(m){
 function init(m,bgc){
  if(failed||!glCv)return false;
  try{
-  stop();I=m;map=m.map;TMH=TM[map]||TM.forest;quality=pickQuality();crowd=m.players.length>=10;shadowsOn=quality===3&&!crowd; // big matches skip shadows for speed
+  stop();I=m;map=m.map;TMH=TM[map]||TM.forest;skyC.set(TMH.sky);fogC.set(TMH.fog||TMH.sky);sunC.set(TMH.sun);hemC.set(TMH.hs);quality=pickQuality();crowd=m.players.length>=10;shadowsOn=quality===3&&!crowd; // big matches skip shadows for speed
   if(!rd){rd=new T.WebGLRenderer({canvas:glCv,antialias:quality>1,powerPreference:'high-performance'});rd.setClearColor(0x000000,1)}
-  rd.shadowMap.enabled=shadowsOn;rd.shadowMap.type=T.PCFSoftShadowMap;
+  rd.shadowMap.enabled=shadowsOn;rd.shadowMap.autoUpdate=false;rd.shadowMap.type=T.PCFSoftShadowMap; // shadows are redrawn every other frame
   sc=new T.Scene();sc.background=new T.Color(TMH.sky);sc.fog=new T.Fog(new T.Color(TMH.fog||TMH.sky),1100,3400);
   cam=new T.PerspectiveCamera(44,cw/ch,10,7000);
   hemi=new T.HemisphereLight(TMH.hs,TMH.hg,.5);sc.add(hemi);
@@ -560,21 +565,21 @@ function frame(f){
   cam.position.set(tx+Math.sin(orbit)*330,230,tz+Math.cos(orbit)*330);cam.lookAt(tx,36,tz)}
  else{const sx=f.shake?f.shake[0]:0,sz=f.shake?f.shake[1]:0;
   cam.position.set(tx+co[0]*zz+sx*1.4,co[1]*zz,tz+co[2]*zz+sz*1.4);cam.lookAt(tx+sx*.4,10,tz-30*(co[1]>800?0:1)+sz*.4);cam.rotation.z+=sx*.0009}
- const me=f.dash?1:0;fovK+=((me?1:0)-fovK)*(1-Math.exp(-dt*10));cam.fov=44+fovK*6;cam.updateProjectionMatrix();
+ const me=f.dash?1:0;fovK+=((me?1:0)-fovK)*(1-Math.exp(-dt*10));{const nf=44+fovK*6;if(Math.abs(nf-cam.fov)>.02){cam.fov=nf;cam.updateProjectionMatrix()}}
  /* light follows the view */
  sun.position.set(tx-380,780,tz+300);sun.target.position.set(tx,0,tz);
  flash=Math.max(0,flash-dt*3.2);
  const nk=f.mod==='NIGHT'?1:0;nightK+=(nk-nightK)*(1-Math.exp(-dt*2.5));
  let dk=nightK;
  hemi.intensity=.5*(1-.55*dk)+flash*.9;sun.intensity=.64*(1-.7*dk)+flash*.5;
- const bgc=new T.Color(TMH.sky).lerp(new T.Color('#050818'),dk*.85);
- if(tod===1){bgc.lerp(new T.Color('#ff9a62'),.32);sun.color.set('#ffb070');hemi.color.set('#ffd2a8')}else if(tod===2){bgc.lerp(new T.Color('#4a3a7a'),.38);sun.color.set('#b9a8ff');hemi.color.set('#9a90d8');hemi.intensity*=.9;sun.intensity*=.85}else{sun.color.set(TMH.sun);hemi.color.set(TMH.hs)}
- if(rainy)bgc.lerp(new T.Color('#6b7a8f'),.45);
- if(season==='halloween')bgc.lerp(new T.Color('#4a2368'),.3);else if(season==='xmas')bgc.lerp(new T.Color('#dff1ff'),.2);
- if(st.ph==='ROLE'&&f.disaster==='METEOR')bgc.lerp(new T.Color('#7a2d10'),.25);
- if(f.disaster==='LIGHTNING'||f.disaster==='TORNADO')bgc.lerp(new T.Color('#3a4252'),.45);
- if(f.disaster==='HAIL')bgc.lerp(new T.Color('#aebccb'),.35);
- sc.background.copy(bgc);sc.fog.color.copy(new T.Color(TMH.fog||TMH.sky).lerp(bgc,.7));
+ const bgc=_bg.copy(skyC).lerp(KC.night,dk*.85);
+ if(tod===1){bgc.lerp(KC.sunset,.32);sun.color.copy(KC.sunSet);hemi.color.copy(KC.hemSet)}else if(tod===2){bgc.lerp(KC.dusk,.38);sun.color.copy(KC.sunDusk);hemi.color.copy(KC.hemDusk);hemi.intensity*=.9;sun.intensity*=.85}else{sun.color.copy(sunC);hemi.color.copy(hemC)}
+ if(rainy)bgc.lerp(KC.rain,.45);
+ if(season==='halloween')bgc.lerp(KC.hal,.3);else if(season==='xmas')bgc.lerp(KC.xmas,.2);
+ if(st.ph==='ROLE'&&f.disaster==='METEOR')bgc.lerp(KC.meteor,.25);
+ if(f.disaster==='LIGHTNING'||f.disaster==='TORNADO')bgc.lerp(KC.storm,.45);
+ if(f.disaster==='HAIL')bgc.lerp(KC.hail,.35);
+ sc.background.copy(bgc);sc.fog.color.copy(fogMix.copy(fogC).lerp(bgc,.7));
  /* players */
  const watcher=f.watcher;
  for(const p of st.p){const g=pos[p.id],c=chars[p.id];if(!g||!c)continue;
@@ -594,10 +599,11 @@ function frame(f){
  /* arrow to the property */
  const mp=f.mine&&!f.dead?pos[f.you]:null,hids=[st.holder,st.holder2].filter(i=>i&&i!==f.you&&pos[i]),hid=mp?hids.sort((a,b)=>Math.hypot(pos[a].sx-mp.sx,pos[a].sy-mp.sy)-Math.hypot(pos[b].sx-mp.sx,pos[b].sy-mp.sy))[0]:null,hp=hid?pos[hid]:null;
  if(arrow){arrow.visible=false;if(mp&&hp&&st.holder!==f.you&&st.holder2!==f.you&&st.ph!=='SCORE'&&st.ph!=='OVER'){const dx=hp.sx-mp.sx,dz=hp.sy-mp.sy,d=Math.hypot(dx,dz);if(d>160){const a=Math.atan2(dx,dz);arrow.visible=true;arrow.position.set(mp.sx+Math.sin(a)*(88+Math.sin(t*6)*4),5,mp.sy+Math.cos(a)*(88+Math.sin(t*6)*4));arrow.rotation.y=a}}}
- updFx();updParticles(dt);updWeather(dt,t);
+ updFx();updParticles(dt);wTick^=1;if(quality===3||wTick)updWeather(quality===3?dt:dt*2,t); // weather updates every other frame on weaker settings
  for(const u of zoneUpd)u(t);
  if(trapGlow)trapGlow.material.opacity=.22+Math.sin(t*4)*.1;
  if(st.ph==='OVER'&&Math.random()<.9)burst(tx+rnd(-420,420),tz+rnd(-300,300),['#facc15','#38bdf8','#f472b6','#86efac','#ffffff'][(Math.random()*5)|0],2,{h:380,up:-.2,spd:.12,g:120,life:2.4});
+ if(shadowsOn){shTick^=1;if(shTick)rd.shadowMap.needsUpdate=true}
  rd.render(sc,cam);
  if(snapReq){const cb=snapReq;snapReq=null;try{const c=document.createElement('canvas');c.width=glCv.width;c.height=glCv.height;c.getContext('2d').drawImage(glCv,0,0);cb(c)}catch(e){cb(null)}}}
 
@@ -668,6 +674,7 @@ function previewStart(canvas){
   pv={r,s,c,canvas,char:null,ci:-1,raf:0,t0:performance.now(),ringM:base.material};
   const loop=now=>{if(!pv||pv.canvas!==canvas)return;pv.raf=requestAnimationFrame(loop);
    if(!canvas.isConnected||canvas.offsetParent===null)return;
+   pv.fr=(pv.fr||0)+1;if(pv.fr&1)return; // the lobby preview only needs 30 frames per second
    const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;if(canvas.width!==w*2||canvas.height!==h*2){r.setSize(w*2,h*2,false);c.aspect=w/h;c.updateProjectionMatrix()}
    const t=(now-pv.t0)/1000;if(pv.char){pv.char.root.rotation.y=t*.9;pv.char.pivot.position.y=Math.abs(Math.sin(t*3))*3;pv.char.arms[0].rotation.z=-.5+Math.sin(t*3)*.3;pv.char.arms[1].rotation.z=.5-Math.sin(t*3)*.3;if(pv.char.tail)pv.char.tail.rotation.y=Math.sin(t*8)*.5}
    r.render(s,c)};

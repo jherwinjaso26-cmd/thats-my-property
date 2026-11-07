@@ -2,7 +2,7 @@
 
 /* Settings: saved in this browser. Used by sounds, music, screen shake and vibration. */
 const Settings=(()=>{
-const v={music:.5,sfx:.8,musicOn:true,shake:true,vibe:true,gfx3d:true,gfx:'auto',cam:'tilt',amb:.5,lefty:false,btn:1,cb:false,big:false},ls=[];
+const v={music:.5,sfx:.8,musicOn:true,shake:true,vibe:true,gfx3d:true,gfx:'auto',cam:'tilt',amb:.5,lefty:false,btn:1,cb:false,big:false,fps30:false},ls=[];
 try{Object.assign(v,JSON.parse(localStorage.getItem('tmp_settings')||'{}'))}catch(e){}
 return{get:k=>v[k],on:fn=>ls.push(fn),
  set(k,x){v[k]=x;try{localStorage.setItem('tmp_settings',JSON.stringify(v))}catch(e){}ls.forEach(f=>f(k))}};
@@ -295,7 +295,7 @@ return{want(b,tr){wanted=!!b;if(tr&&tr!==track){track=tr;SPB=60/TR[tr].bpm/4;CHO
 /* Settings panel (opened from the home and lobby screens) and the lobby music button. */
 (function(){
  const g=id=>document.getElementById(id),m=g('settings');if(!m)return;
- const sync=()=>{g('sMusic').value=Settings.get('music')*100;g('sSfx').value=Settings.get('sfx')*100;g('sMusicOn').checked=Settings.get('musicOn');g('sShake').checked=Settings.get('shake');g('sVibe').checked=Settings.get('vibe');g('sAmb').value=Settings.get('amb')*100;g('sGfx3d').checked=Settings.get('gfx3d')!==false;g('sGfx').value=Settings.get('gfx');g('sCam').value=Settings.get('cam');g('sLefty').checked=!!Settings.get('lefty');g('sBtn').value=Settings.get('btn')*100;g('sCb').checked=!!Settings.get('cb');g('sBig').checked=!!Settings.get('big')};
+ const sync=()=>{g('sMusic').value=Settings.get('music')*100;g('sSfx').value=Settings.get('sfx')*100;g('sMusicOn').checked=Settings.get('musicOn');g('sShake').checked=Settings.get('shake');g('sVibe').checked=Settings.get('vibe');g('sAmb').value=Settings.get('amb')*100;g('sGfx3d').checked=Settings.get('gfx3d')!==false;g('sGfx').value=Settings.get('gfx');g('sCam').value=Settings.get('cam');g('sLefty').checked=!!Settings.get('lefty');g('sBtn').value=Settings.get('btn')*100;g('sCb').checked=!!Settings.get('cb');g('sBig').checked=!!Settings.get('big');g('sFps30').checked=!!Settings.get('fps30')};
  const open=()=>{sync();m.style.display='flex'};
  ['gearH','gearL'].forEach(i=>{const b=g(i);if(b)b.onclick=open});
  g('sClose').onclick=()=>m.style.display='none';
@@ -311,6 +311,7 @@ return{want(b,tr){wanted=!!b;if(tr&&tr!==track){track=tr;SPB=60/TR[tr].bpm/4;CHO
  g('sBtn').oninput=e=>Settings.set('btn',e.target.value/100);
  g('sCb').onchange=e=>Settings.set('cb',e.target.checked);
  g('sBig').onchange=e=>Settings.set('big',e.target.checked);
+ g('sFps30').onchange=e=>Settings.set('fps30',e.target.checked);
  g('sMusicOn').onchange=e=>Settings.set('musicOn',e.target.checked);
  g('sShake').onchange=e=>Settings.set('shake',e.target.checked);
  g('sVibe').onchange=e=>{Settings.set('vibe',e.target.checked);if(e.target.checked&&navigator.vibrate)try{navigator.vibrate(60)}catch(x){}};

@@ -51,7 +51,12 @@ public class Main {
 
     public static void main(String[] args) {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
-        Javalin app = Javalin.create(c -> c.staticFiles.add("/public", Location.CLASSPATH));
+        Javalin app = Javalin.create(c -> c.staticFiles.add(s -> {
+            s.hostedPath = "/";
+            s.directory = "/public";
+            s.location = Location.CLASSPATH;
+            s.precompress = true; // the game files are compressed once and sent small
+        }));
         app.get("/health", ctx -> ctx.result("ok")); // for uptime pings (keeps Render awake)
         Db.init();
         AccountApi.routes(app);
@@ -67,6 +72,7 @@ public class Main {
             });
             ws.onClose(ctx -> {
                 synchronized (LOCK) {
+                    OUTBOX.remove(ctx.sessionId());
                     Player p = bySession.remove(ctx.sessionId());
                     if (p != null) disconnected(p);
                 }
@@ -321,9 +327,17 @@ public class Main {
 
     static void send(WsContext ctx, ObjectNode n) { sendRaw(ctx, n.toString()); }
 
-    static void sendRaw(WsContext ctx, String s) {
+    /** One outgoing queue per connection, so sending to a slow phone never slows the game for the others. */
+    static final java.util.concurrent.ConcurrentHashMap<String, Outbox> OUTBOX = new java.util.concurrent.ConcurrentHashMap<>();
+
+    static void sendRaw(WsContext ctx, String s) { sendRaw(ctx, s, false); }
+
+    static void sendRaw(WsContext ctx, String s, boolean state) {
         if (ctx == null) return;
-        try { ctx.send(s); } catch (Exception ignored) { }
+        try {
+            Outbox o = OUTBOX.computeIfAbsent(ctx.sessionId(), k -> new Outbox(ctx));
+            if (state) o.sendState(s); else o.send(s);
+        } catch (Exception ignored) { }
     }
 
     /** A random character nobody in the room is using yet. */
