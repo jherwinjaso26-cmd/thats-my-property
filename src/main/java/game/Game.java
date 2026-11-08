@@ -12,7 +12,7 @@ class Game {
     static final long DASH_MS = 180, DASH_CD = 3000, HOLD_MS = 30_000, STEAL_GRACE = 1500, BACK_LOCK = 3000, DROWN_MS = 2500;
     static final String[] DISASTERS = {"METEOR", "LIGHTNING", "TORNADO", "FLOOD", "SINKHOLE", "HAIL", "BOULDER"};
     static final String[] MODS = {"NIGHT", "SPEEDY"};
-    static final String[] POWERS = {"speed", "shield", "trap", "freeze", "smoke", "swap", "decoy"};
+    static final String[] POWERS = {"speed", "shield", "trap", "freeze", "smoke", "swap", "decoy", "magnet", "jump", "reveal", "ghost", "tele", "mine"};
     static final ScheduledExecutorService SCH = Executors.newScheduledThreadPool(2, r -> {
         Thread t = new Thread(r, "game-tick");
         t.setDaemon(true);
@@ -25,9 +25,11 @@ class Game {
         Main.Player p;
         double x, y, dx, dy, fx = 1, fy = 0, ddx = 1, ddy = 0, vx, vy;
         double skill = 0.6 + Math.random() * 0.4, wander = Math.random() * 6.28; // bot behaviour
-        long dashUntil, dashReady, speedUntil, shieldUntil, frozenUntil, trappedUntil, wetSince, padUntil, tpUntil, smokeUntil, heldMs;
+        long dashUntil, dashReady, speedUntil, shieldUntil, frozenUntil, trappedUntil, wetSince, padUntil, tpUntil, smokeUntil, magnetUntil, ghostUntil, abilityReady, heldMs;
         boolean alive = true, hasTrap, off;
         int steals, deaths, blocks; // stats for the end-of-match awards
+        int streak;                 // steals in a row (3 in a row = speed boost)
+        String lastRobber;          // who last stole from this player (stealing back = revenge shield)
     }
 
     /** Hazard: "m" meteor, "l" lightning, "h" hail, "s" sinkhole (warn, then hit; sinkholes stay open), "t" tornado (chases players), "b" boulder (warns, then rolls across the map). */
@@ -44,6 +46,7 @@ class Game {
         double x, y;
         String owner;
         long armAt;
+        boolean mine;   // a mine throws players back instead of trapping them
     }
 
     /** Map terrain: "ice" slide, "slow" mud/sand/shallows (p = speed factor), "bush" hides, "bounce" pad, "portal" (link = partner index), "lava" kills. */
@@ -62,7 +65,11 @@ class Game {
 
     final Main.Room room;
     final double W, H;
-    final boolean team;
+    final boolean team, blitz, shrink, potato, dbl, survivor, hotswap, arena, chaos;
+    final double abCd;   // ability cooldown factor (chaos = recharge twice as fast)
+    final long holdMs;
+    String roleId;              // this round's special-role player (null = nobody)
+    String role = "";            // "sprinter" (+15% speed) or "grabber" (longer steal reach)
     final int target;
     final Random rnd = new Random();
     final int seed = rnd.nextInt();
@@ -78,6 +85,8 @@ class Game {
     final Map<String, Gp> gp = new LinkedHashMap<>();
     final Map<String, Integer> scores = new HashMap<>();
     String holder, prevHolder, disaster = "", mod = "", lastBlocksSig = "", lastBearsSig = "";
+    String holder2, prevHolder2;  // the second property in "double" mode (null otherwise)
+    long lastSwap2, backLockUntil2;
     int round, hzId, lastHoles = -1;
     boolean forceFull = true;
     Ph ph;
@@ -89,9 +98,20 @@ class Game {
         this.room = room;
         int n = room.players.size();
         int big = Math.min(n, 6), extra = Math.max(0, n - 6);
-        W = 1000 + 250 * big + 120 * extra;   // more players = bigger map (grows slower past 6)
-        H = 650 + 160 * big + 80 * extra;
+        arena = room.mode.equals("arena");     // small arena: everything is close together
+        double sc = arena ? 0.62 : 1.0;
+        W = (1000 + 250 * big + 120 * extra) * sc;   // more players = bigger map (grows slower past 6)
+        H = (650 + 160 * big + 80 * extra) * sc;
         team = room.mode.equals("team");
+        blitz = room.mode.equals("blitz");     // short 15s rounds, everyone always speedy
+        survivor = room.mode.equals("survivor"); // the arena closes in and the last one standing wins the round
+        shrink = room.mode.equals("shrink") || survivor;   // the arena closes in every round
+        hotswap = room.mode.equals("hotswap"); // the property jumps to a random player every few seconds
+        chaos = room.mode.equals("chaos");     // lucky blocks twice as often, abilities recharge twice as fast
+        abCd = chaos ? 0.5 : 1.0;
+        dbl = room.mode.equals("double");       // two properties at once
+        potato = room.mode.equals("potato");   // the longer you hold the property, the slower you get
+        holdMs = blitz ? 15_000 : HOLD_MS;
         target = room.target;
         for (Main.Player p : room.players) { Gp g = new Gp(); g.p = p; gp.put(p.id, g); }
         addObstacles((int) (W * H / 90000));
@@ -103,9 +123,13 @@ class Game {
 
     int sendCount = 0;
 
+    double tickMs;   // how long a game step takes (shown on screen so lag can be traced)
+
     void tick() {
         synchronized (Main.LOCK) {
+            long t0 = System.nanoTime();
             try { step(); } catch (Exception e) { e.printStackTrace(); }
+            tickMs = tickMs * 0.9 + (System.nanoTime() - t0) / 1e6 * 0.1;
         }
     }
 
@@ -116,13 +140,16 @@ class Game {
         switch (ph) {
             case ROLE -> { if (now >= phaseEnd) { ph = Ph.COUNT; phaseEnd = now + 3000; } }
             case COUNT -> {
-                if (now >= phaseEnd) { ph = Ph.PLAY; phaseEnd = now + HOLD_MS; nextHz = now + 3000; nextBlock = now + 10_000; startDisaster(); }
+                if (now >= phaseEnd) { ph = Ph.PLAY; phaseEnd = now + holdMs; nextHz = now + 3000; nextBlock = now + 10_000; startDisaster(); }
             }
             case PLAY -> {
                 for (Gp g : gp.values()) if (g.p.bot) Bots.think(this, g, now);
                 move(dt, now);
                 Gp hg = gp.get(holder);
                 if (hg != null && hg.alive) hg.heldMs += (long) (dt * 1000);
+                Gp hg2 = holder2 == null ? null : gp.get(holder2);
+                if (hg2 != null && hg2.alive) hg2.heldMs += (long) (dt * 1000);
+                if (hotswap && now - lastSwap >= 9000) hotSwap(now);
                 steals(now);
                 hazards(now, dt);
                 flood(now);
@@ -134,7 +161,8 @@ class Game {
             case OVER -> { if (now >= phaseEnd) { finish(); return; } }
         }
         // physics still runs at 30/s, but only 2 of every 3 steps are sent (20 updates/s): less CPU and bandwidth, the client smooths the rest
-        if (++sendCount % 3 != 0) broadcast(stateMsg(now));
+        int skip = gp.size() >= 10 ? 2 : 3; // big matches send fewer updates (15/s instead of 20/s) to save bandwidth and CPU
+        if (++sendCount % skip != 0) broadcast(stateMsg(now));
     }
 
     // ---------- messages ----------
@@ -144,17 +172,17 @@ class Game {
     ObjectNode initMsg(String you) {
         ObjectNode init = Main.JSON.createObjectNode();
         init.put("t", "init").put("w", (int) W).put("h", (int) H).put("map", room.map)
-            .put("seed", seed).put("mode", room.mode).put("target", target);
+            .put("seed", seed).put("mode", room.mode).put("target", target).put("hold", (int) (holdMs / 1000));
         if (you != null) init.put("you", you);
         ArrayNode a = init.putArray("players");
         for (Gp g : gp.values())
-            a.addObject().put("id", g.p.id).put("name", g.p.name).put("character", g.p.character).put("team", g.p.team);
+            a.addObject().put("id", g.p.id).put("name", g.p.name).put("character", g.p.character).put("team", g.p.team).put("acc", g.p.acc);
         return init;
     }
 
     ObjectNode roundMsg() {
         ObjectNode n = Main.JSON.createObjectNode();
-        n.put("t", "round").put("round", round).put("holder", holder).put("disaster", disaster).put("mod", mod);
+        n.put("t", "round").put("round", round).put("holder", holder).put("holder2", holder2).put("disaster", disaster).put("mod", mod);
         ArrayNode a = n.putArray("obstacles");
         for (double[] o : obs) a.addArray().add((int) o[0]).add((int) o[1]).add((int) o[2]).add((int) o[3]);
         ArrayNode tr = n.putArray("traps");
@@ -168,8 +196,8 @@ class Game {
     /** Players are compact arrays: id, x, y, dashCooldown, dashing, alive, speed, shield, frozen, trapped, hasTrap, wet, smoke, offline. */
     ObjectNode stateMsg(long now) {
         ObjectNode n = Main.JSON.createObjectNode();
-        n.put("t", "state").put("ph", ph.name()).put("left", Math.max(0, phaseEnd - now) / 1000.0)
-            .put("round", round).put("holder", holder).put("fx", (int) fx).put("fy", (int) fy);
+        n.put("t", "state").put("ms", (int) Math.round(tickMs)).put("ph", ph.name()).put("left", Math.max(0, phaseEnd - now) / 1000.0)
+            .put("round", round).put("holder", holder).put("holder2", holder2).put("fx", (int) fx).put("fy", (int) fy);
         ArrayNode a = n.putArray("p");
         for (Gp g : gp.values())
             a.addArray().add(g.p.id).add((int) g.x).add((int) g.y).add((int) Math.max(0, g.dashReady - now))
@@ -184,7 +212,7 @@ class Game {
                 .put("w", Math.max(0, h.hitAt - now)).put("vx", (int) h.vx).put("vy", (int) h.vy);
         ArrayNode dcs = n.putArray("dc");
         for (Dc d : decoys)
-            dcs.addArray().add((int) d.x).add((int) d.y).add(d.owner.p.character).add(d.owner.p.id.equals(holder) ? 1 : 0).add(d.owner.p.id);
+            dcs.addArray().add((int) d.x).add((int) d.y).add(d.owner.p.character).add((d.owner.p.id.equals(holder) || d.owner.p.id.equals(holder2)) ? 1 : 0).add(d.owner.p.id);
         // rarely-changing lists are only sent when they change (the client keeps the last copy)
         if (forceFull || holes.size() != lastHoles) {
             lastHoles = holes.size();
@@ -203,7 +231,7 @@ class Game {
         if (forceFull || !ts.toString().equals(lastBearsSig)) {
             lastBearsSig = ts.toString();
             ArrayNode bt = n.putArray("bt");
-            for (Bt b : bears) bt.addObject().put("x", (int) b.x).put("y", (int) b.y).put("a", now >= b.armAt);
+            for (Bt b : bears) bt.addObject().put("x", (int) b.x).put("y", (int) b.y).put("a", now >= b.armAt).put("m", b.mine);
         }
         forceFull = false;
         return n;
@@ -235,7 +263,9 @@ class Game {
             if (z != null && z.k.equals("slow")) mul *= z.p;
             if (g.wetSince > 0) mul *= 0.55;
             if (now < g.speedUntil) mul *= 1.6;
-            if (g.p.id.equals(holder)) mul *= PROT_BONUS; // the protector is slightly quicker
+            if (g.p.id.equals(holder) || g.p.id.equals(holder2)) mul *= PROT_BONUS; // the protector is slightly quicker
+            if (potato && g.p.id.equals(holder)) mul *= Math.max(0.55, 1.0 - (now - lastSwap) / 50000.0); // hot potato gets heavy
+            if (g.p.id.equals(roleId) && role.equals("sprinter")) mul *= 1.15;
             if (dashing) {
                 g.vx = g.ddx * DASH_SPEED;
                 g.vy = g.ddy * DASH_SPEED;
@@ -247,9 +277,14 @@ class Game {
                     g.vy += (tvy - g.vy) * k;
                 } else { g.vx = tvx; g.vy = tvy; }
             }
+            if (z != null && z.k.equals("belt") && !dashing) { // moving floor pushes you along (link = 0 right, 1 down, 2 left, 3 up)
+                int d = z.link & 3;
+                g.vx += (d == 0 ? 130 : d == 2 ? -130 : 0);
+                g.vy += (d == 1 ? 130 : d == 3 ? -130 : 0);
+            }
             g.x = clamp(g.x + g.vx * dt, R, W - R);
             g.y = clamp(g.y + g.vy * dt, R, H - R);
-            for (double[] o : obs) {
+            if (now >= g.ghostUntil) for (double[] o : obs) { // ghosts walk through obstacles
                 double ex = g.x - o[0], ey = g.y - o[1], d = Math.hypot(ex, ey), min = R + o[2] * 0.85;
                 if (d < min && d > 0.001) { g.x = o[0] + ex / d * min; g.y = o[1] + ey / d * min; }
             }
@@ -274,21 +309,38 @@ class Game {
         }
     }
 
-    /** The holder is always the protector. Touching them steals the property and swaps roles. */
+    /** The holder is always the protector. Touching them steals the property and swaps roles (once per property in "double" mode). */
     void steals(long now) {
-        Gp h = gp.get(holder);
-        if (h == null || !h.alive || now - lastSwap < STEAL_GRACE || now < h.shieldUntil) return; // shield blocks stealing
+        stealSlot(0, now);
+        if (holder2 != null) stealSlot(1, now);
+    }
+
+    void stealSlot(int slot, long now) {
+        String hid = slot == 0 ? holder : holder2;
+        String other = slot == 0 ? holder2 : holder;
+        String prev = slot == 0 ? prevHolder : prevHolder2;
+        long swap = slot == 0 ? lastSwap : lastSwap2;
+        long lock = slot == 0 ? backLockUntil : backLockUntil2;
+        Gp h = gp.get(hid);
+        if (h == null || !h.alive || now - swap < STEAL_GRACE || now < h.shieldUntil) return; // shield blocks stealing
         for (Gp g : gp.values()) {
             if (g == h || !g.alive || g.off) continue;
+            if (g.p.id.equals(other)) continue;                                      // already holds the other property
             if (team && g.p.team.equals(h.p.team)) continue;                          // teammates don't steal from each other
-            if (g.p.id.equals(prevHolder) && now < backLockUntil) continue;          // no instant steal-back
-            if (Math.hypot(g.x - h.x, g.y - h.y) < 2 * R + 4) {
-                broadcast(evt("steal").put("from", holder).put("to", g.p.id));
-                prevHolder = holder;
-                backLockUntil = now + BACK_LOCK;
-                holder = g.p.id;
-                lastSwap = now;
+            if (g.p.id.equals(prev) && now < lock) continue;                         // no instant steal-back
+            double reach = now < g.magnetUntil ? 2 * R + 60 : 2 * R + 4; // magnet power-up
+            if (g.p.id.equals(roleId) && role.equals("grabber")) reach += 30;
+            if (Math.hypot(g.x - h.x, g.y - h.y) < reach) {
+                broadcast(evt("steal").put("from", hid).put("to", g.p.id));
+                if (slot == 0) { prevHolder = holder; backLockUntil = now + BACK_LOCK; holder = g.p.id; lastSwap = now; }
+                else { prevHolder2 = holder2; backLockUntil2 = now + BACK_LOCK; holder2 = g.p.id; lastSwap2 = now; }
                 g.steals++;
+                boolean revenge = h.p.id.equals(g.lastRobber); // stealing back from whoever robbed you
+                h.streak = 0;
+                h.lastRobber = g.p.id;
+                g.streak++;
+                if (revenge) { g.lastRobber = null; g.shieldUntil = Math.max(g.shieldUntil, now + 2000); }
+                if (g.streak >= 3) { g.streak = 0; g.speedUntil = Math.max(g.speedUntil, now + 3000); }
                 return;
             }
         }
@@ -309,6 +361,18 @@ class Game {
                 if (far) break;
             }
             hz.add(h);
+        }
+        if (round % 5 == 0) { // boss: one giant tornado, started far from everyone
+            Hz b = new Hz();
+            b.id = ++hzId; b.k = "t"; b.r = 95;
+            for (int tries = 0; tries < 40; tries++) {
+                b.x = 120 + rnd.nextDouble() * (W - 240); b.y = 120 + rnd.nextDouble() * (H - 240);
+                boolean far = true;
+                for (Gp g : gp.values()) if (Math.hypot(g.x - b.x, g.y - b.y) < 400) { far = false; break; }
+                if (far) break;
+            }
+            hz.add(b);
+            broadcast(evt("boss"));
         }
     }
 
@@ -393,8 +457,8 @@ class Game {
 
     /** Flood: water rises from every edge. Standing in it slows you, and after 2.5s you drown. */
     void flood(long now) {
-        if (!disaster.equals("FLOOD")) return;
-        double f = Math.max(0, Math.min(1, 1 - (phaseEnd - now) / (double) HOLD_MS));
+        if (!disaster.equals("FLOOD") && !shrink) return;
+        double f = Math.max(0, Math.min(1, 1 - (phaseEnd - now) / (double) holdMs));
         fx = f * 0.32 * W; fy = f * 0.32 * H;
         for (Gp g : gp.values()) {
             if (!g.alive) { g.wetSince = 0; continue; }
@@ -428,17 +492,34 @@ class Game {
         if (!g.alive) return;
         g.alive = false; g.dx = g.dy = 0; g.deaths++;
         broadcast(evt("die").put("id", g.p.id));
-        if (!g.p.id.equals(holder)) return;
+        boolean s0 = g.p.id.equals(holder), s1 = g.p.id.equals(holder2);
+        if (!s0 && !s1) return;
+        String other = s0 ? holder2 : holder;
         Gp best = null;
         double bd = 1e18;
         for (Gp o : gp.values()) {
             double d = Math.hypot(o.x - g.x, o.y - g.y);
-            if (o.alive && d < bd) { bd = d; best = o; }
+            if (o.alive && d < bd && !o.p.id.equals(other)) { bd = d; best = o; }
         }
         if (best != null) { // the property passes to the nearest survivor
-            holder = best.p.id; lastSwap = now; prevHolder = null;
-            broadcast(evt("pass").put("to", holder));
+            if (s0) { holder = best.p.id; lastSwap = now; prevHolder = null; broadcast(evt("pass").put("to", holder)); }
+            else { holder2 = best.p.id; lastSwap2 = now; prevHolder2 = null; broadcast(evt("pass").put("to", holder2)); }
         }
+    }
+
+    boolean isHolder(String id) { return id != null && (id.equals(holder) || id.equals(holder2)); }
+
+    /** The closest living property holder (other than g itself), or null. */
+    Gp nearestHolder(Gp g) {
+        Gp best = null;
+        double bd = 1e18;
+        for (String id : new String[] {holder, holder2}) {
+            Gp o = id == null ? null : gp.get(id);
+            if (o == null || o == g || !o.alive) continue;
+            double d = Math.hypot(o.x - g.x, o.y - g.y);
+            if (d < bd) { bd = d; best = o; }
+        }
+        return best;
     }
 
     int aliveCount() { int c = 0; for (Gp g : gp.values()) if (g.alive) c++; return c; }
@@ -453,7 +534,7 @@ class Game {
 
     void powerups(long now) {
         if (now >= nextBlock) { // one lucky block every 10 seconds
-            nextBlock = now + 10_000;
+            nextBlock = now + (chaos ? 5_000 : 10_000);
             for (int tries = 0; tries < 60; tries++) {
                 double x = 70 + rnd.nextDouble() * (W - 140), y = 70 + rnd.nextDouble() * (H - 140);
                 boolean ok = !inLava(x, y, 40);
@@ -472,12 +553,52 @@ class Game {
             if (now < b.armAt) continue;
             for (Gp g : gp.values()) {
                 if (g.alive && !g.p.id.equals(b.owner) && now >= g.trappedUntil && Math.hypot(g.x - b.x, g.y - b.y) < R + 10) {
-                    g.trappedUntil = now + 3000; // can't move for 3 seconds
+                    if (b.mine) { // a mine throws you back and stuns you briefly
+                        double mx = g.x - b.x, my = g.y - b.y, md = Math.max(1, Math.hypot(mx, my));
+                        g.x = clamp(g.x + mx / md * 150, R, W - R);
+                        g.y = clamp(g.y + my / md * 150, R, H - R);
+                        g.vx = g.vy = 0;
+                        g.frozenUntil = now + 1200;
+                    } else g.trappedUntil = now + 3000; // can't move for 3 seconds
                     it.remove();
                     broadcast(evt("snap").put("id", g.p.id).put("x", (int) b.x).put("y", (int) b.y));
                     break;
                 }
             }
+        }
+    }
+
+    /** Does the effect of a power-up (also used by the animals' special moves). */
+    void applyPower(Gp g, String pw, long now) {
+        switch (pw) {
+            case "speed" -> g.speedUntil = now + 5000;
+            case "shield" -> g.shieldUntil = now + 5000;
+            case "trap" -> g.hasTrap = true;
+            case "smoke" -> g.smokeUntil = now + 4000;
+            case "decoy" -> { Dc d = new Dc(); d.x = g.x; d.y = g.y; d.owner = g; d.until = now + 8000; decoys.add(d); }
+            case "freeze" -> g.frozenUntil = now + 3000; // bad luck: you freeze yourself
+            case "magnet" -> g.magnetUntil = now + 6000; // longer reach when stealing
+            case "jump" -> { // a free super leap, and your dash is ready again
+                double l = Math.hypot(g.dx, g.dy);
+                if (l > 0.1) { g.ddx = g.dx / l; g.ddy = g.dy / l; } else { g.ddx = g.fx; g.ddy = g.fy; }
+                g.dashUntil = now + 420;
+                g.dashReady = 0;
+            }
+            case "ghost" -> g.ghostUntil = now + 4000; // walk through obstacles
+            case "mine" -> { Bt b = new Bt(); b.id = ++hzId; b.x = g.x; b.y = g.y; b.owner = g.p.id; b.armAt = now + 1200; b.mine = true; bears.add(b); }
+            case "tele" -> { // jump to a random free spot
+                for (int tries = 0; tries < 60; tries++) {
+                    double tx = 80 + rnd.nextDouble() * (W - 160), ty = 80 + rnd.nextDouble() * (H - 160);
+                    boolean ok = !inLava(tx, ty, 40);
+                    if (ok) for (double[] o : obs) if (Math.hypot(o[0] - tx, o[1] - ty) < o[2] + R + 20) { ok = false; break; }
+                    if (ok) {
+                        broadcast(evt("tp").put("id", g.p.id).put("fromx", (int) g.x).put("fromy", (int) g.y).put("x", (int) tx).put("y", (int) ty));
+                        g.x = tx; g.y = ty; g.vx = g.vy = 0;
+                        break;
+                    }
+                }
+            }
+            default -> { } // swap already happened above
         }
     }
 
@@ -496,16 +617,31 @@ class Game {
                 broadcast(evt("swap").put("a", g.p.id).put("b", o.p.id));
             }
         }
-        switch (pw) {
-            case "speed" -> g.speedUntil = now + 5000;
-            case "shield" -> g.shieldUntil = now + 5000;
-            case "trap" -> g.hasTrap = true;
-            case "smoke" -> g.smokeUntil = now + 4000;
-            case "decoy" -> { Dc d = new Dc(); d.x = g.x; d.y = g.y; d.owner = g; d.until = now + 8000; decoys.add(d); }
-            case "freeze" -> g.frozenUntil = now + 3000; // bad luck: you freeze yourself
-            default -> { } // swap already happened above
-        }
+        applyPower(g, pw, now);
         broadcast(evt("power").put("id", g.p.id).put("pw", pw));
+    }
+
+    /** The animal's special move (E key / ability button). The cooldown is enforced here, on the server. */
+    void ability(Main.Player p) {
+        Gp g = gp.get(p.id);
+        long now = System.currentTimeMillis();
+        if (g == null || !g.alive || g.off || ph != Ph.PLAY || now < g.abilityReady) return;
+        if (now < g.frozenUntil || now < g.trappedUntil) return;
+        Ability a = Abilities.forCharacter(p.character);
+        g.abilityReady = now + (long) (a.cooldownMs() * abCd);
+        a.use(this, g, now);
+        broadcast(evt("ability").put("id", p.id).put("ab", Math.floorMod(p.character, Abilities.ALL.length)));
+    }
+
+    /** Hot Swap mode: every 9 seconds the property jumps to a random survivor. */
+    void hotSwap(long now) {
+        List<Gp> c = new ArrayList<>();
+        for (Gp g : gp.values()) if (g.alive && !g.off && !g.p.id.equals(holder) && !g.p.id.equals(holder2)) c.add(g);
+        lastSwap = now;
+        if (c.isEmpty()) return;
+        holder = c.get(rnd.nextInt(c.size())).p.id;
+        prevHolder = null;
+        broadcast(evt("pass").put("to", holder));
     }
 
     /** Places a stored bear trap at the player's position. */
@@ -526,11 +662,20 @@ class Game {
     // ---------- rounds ----------
 
     void endRound(long now) {
+        if (survivor && aliveCount() == 1) { // last survivor mode: the one still standing scores
+            for (Gp g : gp.values()) if (g.alive) holder = g.p.id;
+        }
         Gp hg = gp.get(holder);
-        boolean award = hg != null && hg.alive, won = false;
+        Gp hg2 = holder2 == null ? null : gp.get(holder2);
+        boolean award = hg != null && hg.alive, award2 = hg2 != null && hg2.alive, won = false;
+        Gp winGp = null;
         if (award) {
             int pts = scores.merge(team ? hg.p.team : holder, 1, Integer::sum);
-            won = pts >= target;
+            if (pts >= target) { won = true; winGp = hg; }
+        }
+        if (award2) { // the second property scores too
+            int pts2 = scores.merge(team ? hg2.p.team : holder2, 1, Integer::sum);
+            if (pts2 >= target) { won = true; if (winGp == null) winGp = hg2; }
         }
         ph = won ? Ph.OVER : Ph.SCORE;
         phaseEnd = now + (won ? 9000 : 5000);
@@ -552,8 +697,9 @@ class Game {
         }
         rows.sort((a, b) -> b.get("pts").asInt() - a.get("pts").asInt());
         ObjectNode n = Main.JSON.createObjectNode();
-        n.put("t", "scores").put("round", round).put("none", !award);
+        n.put("t", "scores").put("round", round).put("none", !award && !award2);
         if (award) n.put("holderName", hg.p.name);
+        if (award2) n.put("holderName2", hg2.p.name);
         ArrayNode arr = n.putArray("rows");
         for (ObjectNode r : rows) arr.add(r);
         if (won) {
@@ -562,6 +708,32 @@ class Game {
         }
         lastScores = n;
         broadcast(n);
+        if (won && winGp != null) recordToDb(winGp);
+    }
+
+    /** Saves the finished match to the optional database (does nothing when there is none). */
+    void recordToDb(Gp winnerGp) {
+        try { // logged-in players: update their saved account stats (works without a database)
+            for (Gp g : gp.values()) {
+                if (g.p.bot || g.p.acct == null || g.p.acct.isEmpty()) continue;
+                boolean w = team ? g.p.team.equals(winnerGp.p.team) : g == winnerGp;
+                Accounts.DEFAULT.addResult(g.p.acct, w, g.steals);
+            }
+        } catch (Exception e) {
+            // never let account saving break a match
+        }
+        if (!Db.on) return;
+        try {
+            List<Db.Rec> recs = new ArrayList<>();
+            for (Gp g : gp.values()) {
+                if (g.p.bot || g.p.uid == null || g.p.uid.isEmpty()) continue;
+                boolean w = team ? g.p.team.equals(winnerGp.p.team) : g == winnerGp;
+                recs.add(new Db.Rec(g.p.uid, g.p.name, w, g.steals, g.blocks, g.deaths, g.heldMs));
+            }
+            Db.recordMatch(room.map, room.mode, winnerGp.p.name, round, gp.size(), recs);
+        } catch (Exception e) {
+            // the game never depends on the database
+        }
     }
 
     void startRound() {
@@ -573,8 +745,11 @@ class Game {
         for (Gp g : gp.values()) {
             double[] s = sp.get(i++);
             g.x = s[0]; g.y = s[1]; g.dx = g.dy = g.vx = g.vy = 0; g.dashUntil = 0; g.dashReady = 0; g.alive = true; // everyone revives
-            g.speedUntil = g.shieldUntil = g.frozenUntil = g.trappedUntil = g.wetSince = g.padUntil = g.tpUntil = g.smokeUntil = 0;
+            g.speedUntil = g.shieldUntil = g.frozenUntil = g.trappedUntil = g.wetSince = g.padUntil = g.tpUntil = g.smokeUntil = g.magnetUntil = g.ghostUntil = 0;
             g.hasTrap = false;
+            g.abilityReady = 0;
+            g.streak = 0;
+            g.lastRobber = null;
         }
         placeTraps(sp);
         hz.clear(); blocks.clear(); bears.clear(); holes.clear(); decoys.clear();
@@ -582,13 +757,32 @@ class Game {
         String next;
         do { next = DISASTERS[rnd.nextInt(DISASTERS.length)]; } while (next.equals(disaster)); // never the same twice in a row
         disaster = next;
-        mod = (round >= 2 && rnd.nextDouble() < 0.4) ? MODS[rnd.nextInt(MODS.length)] : ""; // some rounds add a twist
+        if (round % 5 == 0) disaster = "TORNADO"; // every 5th round is a boss round with a giant tornado
+        mod = blitz ? "SPEEDY" : (round >= 2 && rnd.nextDouble() < 0.4) ? MODS[rnd.nextInt(MODS.length)] : ""; // some rounds add a twist
         holder = new ArrayList<>(gp.keySet()).get(rnd.nextInt(gp.size())); // exactly one protector
         prevHolder = null;
+        holder2 = null;
+        prevHolder2 = null;
+        if (dbl && gp.size() >= 3) { // two properties are in play
+            List<String> ids2 = new ArrayList<>(gp.keySet());
+            ids2.remove(holder);
+            holder2 = ids2.get(rnd.nextInt(ids2.size()));
+        }
+        roleId = null;
+        role = "";
+        if (gp.size() >= 3) { // one lucky non-holder gets a special role this round
+            List<String> ids = new ArrayList<>(gp.keySet());
+            ids.remove(holder);
+            ids.remove(holder2);
+            roleId = ids.get(rnd.nextInt(ids.size()));
+            role = rnd.nextBoolean() ? "sprinter" : "grabber";
+        }
         ph = Ph.ROLE;
         phaseEnd = now + 3000;
         lastSwap = now;
+        lastSwap2 = now;
         broadcast(roundMsg());
+        if (roleId != null) broadcast(evt("role").put("id", roleId).put("role", role));
     }
 
     void addObstacles(int k) {
@@ -658,7 +852,7 @@ class Game {
     }
 
     void emote(Main.Player p, int e) {
-        if (e < 0 || e > 5 || !gp.containsKey(p.id)) return;
+        if (e < 0 || e > 11 || !gp.containsKey(p.id)) return;
         broadcast(evt("emote").put("id", p.id).put("e", e));
     }
 
@@ -689,6 +883,13 @@ class Game {
             prevHolder = null;
             broadcast(evt("pass").put("to", holder));
         }
+        if (holder2 != null && (p.id.equals(holder2) || holder2.equals(holder))) {
+            Gp r2 = randomAlive();
+            holder2 = (r2 != null && !r2.p.id.equals(holder)) ? r2.p.id : null;
+            lastSwap2 = System.currentTimeMillis();
+            prevHolder2 = null;
+            if (holder2 != null) broadcast(evt("pass").put("to", holder2));
+        }
     }
 
     void stop() { if (task != null) task.cancel(false); }
@@ -702,7 +903,8 @@ class Game {
 
     void broadcast(ObjectNode n) {
         String s = n.toString(); // serialize once, send to everyone
-        for (Gp g : gp.values()) Main.sendRaw(g.p.ctx, s);
+        boolean state = "state".equals(n.path("t").asText()); // position updates may be skipped for slow connections
+        for (Gp g : gp.values()) Main.sendRaw(g.p.ctx, s, state);
     }
 
     static double clamp(double v, double lo, double hi) { return Math.max(lo, Math.min(hi, v)); }

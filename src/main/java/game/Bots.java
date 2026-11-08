@@ -10,8 +10,9 @@ final class Bots {
 
     static void think(Game G, Game.Gp g, long now) {
         if (G.ph != Game.Ph.PLAY || !g.alive || now < g.frozenUntil || now < g.trappedUntil) { g.dx = g.dy = 0; return; }
-        boolean prot = g.p.id.equals(G.holder);
-        Game.Gp h = G.gp.get(G.holder);
+        if (now >= g.abilityReady && RND.nextDouble() < 0.012) G.ability(g.p); // bots use their animal's special move now and then
+        boolean prot = G.isHolder(g.p.id);
+        Game.Gp h = G.nearestHolder(g);
         Game.Gp near = nearest(G, g);
         double tx = 0, ty = 0;
 

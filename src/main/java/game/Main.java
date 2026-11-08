@@ -21,17 +21,19 @@ public class Main {
     static final Map<String, Player> byToken = new HashMap<>();
     static final int MAX_PLAYERS = 15;
     static final int MAX_ROOMS = 200;
-    static final int CHARS = 20; // more characters than max players, so everyone can pick a unique one
+    static final int CHARS = 24; // more characters than max players, so everyone can pick a unique one
     static final long IDLE_MS = 600_000;   // no input at all for 10 minutes = removed (a host waiting in the lobby must not lose the room)
     static final long GRACE_MS = 60_000;   // a dropped connection keeps its seat this long
-    static final Set<String> MAPS = Set.of("forest", "desert", "snow", "lava", "swamp", "beach", "candy", "space", "autumn", "ruins");
+    static final Set<String> MAPS = Set.of("forest", "desert", "snow", "lava", "swamp", "beach", "candy", "space", "autumn", "ruins", "reef", "mansion");
     static final Set<String> TEAMS = Set.of("red", "blue", "green", "yellow");
     static final List<String> TEAM_LIST = List.of("red", "blue", "green", "yellow");
     static final String[] BOT_NAMES = {"Rex", "Mia", "Zed", "Pip", "Kai", "Nova", "Bolt", "Dot", "Juno", "Otto"};
 
     static class Player {
-        String id, name, team = "red", token, sid;
+        String id, name, team = "red", token, sid, uid = ""; // uid: anonymous id kept in the browser, used only for the leaderboard
+        String acct = "";   // logged-in account username ("" = playing as a guest)
         int character;
+        int acc = -1;   // chosen accessory 0..11 (-1 = automatic)
         boolean ready, bot;
         WsContext ctx;          // null for bots and while a player is reconnecting
         Room room;
@@ -49,8 +51,17 @@ public class Main {
 
     public static void main(String[] args) {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
-        Javalin app = Javalin.create(c -> c.staticFiles.add("/public", Location.CLASSPATH));
+        Javalin app = Javalin.create(c -> c.staticFiles.add(s -> {
+            s.hostedPath = "/";
+            s.directory = "/public";
+            s.location = Location.CLASSPATH;
+            s.precompress = true; // the game files are compressed once and sent small
+            s.headers = java.util.Map.of("Cache-Control", "no-cache");
+        }));
         app.get("/health", ctx -> ctx.result("ok")); // for uptime pings (keeps Render awake)
+        Db.init();
+        AccountApi.routes(app);
+        app.get("/api/leaderboard", ctx -> ctx.contentType("application/json").result(Db.leaderboardJson(ctx.queryParam("uid"))));
         app.ws("/ws", ws -> {
             ws.onConnect(ctx -> ctx.enableAutomaticPings(20, TimeUnit.SECONDS));
             ws.onMessage(ctx -> {
@@ -62,6 +73,7 @@ public class Main {
             });
             ws.onClose(ctx -> {
                 synchronized (LOCK) {
+                    OUTBOX.remove(ctx.sessionId());
                     Player p = bySession.remove(ctx.sessionId());
                     if (p != null) disconnected(p);
                 }
@@ -98,6 +110,10 @@ public class Main {
                 p.id = UUID.randomUUID().toString().substring(0, 6);
                 p.token = UUID.randomUUID().toString();
                 p.name = uniqueName(r, name);
+                String uid = m.path("uid").asText("").replaceAll("[^A-Za-z0-9_-]", "");
+                p.uid = uid.length() > 40 ? uid.substring(0, 40) : uid;
+                Account acct = Accounts.DEFAULT.byToken(m.path("acct").asText(""));   // logged in? then results are saved to the account
+                if (acct != null) { p.acct = acct.username(); p.uid = "acc_" + acct.username(); }
                 p.ctx = ctx;
                 p.sid = ctx.sessionId();
                 p.room = r;
@@ -131,13 +147,15 @@ public class Main {
                     else p.character = ch;
                     String team = m.path("team").asText(p.team);
                     if (TEAMS.contains(team)) p.team = team;
+                    if (m.has("acc")) p.acc = Math.max(-1, Math.min(11, m.path("acc").asInt(-1)));
                     broadcast(r);
                 }
                 case "settings" -> {
                     if (r.host != p || r.game != null) return;
                     String map = m.path("map").asText(r.map), mode = m.path("mode").asText(r.mode);
                     if (MAPS.contains(map)) r.map = map;
-                    if (mode.equals("solo") || mode.equals("team")) r.mode = mode;
+                    if (mode.equals("solo") || mode.equals("team") || mode.equals("blitz") || mode.equals("shrink") || mode.equals("potato") || mode.equals("double")
+                            || mode.equals("survivor") || mode.equals("hotswap") || mode.equals("arena") || mode.equals("chaos")) r.mode = mode;
                     r.target = Math.max(1, Math.min(10, m.path("target").asInt(r.target)));
                     broadcast(r);
                 }
@@ -195,6 +213,7 @@ public class Main {
                 case "input" -> { if (r.game != null) r.game.input(p, m.path("x").asDouble(), m.path("y").asDouble()); }
                 case "dash" -> { if (r.game != null) r.game.dash(p); }
                 case "use" -> { if (r.game != null) r.game.use(p); }
+                case "ability" -> { if (r.game != null) r.game.ability(p); }
                 case "leave" -> { leave(p); }
                 default -> { } // "active" heartbeat only refreshes lastActive
             }
@@ -291,7 +310,7 @@ public class Main {
         ArrayNode arr = n.putArray("players");
         for (Player q : r.players) {
             arr.addObject().put("id", q.id).put("name", q.name)
-                    .put("character", q.character).put("team", q.team)
+                    .put("character", q.character).put("team", q.team).put("acc", q.acc)
                     .put("ready", q.ready).put("bot", q.bot).put("off", q.ctx == null && !q.bot);
         }
         send(viewer.ctx, n);
@@ -309,9 +328,17 @@ public class Main {
 
     static void send(WsContext ctx, ObjectNode n) { sendRaw(ctx, n.toString()); }
 
-    static void sendRaw(WsContext ctx, String s) {
+    /** One outgoing queue per connection, so sending to a slow phone never slows the game for the others. */
+    static final java.util.concurrent.ConcurrentHashMap<String, Outbox> OUTBOX = new java.util.concurrent.ConcurrentHashMap<>();
+
+    static void sendRaw(WsContext ctx, String s) { sendRaw(ctx, s, false); }
+
+    static void sendRaw(WsContext ctx, String s, boolean state) {
         if (ctx == null) return;
-        try { ctx.send(s); } catch (Exception ignored) { }
+        try {
+            Outbox o = OUTBOX.computeIfAbsent(ctx.sessionId(), k -> new Outbox(ctx));
+            if (state) o.sendState(s); else o.send(s);
+        } catch (Exception ignored) { }
     }
 
     /** A random character nobody in the room is using yet. */

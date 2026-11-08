@@ -1,5 +1,11 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en"><head>
+<script>
+(function(){function show(m){try{var d=document.getElementById('errBanner');if(!d){d=document.createElement('div');d.id='errBanner';d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#7f1d1d;color:#fff;font:12px/1.4 monospace;padding:8px 12px;max-height:35%;overflow:auto;white-space:pre-wrap';d.onclick=function(){d.remove()};(document.body||document.documentElement).appendChild(d)}d.textContent+=m+'\n'}catch(e){}}
+addEventListener('error',function(e){show('Error: '+e.message+' ('+(e.filename||'').split('/').pop()+':'+e.lineno+')')});
+addEventListener('unhandledrejection',function(e){show('Promise error: '+(e.reason&&e.reason.message||e.reason))})})();
+</script>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="My Property">
@@ -22,6 +28,7 @@ button:hover:not(:disabled){filter:brightness(1.2)}button:active:not(:disabled){
 .chk{flex-direction:row;align-items:center;gap:10px}.chk input{width:auto}
 .gear{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));z-index:2}
 #settings{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:#000a}
+#settings .card{max-height:90vh;max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .rdy{margin-left:auto;font-size:13px;color:#86efac;white-space:nowrap}.off{opacity:.5}
 .tsh{font-size:15px;color:#0b1220;font-weight:900}
 .pri{background:linear-gradient(135deg,#facc15,#f59e0b);color:#1a1200}
@@ -63,20 +70,28 @@ html.lsx #rotate{display:none!important}
   <h1>That’s My <span>Property</span></h1><p class="sub">Hold it. Steal it. Keep it.</p>
   <input id="name" maxlength="12" placeholder="Username" autocomplete="off">
   <button id="create" class="pri">Host Room</button>
+  <button id="practice">🎓 Practice vs bots</button>
   <p id="iosTip" class="sub" style="display:none;font-size:13px">📱 iPhone tip: tap Share → <b>Add to Home Screen</b> to play full screen with no browser bars.</p>
   <div class="row"><input id="code" maxlength="4" placeholder="CODE" autocomplete="off"><button id="join">Join Room</button></div>
+  <button id="acctBtn" class="ghost">👤 Account / Login</button>
+  <button id="lbBtn" class="ghost">🏆 Leaderboard</button>
 </div></section>
+<div id="acct"><div class="card"><h1 style="font-size:24px">👤 Account</h1><div id="acctBody"></div><button id="acctClose" class="pri">Close</button></div></div>
+<div id="lb"><div class="card"><h1 style="font-size:24px">🏆 Leaderboard</h1><div id="lbBody" class="sub"></div><button id="lbClose" class="pri">Close</button></div></div>
 
 <section id="lobby" class="screen">
   <header><div>Room<b id="rc"></b><button id="copy" class="ghost">Copy</button><button id="invite" class="ghost">Invite</button><button id="mus" class="ghost">🎵</button><button id="gearL" class="ghost" title="Settings">⚙</button></div><button id="leave" class="ghost">Leave</button></header>
   <main>
     <div class="panel"><h2>Players <span id="pc"></span></h2><div id="plist"></div><button id="ready" class="pri" style="margin-top:auto">I’m ready</button></div>
     <div class="panel">
-      <h2>Character</h2><div id="chars" class="chips"></div>
+      <h2>Character</h2><canvas id="prev" title="Your character"></canvas><div id="chars" class="chips"></div>
+      <div id="abInfo" class="minfo"></div>
+      <h2>Accessory</h2><div id="accs" class="chips"></div>
       <h2>Team color</h2><div id="teams" class="chips"></div>
       <h2>Match</h2>
-      <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option></select></label>
-      <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option></select></label>
+      <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option><option value="reef">🪸 Coral Reef</option><option value="mansion">👻 Haunted Mansion</option></select></label>
+      <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option><option value="blitz">⚡ Blitz (15s rounds)</option><option value="shrink">🌊 Shrinking Arena</option><option value="potato">🥔 Hot Potato</option><option value="double">🏠🏠 Two Properties</option><option value="survivor">🏆 Last Survivor</option><option value="hotswap">🔀 Hot Swap</option><option value="arena">🥊 Small Arena</option><option value="chaos">🎪 Chaos</option></select></label>
+      <p id="modeInfo" class="minfo"></p>
       <label class="field">Race to: <b id="tv"></b><input id="target" type="range" min="1" max="10"></label>
       <button id="addbot" class="ghost" style="margin-bottom:8px">🤖 Add bot</button>
       <button id="start" class="pri">Start Match</button>
@@ -87,16 +102,25 @@ html.lsx #rotate{display:none!important}
 </section>
 
 <div id="settings"><div class="card"><h1 style="font-size:24px">Settings</h1>
-  <label class="field">🎵 Lobby music volume<input id="sMusic" type="range" min="0" max="100"></label>
+  <label class="field">🎵 Music volume<input id="sMusic" type="range" min="0" max="100"></label>
+  <label class="field">🌬️ Ambient sound volume<input id="sAmb" type="range" min="0" max="100"></label>
   <label class="field">🔊 Sound effects volume<input id="sSfx" type="range" min="0" max="100"></label>
-  <label class="field chk"><input id="sMusicOn" type="checkbox"> Play lobby music</label>
+  <label class="field chk"><input id="sMusicOn" type="checkbox"> Play music</label>
+  <label class="field chk"><input id="sGfx3d" type="checkbox"> 3D graphics (turn off for the classic 2D view)</label>
+  <label class="field">🎨 Graphics quality<select id="sGfx"><option value="auto">Auto</option><option value="high">High (shadows)</option><option value="med">Medium</option><option value="low">Low (fastest)</option></select></label>
+  <label class="field">📷 Camera<select id="sCam"><option value="tilt">Tilted (default)</option><option value="top">Top-down</option><option value="close">Close-up</option></select></label>
   <label class="field chk"><input id="sShake" type="checkbox"> Screen shake</label>
   <label class="field chk"><input id="sVibe" type="checkbox"> Vibration (phones)</label>
+  <label class="field chk"><input id="sLefty" type="checkbox"> Left-handed controls (joystick on the right)</label>
+  <label class="field">🎮 Button size<input id="sBtn" type="range" min="70" max="150"></label>
+  <label class="field chk"><input id="sCb" type="checkbox"> Colorblind-friendly team colors</label>
+  <label class="field chk"><input id="sBig" type="checkbox"> Bigger text on the game screen</label>
+  <label class="field chk"><input id="sFps30" type="checkbox"> Battery saver: draw 30 frames per second</label>
   <button id="sClose" class="pri">Done</button></div></div>
 
 <script>
-const CH=['🐱','🐶','🦊','🐼','🐸','🐵','🐰','🐻','🐯','🦁','🐷','🐮','🐨','🐭','🐺','🦝','🐧','🐥','🦄','🤖'],
-CHN=['Cat','Dog','Fox','Panda','Frog','Monkey','Bunny','Bear','Tiger','Lion','Pig','Cow','Koala','Mouse','Wolf','Raccoon','Penguin','Chick','Unicorn','Robot'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'},TSH={red:'●',blue:'■',green:'▲',yellow:'◆'};
+const CH=['🐱','🐶','🦊','🐼','🐸','🐵','🐰','🐻','🐯','🦁','🐷','🐮','🐨','🐭','🐺','🦝','🐧','🐥','🦄','🤖','🦉','🦛','🐲','🐝'],
+CHN=['Cat','Dog','Fox','Panda','Frog','Monkey','Bunny','Bear','Tiger','Lion','Pig','Cow','Koala','Mouse','Wolf','Raccoon','Penguin','Chick','Unicorn','Robot','Owl','Hippo','Dragon','Bee'],TEAMS={red:'#ef4444',blue:'#3b82f6',green:'#22c55e',yellow:'#eab308'},TSH={red:'●',blue:'■',green:'▲',yellow:'◆'};
 const $=id=>document.getElementById(id);
 const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 if(IOS){document.querySelectorAll('#rotate .ios').forEach(e=>e.style.display='block');if(!navigator.standalone)$('iosTip').style.display='block'}
@@ -110,7 +134,7 @@ let ws,S=null,lastAct=0,token=null,tries=0,rc=0;
 try{token=sessionStorage.getItem('tmp_tok')}catch(e){}
 function setTok(t){token=t;try{t?sessionStorage.setItem('tmp_tok',t):sessionStorage.removeItem('tmp_tok')}catch(e){}}
 function clearTok(){setTok(null);rc=0}
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));if(typeof Music!=='undefined')Music.want(id==='lobby')}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));if(typeof Music!=='undefined'){const g=id==='game';Music.want(id==='lobby'||g,g?'match':'lobby')}}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2600)}
 function open(first){
   const w=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');ws=w;
@@ -141,7 +165,7 @@ function on(m){
   else if(['init','round','state','ev','scores'].includes(m.t))GameUI.on(m);
   else if(m.t==='chat'){const d=document.createElement('div'),b=document.createElement('b');b.textContent=m.from+': ';d.append(b,m.text);const l=$('log');l.append(d);l.scrollTop=l.scrollHeight}
   else if(m.t==='pong'){Net.ping=Date.now()-m.ts}
-  else if(m.t==='welcome'){setTok(m.token);if(rc){rc=0;toast('Reconnected ✅')}}
+  else if(m.t==='welcome'){setTok(m.token);if(rc){rc=0;toast('Reconnected ✅')}try{const a=localStorage.getItem('tmp_acc');if(a!==null&&a!=='-1')go({t:'profile',acc:+a})}catch(e){}if(ME&&ME.favorite>=0)go({t:'profile',character:ME.favorite});if(practice){practice=false;for(let i=0;i<3;i++)go({t:'addbot'});go({t:'settings',map:'forest',mode:'solo',target:2});go({t:'start'})}}
   else if(m.t==='resumefail'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg);if(ws)ws.close()}
   else if(m.t==='kicked'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg)}
   else if(m.t==='error'){toast(m.msg);if(!S&&!rc&&ws)ws.close()}
@@ -163,8 +187,15 @@ function render(){
   const ch=$('chars');ch.innerHTML='';
   CH.forEach((e,i)=>{const taken=S.players.some(p=>p.id!==S.you&&p.character===i);
     const b=btn('chip'+(me.character===i?' sel':'')+(taken?' taken':''),e,()=>go({t:'profile',character:i}));b.title=CHN[i]+(taken?' (taken)':'');b.disabled=taken;ch.append(b)});
+  const ai=ABIL[me.character%ABIL.length];$('abInfo').textContent='Special move: '+ai[0]+' '+ai[1]+' — '+ai[2]+' ('+ai[3]+'s recharge, key Q)';
+  const ac=$('accs');ac.innerHTML='';const myAcc=me.acc==null?-1:me.acc;
+  const accBtn=(lbl,title,val)=>{const b=btn('chip'+(myAcc===val?' sel':''),lbl,()=>{try{localStorage.setItem('tmp_acc',String(val))}catch(e){}go({t:'profile',acc:val})});b.title=title;ac.append(b)};
+  accBtn('🎲','Surprise me (automatic)',-1);ACC.forEach((a,i)=>accBtn(a[0],a[1],i));
   const tm=$('teams');tm.innerHTML='';
   Object.keys(TEAMS).forEach(k=>{const b=btn('dot'+(me.team===k?' sel':''),'',()=>go({t:'profile',team:k}));b.style.background=TEAMS[k];b.textContent=TSH[k];b.className+=' tsh';b.disabled=!team;tm.append(b)});
+  const MI={solo:'Everyone for themselves. Hold the property for 30 seconds to score.',team:'Teammates never steal from each other. Your team shares the score.',blitz:'⚡ 15 second rounds and everyone is fast. Pure chaos!',shrink:'🌊 Water closes in every round. Hold the middle to survive!',potato:'🥔 The longer you hold the property, the slower you get. Pass it on!',double:'🏠🏠 Two properties are in play at once. Hold one until time runs out to score!',survivor:'🏆 The arena closes in. The last player standing wins the round!',hotswap:'🔀 The property jumps to a random player every 9 seconds.',arena:'🥊 A tiny map with non-stop action.',chaos:'🎪 Lucky blocks twice as often and special moves recharge twice as fast.'};
+  $('modeInfo').textContent=MI[S.mode]||'';
+  if(typeof R3D!=='undefined'){try{if(!render.pv){render.pv=1;if(!R3D.previewStart($('prev')))$('prev').style.display='none'}R3D.previewSet(me.character,team?TEAMS[me.team]:'#334155',me.id,me.acc)}catch(err){console.error(err);$('prev').style.display='none'}}
   $('map').value=S.map;$('mode').value=S.mode;$('target').value=S.target;$('tv').textContent=S.target;
   ['map','mode','target'].forEach(i=>$(i).disabled=!host);
   const nr=S.players.filter(p=>p.ready||p.bot).length;
@@ -175,9 +206,62 @@ function render(){
 const settings=()=>go({t:'settings',map:$('map').value,mode:$('mode').value,target:+$('target').value});
 ['map','mode','target'].forEach(i=>$(i).onchange=settings);
 $('target').oninput=()=>$('tv').textContent=$('target').value;
-$('create').onclick=()=>go({t:'create',name:$('name').value});
+const ACC=[['🎀','Bow'],['🎉','Party hat'],['👓','Glasses'],['🌸','Flower'],['⭐','Star clips'],['👑','Crown'],['🎩','Top hat'],['🐱','Cat band'],['😇','Halo'],['🕶️','Sunglasses'],['🧙','Wizard hat'],['🚫','No accessory']];
+let practice=false;
+const UID=(()=>{let u='';try{u=localStorage.getItem('tmp_uid')||''}catch(e){}if(!u){u=((window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now().toString(36)).replace(/[^A-Za-z0-9]/g,'');try{localStorage.setItem('tmp_uid',u)}catch(e){}}return u})();
+$('create').onclick=()=>go({t:'create',name:$('name').value,uid:UID,acct:AT});
+$('practice').onclick=()=>{practice=true;go({t:'create',name:$('name').value,uid:UID,acct:AT})};
+$('lbBtn').onclick=()=>{$('lb').classList.add('on');const b=$('lbBody');b.textContent='Loading…';
+ fetch('/api/leaderboard?uid='+encodeURIComponent(UID)).then(r=>r.json()).then(d=>{
+  b.textContent='';const add=(t,c)=>{const p=document.createElement('div');p.className=c||'lbr';p.textContent=t;b.append(p);return p};
+  if(!d.on){add('The leaderboard is not set up yet. The server owner needs to add a database.','sub');return}
+  if(d.error){add('Could not load the leaderboard. Try again soon.','sub');return}
+  if(d.me)add('You: '+d.me.wins+' wins · '+d.me.matches+' matches · '+d.me.steals+' steals · '+d.me.blocks+' lucky blocks','lbme');
+  add('Top players','lbh');
+  if(!d.top.length)add('No matches recorded yet. Play one!','sub');
+  d.top.forEach((r,i)=>add((['🥇','🥈','🥉'][i]||(i+1)+'.')+' '+r.name+' — '+r.wins+' wins ('+r.matches+' matches, '+r.steals+' steals)'));
+  if(d.recent&&d.recent.length){add('Recent matches','lbh');d.recent.forEach(r=>add('🗺️ '+r.map+' · '+r.mode+' · winner '+r.winner+' · '+r.players+' players'))}
+ }).catch(()=>{b.textContent='Could not load the leaderboard.'})};
+$('lbClose').onclick=()=>$('lb').classList.remove('on');
+/* ---- account: create, read, update, delete, login, logout (saved by the server in a file) ---- */
+let AT='';try{AT=localStorage.getItem('tmp_acct')||''}catch(e){}
+let ME=null;
+const api=(method,url,body)=>fetch(url,{method,headers:{'Content-Type':'application/json','X-Token':AT},body:body?JSON.stringify(body):undefined}).then(r=>r.json().then(j=>{if(!r.ok)throw new Error(j.error||'Something went wrong');return j}));
+function setAcct(token,profile){AT=token||'';ME=profile||null;try{if(ME)localStorage.setItem('tmp_acct',AT);else localStorage.removeItem('tmp_acct')}catch(e){}
+ $('acctBtn').textContent=ME?'👤 '+ME.displayName:'👤 Account / Login';if(ME)$('name').value=ME.displayName}
+if(AT)api('GET','/api/account').then(p=>setAcct(AT,p)).catch(()=>setAcct('',null));
+function renderAcct(msg,isErr){
+ const b=$('acctBody');b.textContent='';
+ const mk=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e};
+ const field=(label,type,val,max)=>{const l=mk('label','field',label),i=document.createElement('input');i.type=type;i.value=val||'';i.maxLength=max||(type==='password'?64:16);l.append(i);b.append(l);return i};
+ const btnE=(text,cls,fn)=>{const x=mk('button',cls,text);x.onclick=fn;b.append(x);return x};
+ if(msg)b.append(mk('div',isErr?'lbme err':'lbme',msg));
+ if(!ME){
+  b.append(mk('div','lbh','Login'));
+  const lu=field('Username','text'),lp=field('Password','password');
+  btnE('Login','pri',()=>api('POST','/api/account/login',{username:lu.value.trim(),password:lp.value}).then(j=>{setAcct(j.token,j.profile);renderAcct('Welcome back, '+j.profile.displayName+'!')}).catch(e=>renderAcct(e.message,true)));
+  b.append(mk('div','lbh','Create a new account'));
+  const ru=field('Username (3-16 letters, numbers or _)','text'),rp=field('Password (6 or more characters)','password'),rd=field('Display name shown in games','text','',12);
+  btnE('Create account','pri',()=>api('POST','/api/account/register',{username:ru.value.trim(),password:rp.value,displayName:rd.value.trim()}).then(j=>{setAcct(j.token,j.profile);renderAcct('Account created! You are logged in.')}).catch(e=>renderAcct(e.message,true)));
+  return}
+ b.append(mk('div','lbme','👤 '+ME.username+' · joined '+new Date(ME.created).toLocaleDateString()));
+ b.append(mk('div','lbr','Display name: '+ME.displayName));
+ b.append(mk('div','lbr','Favorite animal: '+(ME.favorite>=0?CH[ME.favorite]+' '+CHN[ME.favorite]:'none')));
+ b.append(mk('div','lbr','Matches '+ME.matches+' · Wins '+ME.wins+' · Steals '+ME.steals));
+ b.append(mk('div','lbh','Edit profile'));
+ const ed=field('Display name','text',ME.displayName,12);
+ const fs=document.createElement('select');[['-1','No favorite']].concat(CH.map((c,i)=>[String(i),c+' '+CHN[i]])).forEach(o=>{const op=document.createElement('option');op.value=o[0];op.textContent=o[1];fs.append(op)});fs.value=String(ME.favorite);
+ const fl=mk('label','field','Favorite animal');fl.append(fs);b.append(fl);
+ const cp=field('Current password (only needed to change it)','password'),np=field('New password','password');
+ btnE('Save changes','pri',()=>api('PUT','/api/account',{displayName:ed.value.trim(),favorite:+fs.value,currentPassword:cp.value,newPassword:np.value}).then(p=>{setAcct(AT,p);renderAcct('Saved ✅')}).catch(e=>renderAcct(e.message,true)));
+ btnE('Log out','',()=>api('POST','/api/account/logout').catch(()=>0).then(()=>{setAcct('',null);renderAcct('You are logged out.')}));
+ b.append(mk('div','lbh','Delete account'));
+ const dp=field('Type your password to delete','password');
+ btnE('Delete my account','dng',()=>{if(!confirm('Delete your account for good?'))return;api('DELETE','/api/account',{password:dp.value}).then(()=>{setAcct('',null);renderAcct('Account deleted.')}).catch(e=>renderAcct(e.message,true))})}
+$('acctBtn').onclick=()=>{$('acct').classList.add('on');renderAcct()};
+$('acctClose').onclick=()=>$('acct').classList.remove('on');
 $('code').addEventListener('input',e=>{const c=e.target;c.value=c.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4)});
-$('join').onclick=()=>{const code=$('code').value.toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4){toast('Enter the 4-letter room code');return}go({t:'join',name:$('name').value,code})};
+$('join').onclick=()=>{const code=$('code').value.toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4){toast('Enter the 4-letter room code');return}go({t:'join',name:$('name').value,code,uid:UID,acct:AT})};
 $('ready').onclick=()=>go({t:'ready'});
 $('addbot').onclick=()=>go({t:'addbot'});
 $('invite').onclick=()=>{const url=location.origin+location.pathname+'?code='+S.code;
@@ -193,7 +277,8 @@ const sendChat=()=>{const v=$('msg').value.trim();if(v){go({t:'chat',text:v});$(
 $('send').onclick=sendChat;$('msg').onkeydown=e=>{if(e.key==='Enter')sendChat()};
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{const n=Date.now();if(S&&n-lastAct>10000){lastAct=n;go({t:'active'})}}));
 document.addEventListener('click',()=>{try{screen.orientation.lock('landscape')}catch(e){}},{once:true});
-</script><script src="fx.js"></script>
-<script src="game.js"></script>
-<script src="help.js"></script>
+</script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>window.THREE||document.write('<script src="three.min.js"><\/script>')</script><script src="fx.js?v=13"></script>
+<script src="game3d.js?v=13"></script>
+<script src="game.js?v=13"></script>
+<script src="help.js?v=13"></script>
 </body></html>
