@@ -188,16 +188,18 @@ const Minimap={draw(c,o){
 
 /* Fullscreen toggle: one button per screen (home, lobby, game), all kept in sync. */
 const FS=(()=>{
+ const STANDALONE=!!(navigator.standalone||(window.matchMedia&&(matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches)));
+ if(STANDALONE)document.documentElement.classList.add('app');
  const de=document.documentElement,req=de.requestFullscreen||de.webkitRequestFullscreen,ex=document.exitFullscreen||document.webkitExitFullscreen;
  const on=()=>!!(document.fullscreenElement||document.webkitFullscreenElement),btns=[];
  const sync=b=>{b.textContent=on()?'⤡':'⛶';b.title=on()?'Exit fullscreen':'Fullscreen'};
  async function toggle(){
-  if(!req){if(typeof toast==='function')toast('Fullscreen isn’t supported here. On iPhone use Share → Add to Home Screen.');return}
+  if(!req){if(typeof toast==='function')toast('iPhone can’t full-screen a web page. Tap Share → Add to Home Screen, then open the game from that icon.');return}
   try{if(on())await ex.call(document);else{await req.call(de);try{await screen.orientation.lock('landscape')}catch(e){}}}catch(e){}
  }
  function button(cls){const b=document.createElement('button');b.className='ghost fsb '+(cls||'');b.setAttribute('aria-label','Toggle fullscreen');b.onclick=toggle;sync(b);btns.push(b);return b}
  ['fullscreenchange','webkitfullscreenchange'].forEach(e=>document.addEventListener(e,()=>{btns.forEach(sync);if(!on()){try{screen.orientation.unlock()}catch(x){}}}));
- const home=document.getElementById('home');if(home)home.append(button('fs-home'));
+ ['home','host','joinS','lobby'].forEach(id=>{const s=document.getElementById(id);if(s)s.append(button('fs-home'))});
  const lv=document.getElementById('leave');
  if(lv){const w=document.createElement('div');w.style.cssText='display:flex;gap:8px';lv.replaceWith(w);w.append(button(),lv)}
  return{button};

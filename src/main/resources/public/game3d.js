@@ -4,7 +4,7 @@
    If Three.js did not load, or anything throws, game.js quietly falls back to the 2D renderer. */
 const R3D=(()=>{
 const T=window.THREE;
-if(!T){const N=()=>{};return{available:()=>false,get on(){return false},attach:N,init:()=>false,setRound:N,frame:N,burst:N,fx:N,resize:N,stop:N,hide:N,lower:()=>false,toScreen:()=>null,previewStart:()=>false,previewSet:N,previewStop:N}}
+if(!T){const N=()=>{};return{available:()=>false,get on(){return false},attach:N,init:()=>false,setRound:N,frame:N,burst:N,fx:N,resize:N,stop:N,hide:N,lower:()=>false,toScreen:()=>null,previewStart:()=>false,previewSet:N,previewStop:N,previewRotate:N,mapShot:()=>null}}
 
 const PI=Math.PI,EF='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
 let failed=false,rd=null,sc=null,cam=null,sun=null,hemi=null,glCv=null,I=null,map='forest',TMH=null,active=false,quality=2,shadowsOn=false;
@@ -672,16 +672,50 @@ function previewStart(canvas){
   s.add(new T.HemisphereLight('#ffffff','#556688',.75));const d=new T.DirectionalLight('#ffffff',.7);d.position.set(60,140,120);s.add(d);
   const base=new T.Mesh(new T.CylinderGeometry(30,34,4,32),new T.MeshLambertMaterial({color:'#334155'}));base.position.y=-2;s.add(base);
   pv={r,s,c,canvas,char:null,ci:-1,raf:0,t0:performance.now(),ringM:base.material};
+  {let dx0=null;canvas.onpointerdown=e=>{dx0=e.clientX;try{canvas.setPointerCapture(e.pointerId)}catch(_){}};canvas.onpointermove=e=>{if(dx0==null||!pv)return;pv.rot=(pv.rot||0)+(e.clientX-dx0)*.012;dx0=e.clientX};canvas.onpointerup=canvas.onpointercancel=()=>{dx0=null}}
   const loop=now=>{if(!pv||pv.canvas!==canvas)return;pv.raf=requestAnimationFrame(loop);
    if(!canvas.isConnected||canvas.offsetParent===null)return;
    pv.fr=(pv.fr||0)+1;if(pv.fr&1)return; // the lobby preview only needs 30 frames per second
    const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;if(canvas.width!==w*2||canvas.height!==h*2){r.setSize(w*2,h*2,false);c.aspect=w/h;c.updateProjectionMatrix()}
-   const t=(now-pv.t0)/1000;if(pv.char){pv.char.root.rotation.y=t*.9;pv.char.pivot.position.y=Math.abs(Math.sin(t*3))*3;pv.char.arms[0].rotation.z=-.5+Math.sin(t*3)*.3;pv.char.arms[1].rotation.z=.5-Math.sin(t*3)*.3;if(pv.char.tail)pv.char.tail.rotation.y=Math.sin(t*8)*.5}
+   const t=(now-pv.t0)/1000;if(pv.char){pv.char.root.rotation.y=t*.9+(pv.rot||0);pv.char.pivot.position.y=Math.abs(Math.sin(t*3))*3;pv.char.arms[0].rotation.z=-.5+Math.sin(t*3)*.3;pv.char.arms[1].rotation.z=.5-Math.sin(t*3)*.3;if(pv.char.tail)pv.char.tail.rotation.y=Math.sin(t*8)*.5}
    r.render(s,c)};
   pv.raf=requestAnimationFrame(loop);return true}catch(e){console.error('preview failed',e);pv=null;return false}}
 function previewSet(ci,color,id,acc){if(!pv)return;const ak=id==null?99:accPick({acc},id);if(ci!==pv.ci||ak!==pv.ak){if(pv.char)pv.s.remove(pv.char.anchor);pv.char=buildChar(ci,ak);pv.s.add(pv.char.anchor);pv.ci=ci;pv.ak=ak;pv.char.faces.hap.visible=true}if(color)pv.ringM.color.set(color)}
+
+/* a still render of a map for the lobby: same theme, ground, mountains and scenery as the match */
+let shotR=null;const SHOT={};
+const GROUND={forest:{g:['#3d7a37','#4a8c42','#336b2f']},desert:{g:['#d9b26b','#e3c07e','#c9a059']},snow:{g:['#e4eef7','#d3e3f1','#f4f9fd']},lava:{g:['#3a2a2a','#4a3030','#2c1e1e']},swamp:{g:['#3b4a2a','#46572f','#313f23']},beach:{g:['#f1d9a0','#e9cf8e','#f7e6b8'],edge:'rgba(14,165,233,.6)'},candy:{g:['#f9a8d4','#f472b6','#fbcfe8']},space:{g:['#1e1b4b','#312e81','#27235f']},autumn:{g:['#b45309','#c2610c','#9a4a08']},ruins:{g:['#4b5563','#525c6b','#3f4753']},reef:{g:['#e9d5a1','#f1e2b4','#d9c58c'],edge:'rgba(14,165,233,.5)'},mansion:{g:['#3b2f4f','#463a5c','#2f2540']}};
+
+function mapShot(key,w,h){
+ if(failed||!window.THREE||active)return null;
+ if(SHOT[key])return SHOT[key];
+ const sv=[sc,TMH,I,map,quality,statics,dyn];
+ try{
+  const th=TM[key]||TM.forest,W=1600,H=1100;
+  if(!shotR){const c=document.createElement('canvas');c.width=w;c.height=h;shotR=new T.WebGLRenderer({canvas:c,antialias:true,preserveDrawingBuffer:true});shotR.setClearColor(0x000000,1)}
+  shotR.setSize(w,h,false);
+  TMH=th;map=key;I={w:W,h:H};quality=2;
+  const s=new T.Scene();sc=s;s.background=new T.Color(th.sky);s.fog=new T.Fog(new T.Color(th.fog||th.sky),1100,3400);
+  s.add(new T.HemisphereLight(th.hs,th.hg,.5));
+  const sn=new T.DirectionalLight(th.sun,.64),cz=H*.55;sn.position.set(W/2-380,780,cz+300);sn.target.position.set(W/2,0,cz);s.add(sn);s.add(sn.target);
+  const P=GROUND[key]||GROUND.forest;
+  const gc=document.createElement('canvas');gc.width=1024;gc.height=Math.round(1024*H/W);const x=gc.getContext('2d'),k=1024/W,r=mulberry(key.length*977+key.charCodeAt(0));
+  x.scale(k,k);x.fillStyle=P.g[0];x.fillRect(0,0,W,H);
+  for(let i=0;i<W*H/5000;i++){x.globalAlpha=.5;x.fillStyle=P.g[1+(r()*2|0)];x.beginPath();x.ellipse(r()*W,r()*H,40+r()*130,30+r()*90,r()*3,0,7);x.fill()}
+  x.globalAlpha=1;x.strokeStyle=P.edge||'rgba(0,0,0,.3)';x.lineWidth=90;x.strokeRect(0,0,W,H);x.strokeStyle='rgba(0,0,0,.45)';x.lineWidth=24;x.strokeRect(0,0,W,H);
+  buildStatics({w:W,h:H,seed:key.length*7919+key.charCodeAt(1)},gc);
+  const ops=[],kinds=th.ob,rr=mulberry(key.charCodeAt(0)*31+key.length);
+  for(let i=0;i<26;i++){const ox=140+rr()*(W-280),oy=140+rr()*(H-280),or=42+rr()*26,ry=rr()*6;try{ops.push(...place(OBJ[kinds[i%2]](or),ox,oy,ry,1,.75))}catch(e){}}
+  if(ops.length)s.add(mk(ops,true));
+  const cm=new T.PerspectiveCamera(44,w/h,10,7000);cm.position.set(W/2,520,H+560);cm.lookAt(W/2,150,H*.42);
+  shotR.render(s,cm);
+  return SHOT[key]=shotR.domElement.toDataURL('image/jpeg',.86);
+ }catch(e){return null}
+ finally{[sc,TMH,I,map,quality,statics,dyn]=sv}
+}
+function previewRotate(d){if(pv)pv.rot=(pv.rot||0)+d}
 function previewStop(){if(!pv)return;cancelAnimationFrame(pv.raf);try{pv.r.dispose()}catch(e){}pv=null}
 
 const snapshot=cb=>{snapReq=cb};
-return{snapshot,get crowd(){return crowd},get season(){return season},available,get on(){return active},attach,init,setRound,frame,burst,fx:onEvent,resize,stop,hide,lower,toScreen,previewStart,previewSet,previewStop,get quality(){return quality}};
+return{snapshot,get crowd(){return crowd},get season(){return season},available,get on(){return active},attach,init,setRound,frame,burst,fx:onEvent,resize,stop,hide,lower,toScreen,previewStart,previewSet,previewStop,previewRotate,mapShot,get quality(){return quality}};
 })();

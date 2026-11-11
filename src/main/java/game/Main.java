@@ -19,7 +19,7 @@ public class Main {
     static final Map<String, Room> rooms = new HashMap<>();
     static final Map<String, Player> bySession = new HashMap<>();
     static final Map<String, Player> byToken = new HashMap<>();
-    static final int MAX_PLAYERS = 15;
+    static final int MAX_PLAYERS = 6;
     static final int MAX_ROOMS = 200;
     static final int CHARS = 24; // more characters than max players, so everyone can pick a unique one
     static final long IDLE_MS = 600_000;   // no input at all for 10 minutes = removed (a host waiting in the lobby must not lose the room)
@@ -55,6 +55,7 @@ public class Main {
             s.hostedPath = "/";
             s.directory = "/public";
             s.location = Location.CLASSPATH;
+            s.precompress = true; // the game files are compressed once and sent small
             s.headers = java.util.Map.of("Cache-Control", "no-cache");
         }));
         app.get("/health", ctx -> ctx.result("ok")); // for uptime pings (keeps Render awake)

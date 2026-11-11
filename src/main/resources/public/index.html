@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <script>
-(function(){function show(m){try{var d=document.getElementById('errBanner');if(!d){d=document.createElement('div');d.id='errBanner';d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#7f1d1d;color:#fff;font:12px/1.4 monospace;padding:8px 12px;max-height:35%;overflow:auto;white-space:pre-wrap';d.onclick=function(){d.remove()};(document.body||document.documentElement).appendChild(d)}d.textContent+=m+'\n'}catch(e){}}
+(function(){function show(m){if(!/[?&]debug\b/.test(location.search))return;try{var d=document.getElementById('errBanner');if(!d){d=document.createElement('div');d.id='errBanner';d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#7f1d1d;color:#fff;font:12px/1.4 monospace;padding:8px 12px;max-height:35%;overflow:auto;white-space:pre-wrap';d.onclick=function(){d.remove()};(document.body||document.documentElement).appendChild(d)}d.textContent+=m+'\n'}catch(e){}}
 addEventListener('error',function(e){show('Error: '+e.message+' ('+(e.filename||'').split('/').pop()+':'+e.lineno+')')});
 addEventListener('unhandledrejection',function(e){show('Promise error: '+(e.reason&&e.reason.message||e.reason))})})();
 </script>
@@ -9,7 +9,7 @@ addEventListener('unhandledrejection',function(e){show('Promise error: '+(e.reas
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="My Property">
-<meta name="theme-color" content="#0b1220"><link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7dd3fc"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="icon-192.png">
 <title>That’s My Property</title>
 <style>
 *{box-sizing:border-box;margin:0}
@@ -62,44 +62,15 @@ html.lsx #rotate{display:none!important}
 @media (max-height:480px){main{gap:6px}.panel{padding:8px}.av{width:34px;height:34px;font-size:18px}.chip{width:38px;height:38px;font-size:20px}}
 @keyframes pop{from{transform:scale(.9);opacity:0}}
 </style>
-<link rel="stylesheet" href="game.css"></head><body>
+<link rel="stylesheet" href="game.css?v=24"></head><body>
 <div id="rotate"><div><div>📱↻</div><p>Rotate your device to landscape</p><p class="ios" style="display:none;color:#facc15;max-width:80vw;margin:10px auto 0">iPhone: swipe down from the top-right corner and turn OFF “Portrait Orientation Lock”, then turn your phone sideways.</p></div></div>
 <div id="toast"></div>
 
-<section id="home" class="screen on"><button id="gearH" class="ghost gear" title="Settings">⚙</button><div class="card">
-  <h1>That’s My <span>Property</span></h1><p class="sub">Hold it. Steal it. Keep it.</p>
-  <input id="name" maxlength="12" placeholder="Username" autocomplete="off">
-  <button id="create" class="pri">Host Room</button>
-  <button id="practice">🎓 Practice vs bots</button>
-  <p id="iosTip" class="sub" style="display:none;font-size:13px">📱 iPhone tip: tap Share → <b>Add to Home Screen</b> to play full screen with no browser bars.</p>
-  <div class="row"><input id="code" maxlength="4" placeholder="CODE" autocomplete="off"><button id="join">Join Room</button></div>
-  <button id="acctBtn" class="ghost">👤 Account / Login</button>
-  <button id="lbBtn" class="ghost">🏆 Leaderboard</button>
-</div></section>
+<section id="home" class="screen on"><button id="gearH" class="ghost gear" title="Settings">⚙</button><svg class="scene" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><rect width="1280" height="720" fill="#7dd3fc"/><g class="sun"><circle cx="1070" cy="120" r="68" fill="#fde047" stroke="#0f172a" stroke-width="5"/></g><g class="cl c1" fill="#fff" stroke="#0f172a" stroke-width="5"><ellipse cx="190" cy="130" rx="95" ry="34"/><ellipse cx="260" cy="104" rx="58" ry="30"/></g><g class="cl c2" fill="#fff" stroke="#0f172a" stroke-width="5"><ellipse cx="760" cy="90" rx="80" ry="28"/></g><path d="M0 560Q320 430 660 540T1280 500V720H0Z" fill="#4ade80" stroke="#0f172a" stroke-width="5" stroke-linejoin="round"/><path d="M0 650Q420 560 820 640T1280 610V720H0Z" fill="#22c55e" stroke="#0f172a" stroke-width="5" stroke-linejoin="round"/><rect x="110" y="478" width="92" height="70" fill="#fff7ed" stroke="#0f172a" stroke-width="5"/><polygon points="98,480 156,430 214,480" fill="#ef4444" stroke="#0f172a" stroke-width="5" stroke-linejoin="round"/><rect x="145" y="510" width="22" height="38" fill="#7c3aed" stroke="#0f172a" stroke-width="5"/><path d="M1010 560V470" stroke="#0f172a" stroke-width="5" stroke-linecap="round"/><polygon class="flag" points="1010,470 1062,490 1010,510" fill="#f472b6" stroke="#0f172a" stroke-width="5" stroke-linejoin="round"/><g class="blk"><rect x="1130" y="560" width="64" height="64" rx="12" fill="#fde047" stroke="#0f172a" stroke-width="5" transform="rotate(-8 1162 592)"/><text x="1162" y="606" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="40" fill="#0f172a">?</text></g></svg><div id="pcard" class="pcard"><span id="pav" class="pav">G</span><div class="pinfo"><b id="pname"></b><span id="psub" class="psub"></span><div class="prow"><button id="acctBtn" class="mini"><span id="acctTxt">Log in</span></button><button id="regBtn" class="mini">Register</button><button id="outBtn" class="mini" style="display:none">Log out</button></div></div></div><div class="bld">Build 24</div><div class="mm"><h1 class="mt">That’s My Property</h1><div class="stk">Hold it. Steal it. Keep it.</div><div class="mm-grid"><div class="mm-col"><button id="create" class="mb" style="--c:#fde047"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg>Host Room</button><button id="join" class="mb" style="--c:#bef264"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v4M15 12v3"/></svg>Join Room</button><button id="practice" class="mb" style="--c:#86efac"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9 17h6"/></svg>Practice vs bots</button></div><div class="mm-col"><button id="tutBtn" class="mb" style="--c:#7dd3fc"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/></svg>Tutorial</button><button id="setBtn" class="mb" style="--c:#ffffff"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Settings</button><button id="lbBtn" class="mb" style="--c:#fdba74"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3"/></svg>Leaderboard</button></div></div><p id="iosTip" class="sub" style="display:none;font-size:13px">📱 iPhone tip: tap Share → <b>Add to Home Screen</b>, then open the game from the new icon to play full screen.</p></div></section><section id="host" class="screen"><div class="pn hc"><div class="hh2"><button id="hostBack" class="mb sm" style="--c:#fff"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M15 5l-7 7 7 7"/></svg>Back</button><div class="ttl">Host a room</div><span class="tag">Up to 6 players</span></div><div class="hb2"><div class="hl"><div class="lab3">Map</div><div id="hMaps" class="mgrid"></div></div><div class="hpv"><div id="hArt" class="pvart"></div><div id="hName" class="ttl2"></div><div id="hTag" class="cap"></div><div class="lab3">Mode</div><div id="hModes" class="mchips"></div><div class="lab3">Race to</div><div id="hRace" class="rnums"></div></div></div><button id="hostGo" class="mb gobtn" style="--c:#fde047"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg>Create Room</button></div></section><section id="joinS" class="screen"><div class="pn jc"><div class="hh2"><button id="joinBack" class="mb sm" style="--c:#fff"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M15 5l-7 7 7 7"/></svg>Back</button><div class="ttl">Join a room</div></div><div class="cbs"><input class="cb" maxlength="1" autocomplete="off" autocapitalize="characters" aria-label="Room code letter 1"><input class="cb" maxlength="1" autocomplete="off" autocapitalize="characters" aria-label="Room code letter 2"><input class="cb" maxlength="1" autocomplete="off" autocapitalize="characters" aria-label="Room code letter 3"><input class="cb" maxlength="1" autocomplete="off" autocapitalize="characters" aria-label="Room code letter 4"></div><p class="hint">Ask the host for the 4-letter room code.</p><button id="joinGo" class="mb gobtn" style="--c:#bef264"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v4M15 12v3"/></svg>Join Room</button><span class="tag">Joining as <b id="jname"></b></span></div></section>
 <div id="acct"><div class="card"><h1 style="font-size:24px">👤 Account</h1><div id="acctBody"></div><button id="acctClose" class="pri">Close</button></div></div>
 <div id="lb"><div class="card"><h1 style="font-size:24px">🏆 Leaderboard</h1><div id="lbBody" class="sub"></div><button id="lbClose" class="pri">Close</button></div></div>
 
-<section id="lobby" class="screen">
-  <header><div>Room<b id="rc"></b><button id="copy" class="ghost">Copy</button><button id="invite" class="ghost">Invite</button><button id="mus" class="ghost">🎵</button><button id="gearL" class="ghost" title="Settings">⚙</button></div><button id="leave" class="ghost">Leave</button></header>
-  <main>
-    <div class="panel"><h2>Players <span id="pc"></span></h2><div id="plist"></div><button id="ready" class="pri" style="margin-top:auto">I’m ready</button></div>
-    <div class="panel">
-      <h2>Character</h2><canvas id="prev" title="Your character"></canvas><div id="chars" class="chips"></div>
-      <div id="abInfo" class="minfo"></div>
-      <h2>Accessory</h2><div id="accs" class="chips"></div>
-      <h2>Team color</h2><div id="teams" class="chips"></div>
-      <h2>Match</h2>
-      <label class="field">Map<select id="map"><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option><option value="reef">🪸 Coral Reef</option><option value="mansion">👻 Haunted Mansion</option></select></label>
-      <label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option><option value="blitz">⚡ Blitz (15s rounds)</option><option value="shrink">🌊 Shrinking Arena</option><option value="potato">🥔 Hot Potato</option><option value="double">🏠🏠 Two Properties</option><option value="survivor">🏆 Last Survivor</option><option value="hotswap">🔀 Hot Swap</option><option value="arena">🥊 Small Arena</option><option value="chaos">🎪 Chaos</option></select></label>
-      <p id="modeInfo" class="minfo"></p>
-      <label class="field">Race to: <b id="tv"></b><input id="target" type="range" min="1" max="10"></label>
-      <button id="addbot" class="ghost" style="margin-bottom:8px">🤖 Add bot</button>
-      <button id="start" class="pri">Start Match</button>
-    </div>
-    <div class="panel chat"><h2>Chat</h2><div id="log"></div>
-      <div class="row"><input id="msg" maxlength="120" placeholder="Say something" autocomplete="off"><button id="send">Send</button></div></div>
-  </main>
-</section>
+<section id="lobby" class="screen"><header class="lh"><div class="lh-l"><span class="rl">Room</span><b id="rc"></b><button id="copy" class="mb sm" style="--c:#fff"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>Copy</button><button id="invite" class="mb sm" style="--c:#7dd3fc"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 11l7.6-4M8.2 13l7.6 4"/></svg>Invite</button></div><div class="lh-r"><button id="mus" class="mb sm sq" style="--c:#fff" title="Music"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button><button id="gearL" class="mb sm sq" style="--c:#fff" title="Settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="leave" class="mb sm" style="--c:#fca5a5"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M9 4H5v16h4M16 8l5 4-5 4M21 12H9"/></svg>Leave</button></div></header><main class="lm"><div class="c1"><div class="pn plp"><h2>Players <span id="pc"></span></h2><div id="plist"></div><button id="ready" class="mb" style="--c:#bef264">I’m ready</button></div><div class="pn chat"><h2>Chat</h2><div id="log"></div><div class="row"><input id="msg" maxlength="120" placeholder="Say something" autocomplete="off"><button id="send" class="mb sm sq" style="--c:#7dd3fc" title="Send"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 12l16-8-6 16-3-6z"/></svg></button></div></div></div><div class="pn c2"><h2>Your character</h2><div class="cw"><div class="cl"><div class="vw"><canvas id="prev" title="Drag to rotate"></canvas><div id="pfb"></div><span class="b3d">3D view</span><button id="rotL" class="rot l" title="Rotate left" aria-label="Rotate left">‹</button><button id="rotR" class="rot r" title="Rotate right" aria-label="Rotate right">›</button><span class="dh">Drag to rotate</span></div><div id="teams" class="chips"></div><div class="lab3">Team color</div></div><div class="cr"><div class="lab3">Animal</div><div id="chars" class="chips tiles"></div><div id="abInfo" class="minfo"></div><div class="lab3">Accessory</div><div id="accs" class="chips tiles"></div></div></div></div><div class="pn c3"><h2>Match</h2><button id="mapBtn" class="mapcard"><span id="mapArt"></span><span id="mapName" class="mn"></span><span id="mapChg" class="mcg">Change</span></button><div id="mapTag" class="cap"></div><select id="map" hidden><option value="forest">🌲 Forest</option><option value="desert">🏜️ Desert</option><option value="snow">❄️ Snow</option><option value="lava">🌋 Lava</option><option value="swamp">🍄 Swamp</option><option value="beach">🏖️ Beach</option><option value="candy">🍭 Candy Land</option><option value="space">🌑 Moon Base</option><option value="autumn">🍁 Autumn</option><option value="ruins">🏛️ Ancient Ruins</option><option value="reef">🪸 Coral Reef</option><option value="mansion">👻 Haunted Mansion</option></select><label class="field">Mode<select id="mode"><option value="solo">Solo</option><option value="team">Team colors</option><option value="blitz">⚡ Blitz (15s rounds)</option><option value="shrink">🌊 Shrinking Arena</option><option value="potato">🥔 Hot Potato</option><option value="double">🏠🏠 Two Properties</option><option value="survivor">🏆 Last Survivor</option><option value="hotswap">🔀 Hot Swap</option><option value="arena">🥊 Small Arena</option><option value="chaos">🎪 Chaos</option></select></label><p id="modeInfo" class="minfo"></p><label class="field rt">Race to: <b id="tv"></b><input id="target" type="range" min="1" max="10"></label><button id="addbot" class="mb sm" style="--c:#fff"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9 17h6"/></svg>Add bot</button><button id="start" class="mb" style="--c:#fde047">Start Match</button></div></main></section><div id="mapPick"><div class="pn mpc"><div class="hh2"><div class="ttl">Choose a map</div><button id="mapX" class="mb sm sq" style="--c:#fca5a5;margin-left:auto" title="Close">✕</button></div><div class="hb2"><div id="pMaps" class="mgrid"></div><div class="hpv"><div id="pArt" class="pvart"></div><div id="pName" class="ttl2"></div><div id="pTags" class="mchips"></div><button id="mapUse" class="mb gobtn" style="--c:#fde047"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M5 12l5 5 9-10"/></svg>Use this map</button></div></div></div></div>
 
 <div id="settings"><div class="card"><h1 style="font-size:24px">Settings</h1>
   <label class="field">🎵 Music volume<input id="sMusic" type="range" min="0" max="100"></label>
@@ -126,7 +97,8 @@ const IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='M
 if(IOS){document.querySelectorAll('#rotate .ios').forEach(e=>e.style.display='block');if(!navigator.standalone)$('iosTip').style.display='block'}
 /* Forced landscape: if the phone is upright, rotate the UI with CSS and translate touch coordinates to match. */
 const Orient=(()=>{const de=document.documentElement;let on=false;
-  function apply(){const w=innerWidth,h=innerHeight;on=h>w&&w<=900;de.classList.toggle('lsx',on);if(on){de.style.setProperty('--lw',h+'px');de.style.setProperty('--lh',w+'px')}}
+  function apply(){const w=innerWidth,h=innerHeight;on=h>w&&w<=900;de.classList.toggle('lsx',on);if(on){de.style.setProperty('--lw',h+'px');de.style.setProperty('--lh',w+'px')}
+  const ew=on?h:w,eh=on?w:h;de.style.setProperty('--vw',ew/100+'px');de.style.setProperty('--vh',eh/100+'px');de.classList.toggle('short',eh<=450);de.classList.toggle('tiny',eh<=360);de.classList.toggle('tall',eh>=600)}
   addEventListener('resize',apply);addEventListener('orientationchange',()=>setTimeout(apply,200));apply();
   return{on:()=>on,w:()=>on?innerHeight:innerWidth,h:()=>on?innerWidth:innerHeight,pt:e=>on?{x:e.clientY,y:innerWidth-e.clientX}:{x:e.clientX,y:e.clientY}}})();
 const Net={ping:-1};
@@ -136,6 +108,10 @@ function setTok(t){token=t;try{t?sessionStorage.setItem('tmp_tok',t):sessionStor
 function clearTok(){setTok(null);rc=0}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));if(typeof Music!=='undefined'){const g=id==='game';Music.want(id==='lobby'||g,g?'match':'lobby')}}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('on'),2600)}
+const MAPS=[["forest", "Forest", "Bushes hide you from far players"], ["desert", "Desert", "Quicksand slows you down"], ["snow", "Snow", "Icy patches make you slide"], ["lava", "Lava", "Deadly lava pools"], ["swamp", "Swamp", "Mud slows you down"], ["beach", "Beach", "Tide pools slow you down"], ["candy", "Candy Land", "Launch pads bounce you"], ["space", "Moon Base", "Portals teleport you in pairs"], ["autumn", "Autumn", "Bushes hide you from far players"], ["ruins", "Ancient Ruins", "Portals teleport you in pairs"], ["reef", "Coral Reef", "Launch pads bounce you"], ["mansion", "Haunted Mansion", "Moving floors push you around"]],MAPART={"forest": ["#bae6fd", "<path d=\"M0 80Q50 62 100 80T200 76V120H0Z\" fill=\"#4ade80\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"37\" y=\"62\" width=\"6\" height=\"14\" fill=\"#92400e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><polygon points=\"40,34 25,66 55,66\" fill=\"#16a34a\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"152\" y=\"58\" width=\"6\" height=\"14\" fill=\"#92400e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><polygon points=\"155,30 140,62 170,62\" fill=\"#15803d\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"100\" cy=\"86\" r=\"11\" fill=\"#22c55e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "desert": ["#fef3c7", "<circle cx=\"160\" cy=\"26\" r=\"14\" fill=\"#fb923c\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M0 86Q50 68 100 86T200 82V120H0Z\" fill=\"#fcd34d\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"94\" y=\"48\" width=\"12\" height=\"40\" rx=\"6\" fill=\"#4ade80\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"80\" y=\"60\" width=\"10\" height=\"18\" rx=\"5\" fill=\"#4ade80\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "snow": ["#e0f2fe", "<path d=\"M0 80Q50 62 100 80T200 76V120H0Z\" fill=\"#fff\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><ellipse cx=\"110\" cy=\"96\" rx=\"38\" ry=\"9\" fill=\"#bae6fd\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"39\" y=\"62\" width=\"6\" height=\"14\" fill=\"#92400e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><polygon points=\"42,34 27,66 57,66\" fill=\"#86efac\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"162\" y=\"60\" width=\"6\" height=\"14\" fill=\"#92400e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><polygon points=\"165,32 150,64 180,64\" fill=\"#6ee7b7\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "lava": ["#fb923c", "<polygon points=\"140,84 172,34 200,84\" fill=\"#78350f\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M0 88Q50 70 100 88T200 84V120H0Z\" fill=\"#44403c\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><ellipse cx=\"80\" cy=\"98\" rx=\"42\" ry=\"10\" fill=\"#ef4444\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><ellipse cx=\"80\" cy=\"98\" rx=\"22\" ry=\"5\" fill=\"#fde047\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "swamp": ["#d9f99d", "<path d=\"M0 80Q50 62 100 80T200 76V120H0Z\" fill=\"#84cc16\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><ellipse cx=\"58\" cy=\"96\" rx=\"30\" ry=\"8\" fill=\"#92400e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><ellipse cx=\"146\" cy=\"100\" rx=\"26\" ry=\"7\" fill=\"#92400e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"98\" y=\"58\" width=\"8\" height=\"24\" rx=\"3\" fill=\"#fff7ed\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M88 60a14 14 0 0 1 28 0z\" fill=\"#ef4444\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "beach": ["#bae6fd", "<rect x=\"-4\" y=\"56\" width=\"208\" height=\"30\" rx=\"0\" fill=\"#38bdf8\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M0 86Q60 76 120 88T200 84V120H0Z\" fill=\"#fde68a\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M150 54a22 22 0 0 1 44 0z\" fill=\"#ef4444\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M172 54V92\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "candy": ["#fbcfe8", "<path d=\"M0 80Q50 62 100 80T200 76V120H0Z\" fill=\"#f9a8d4\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M52 56V92M150 62V94\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"52\" cy=\"48\" r=\"14\" fill=\"#fde047\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"150\" cy=\"54\" r=\"12\" fill=\"#a78bfa\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "space": ["#1e1b4b", "<circle cx=\"30\" cy=\"20\" r=\"2\" fill=\"#fde68a\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"120\" cy=\"14\" r=\"2\" fill=\"#fde68a\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"170\" cy=\"36\" r=\"2\" fill=\"#fde68a\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><path d=\"M0 84Q50 66 100 84T200 80V120H0Z\" fill=\"#94a3b8\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><ellipse cx=\"50\" cy=\"100\" rx=\"24\" ry=\"7\" fill=\"#64748b\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><ellipse cx=\"130\" cy=\"66\" rx=\"13\" ry=\"24\" fill=\"none\" stroke=\"#22d3ee\" stroke-width=\"6\"/>"], "autumn": ["#fed7aa", "<path d=\"M0 80Q50 62 100 80T200 76V120H0Z\" fill=\"#d97706\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"43\" y=\"56\" width=\"6\" height=\"14\" fill=\"#92400e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"46\" cy=\"48\" r=\"20\" fill=\"#f97316\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"147\" y=\"60\" width=\"6\" height=\"14\" fill=\"#92400e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"150\" cy=\"52\" r=\"18\" fill=\"#ef4444\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "ruins": ["#fde68a", "<path d=\"M0 80Q50 62 100 80T200 76V120H0Z\" fill=\"#a8a29e\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"44\" y=\"44\" width=\"18\" height=\"44\" rx=\"3\" fill=\"#f5f5f4\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"120\" y=\"52\" width=\"18\" height=\"36\" rx=\"3\" fill=\"#f5f5f4\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><ellipse cx=\"170\" cy=\"70\" rx=\"10\" ry=\"18\" fill=\"none\" stroke=\"#22d3ee\" stroke-width=\"5\"/>"], "reef": ["#67e8f9", "<path d=\"M0 92Q50 74 100 92T200 88V120H0Z\" fill=\"#fcd34d\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"48\" y=\"56\" width=\"12\" height=\"38\" rx=\"6\" fill=\"#f472b6\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"66\" y=\"68\" width=\"10\" height=\"26\" rx=\"5\" fill=\"#fb923c\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"150\" y=\"60\" width=\"12\" height=\"34\" rx=\"6\" fill=\"#f472b6\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"110\" cy=\"30\" r=\"6\" fill=\"#fff\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"122\" cy=\"18\" r=\"4\" fill=\"#fff\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"], "mansion": ["#312e81", "<rect x=\"60\" y=\"48\" width=\"80\" height=\"48\" rx=\"0\" fill=\"#4c1d95\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><polygon points=\"52,50 100,18 148,50\" fill=\"#6d28d9\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"72\" y=\"60\" width=\"14\" height=\"16\" rx=\"0\" fill=\"#fde047\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"114\" y=\"60\" width=\"14\" height=\"16\" rx=\"0\" fill=\"#fde047\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"92\" y=\"76\" width=\"16\" height=\"20\" rx=\"0\" fill=\"#78350f\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"-4\" y=\"96\" width=\"208\" height=\"28\" rx=\"0\" fill=\"#78350f\" stroke=\"#0f172a\" stroke-width=\"3\" stroke-linejoin=\"round\"/>"]};
+const SHOTS={};
+function mapSvg(k){const a=MAPART[k]||MAPART.forest;return '<span class="mv" data-mk="'+k+'">'+(SHOTS[k]?'<img class="mshot" alt="" src="'+SHOTS[k]+'">':'<svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="200" height="120" fill="'+a[0]+'"/>'+a[1]+'</svg>')+'</span>'}
+function mapCards(box,sel,pick){box.innerHTML='';MAPS.forEach(m=>{const b=document.createElement('button');b.type='button';b.className='mc2'+(m[0]===sel?' sel':'');b.innerHTML='<span class="th">'+mapSvg(m[0])+'</span><span class="nmx">'+m[1]+'</span>';b.setAttribute('aria-pressed',String(m[0]===sel));b.onclick=()=>pick(m[0]);box.append(b)})}
 function open(first){
   const w=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');ws=w;
   w.onopen=()=>{tries=0;w.send(first||JSON.stringify({t:'resume',token}))};
@@ -161,27 +137,29 @@ function lost(){
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S&&token&&!rc&&(!ws||ws.readyState>1))lost()});
 function on(m){
-  if(m.t==='lobby'){const first=!S||GameUI.active;S=m;render();if(first){if(!GameUI.active)$('log').innerHTML='';GameUI.stop();show('lobby')}}
+  if(m.t==='lobby'){const first=!S||GameUI.active;S=m;render();if(pend&&S.hostId===S.you){go({t:'settings',map:pend.map,mode:pend.mode,target:pend.target});pend=null}if(first){if(!GameUI.active)$('log').innerHTML='';GameUI.stop();show('lobby')}}
   else if(['init','round','state','ev','scores'].includes(m.t))GameUI.on(m);
   else if(m.t==='chat'){const d=document.createElement('div'),b=document.createElement('b');b.textContent=m.from+': ';d.append(b,m.text);const l=$('log');l.append(d);l.scrollTop=l.scrollHeight}
   else if(m.t==='pong'){Net.ping=Date.now()-m.ts}
   else if(m.t==='welcome'){setTok(m.token);if(rc){rc=0;toast('Reconnected ✅')}try{const a=localStorage.getItem('tmp_acc');if(a!==null&&a!=='-1')go({t:'profile',acc:+a})}catch(e){}if(ME&&ME.favorite>=0)go({t:'profile',character:ME.favorite});if(practice){practice=false;for(let i=0;i<3;i++)go({t:'addbot'});go({t:'settings',map:'forest',mode:'solo',target:2});go({t:'start'})}}
   else if(m.t==='resumefail'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg);if(ws)ws.close()}
   else if(m.t==='kicked'){clearTok();S=null;GameUI.stop();show('home');toast(m.msg)}
-  else if(m.t==='error'){toast(m.msg);if(!S&&!rc&&ws)ws.close()}
+  else if(m.t==='error'){pend=null;toast(m.msg);if(!S&&!rc&&ws)ws.close()}
 }
 function btn(cls,txt,fn){const b=document.createElement('button');b.className=cls;b.textContent=txt;b.onclick=fn;return b}
+const MI={solo:'Everyone for themselves. Hold the property for 30 seconds to score.',team:'Teammates never steal from each other. Your team shares the score.',blitz:'⚡ 15 second rounds and everyone is fast. Pure chaos!',shrink:'🌊 Water closes in every round. Hold the middle to survive!',potato:'🥔 The longer you hold the property, the slower you get. Pass it on!',double:'🏠🏠 Two properties are in play at once. Hold one until time runs out to score!',survivor:'🏆 The arena closes in. The last player standing wins the round!',hotswap:'🔀 The property jumps to a random player every 9 seconds.',arena:'🥊 A tiny map with non-stop action.',chaos:'🎪 Lucky blocks twice as often and special moves recharge twice as fast.'};
 function render(){
   const me=S.players.find(p=>p.id===S.you),host=S.hostId===S.you,team=S.mode==='team';
   $('rc').textContent=S.code;$('pc').textContent=S.players.length+'/'+(S.max||15);
   const pl=$('plist');pl.innerHTML='';
   S.players.forEach(p=>{
     const d=document.createElement('div');d.className='pl'+(p.off?' off':'');
-    const av=document.createElement('span');av.className='av';av.textContent=CH[p.character];av.style.background=team?TEAMS[p.team]:'#334155';
+    const av=document.createElement('span');av.className='av';av.textContent=CH[p.character];av.style.background=team?TEAMS[p.team]:'#bae6fd';
     const nm=document.createElement('span');nm.className='nm';nm.textContent=(team?TSH[p.team]+' ':'')+p.name+(p.bot?' 🤖':'')+(p.id===S.you?' (you)':'')+(p.id===S.hostId?' 👑':'')+(p.off?' (reconnecting…)':'');
     d.append(av,nm);
     if(p.ready&&!p.bot)d.append(Object.assign(document.createElement('span'),{className:'rdy',textContent:'✅ Ready'}));
-    if(host&&p.id!==S.you)d.append(btn('ghost',p.bot?'Remove':'Kick',()=>go({t:'kick',id:p.id})));
+    else if(!p.bot)d.append(Object.assign(document.createElement('span'),{className:'rdy wait',textContent:'Waiting'}));
+     if(host&&p.id!==S.you){const k=btn('kick','✕',()=>go({t:'kick',id:p.id}));k.title=p.bot?'Remove bot':'Kick player';k.setAttribute('aria-label',k.title);d.append(k)}
     pl.append(d);
   });
   const ch=$('chars');ch.innerHTML='';
@@ -193,10 +171,10 @@ function render(){
   accBtn('🎲','Surprise me (automatic)',-1);ACC.forEach((a,i)=>accBtn(a[0],a[1],i));
   const tm=$('teams');tm.innerHTML='';
   Object.keys(TEAMS).forEach(k=>{const b=btn('dot'+(me.team===k?' sel':''),'',()=>go({t:'profile',team:k}));b.style.background=TEAMS[k];b.textContent=TSH[k];b.className+=' tsh';b.disabled=!team;tm.append(b)});
-  const MI={solo:'Everyone for themselves. Hold the property for 30 seconds to score.',team:'Teammates never steal from each other. Your team shares the score.',blitz:'⚡ 15 second rounds and everyone is fast. Pure chaos!',shrink:'🌊 Water closes in every round. Hold the middle to survive!',potato:'🥔 The longer you hold the property, the slower you get. Pass it on!',double:'🏠🏠 Two properties are in play at once. Hold one until time runs out to score!',survivor:'🏆 The arena closes in. The last player standing wins the round!',hotswap:'🔀 The property jumps to a random player every 9 seconds.',arena:'🥊 A tiny map with non-stop action.',chaos:'🎪 Lucky blocks twice as often and special moves recharge twice as fast.'};
+  
   $('modeInfo').textContent=MI[S.mode]||'';
   if(typeof R3D!=='undefined'){try{if(!render.pv){render.pv=1;if(!R3D.previewStart($('prev')))$('prev').style.display='none'}R3D.previewSet(me.character,team?TEAMS[me.team]:'#334155',me.id,me.acc)}catch(err){console.error(err);$('prev').style.display='none'}}
-  $('map').value=S.map;$('mode').value=S.mode;$('target').value=S.target;$('tv').textContent=S.target;
+  $('pfb').textContent=CH[me.character];$('pfb').style.display=$('prev').style.display==='none'?'flex':'none';$('map').value=S.map;syncMap();$('mode').value=S.mode;$('target').value=S.target;$('tv').textContent=S.target;
   ['map','mode','target'].forEach(i=>$(i).disabled=!host);
   const nr=S.players.filter(p=>p.ready||p.bot).length;
   $('start').style.display=host?'':'none';$('start').textContent='Start Match ('+nr+'/'+S.players.length+' ready)';
@@ -207,10 +185,10 @@ const settings=()=>go({t:'settings',map:$('map').value,mode:$('mode').value,targ
 ['map','mode','target'].forEach(i=>$(i).onchange=settings);
 $('target').oninput=()=>$('tv').textContent=$('target').value;
 const ACC=[['🎀','Bow'],['🎉','Party hat'],['👓','Glasses'],['🌸','Flower'],['⭐','Star clips'],['👑','Crown'],['🎩','Top hat'],['🐱','Cat band'],['😇','Halo'],['🕶️','Sunglasses'],['🧙','Wizard hat'],['🚫','No accessory']];
-let practice=false;
+let practice=false,pend=null;
 const UID=(()=>{let u='';try{u=localStorage.getItem('tmp_uid')||''}catch(e){}if(!u){u=((window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Math.random()).slice(2)+Date.now().toString(36)).replace(/[^A-Za-z0-9]/g,'');try{localStorage.setItem('tmp_uid',u)}catch(e){}}return u})();
-$('create').onclick=()=>go({t:'create',name:$('name').value,uid:UID,acct:AT});
-$('practice').onclick=()=>{practice=true;go({t:'create',name:$('name').value,uid:UID,acct:AT})};
+$('create').onclick=()=>{buildHost();show('host');shootMaps()};
+$('practice').onclick=()=>{practice=true;pend=null;go({t:'create',name:myName(),uid:UID,acct:AT})};
 $('lbBtn').onclick=()=>{$('lb').classList.add('on');const b=$('lbBody');b.textContent='Loading…';
  fetch('/api/leaderboard?uid='+encodeURIComponent(UID)).then(r=>r.json()).then(d=>{
   b.textContent='';const add=(t,c)=>{const p=document.createElement('div');p.className=c||'lbr';p.textContent=t;b.append(p);return p};
@@ -228,21 +206,24 @@ let AT='';try{AT=localStorage.getItem('tmp_acct')||''}catch(e){}
 let ME=null;
 const api=(method,url,body)=>fetch(url,{method,headers:{'Content-Type':'application/json','X-Token':AT},body:body?JSON.stringify(body):undefined}).then(r=>r.json().then(j=>{if(!r.ok)throw new Error(j.error||'Something went wrong');return j}));
 function setAcct(token,profile){AT=token||'';ME=profile||null;try{if(ME)localStorage.setItem('tmp_acct',AT);else localStorage.removeItem('tmp_acct')}catch(e){}
- $('acctBtn').textContent=ME?'👤 '+ME.displayName:'👤 Account / Login';if(ME)$('name').value=ME.displayName}
+ paintProfile()}
 if(AT)api('GET','/api/account').then(p=>setAcct(AT,p)).catch(()=>setAcct('',null));
+let acctMode='login';
 function renderAcct(msg,isErr){
- const b=$('acctBody');b.textContent='';
+ const b=$('acctBody');b.textContent='';if(ME)$('acct').querySelector('h1').textContent='Account';
  const mk=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e};
  const field=(label,type,val,max)=>{const l=mk('label','field',label),i=document.createElement('input');i.type=type;i.value=val||'';i.maxLength=max||(type==='password'?64:16);l.append(i);b.append(l);return i};
  const btnE=(text,cls,fn)=>{const x=mk('button',cls,text);x.onclick=fn;b.append(x);return x};
  if(msg)b.append(mk('div',isErr?'lbme err':'lbme',msg));
  if(!ME){
-  b.append(mk('div','lbh','Login'));
-  const lu=field('Username','text'),lp=field('Password','password');
-  btnE('Login','pri',()=>api('POST','/api/account/login',{username:lu.value.trim(),password:lp.value}).then(j=>{setAcct(j.token,j.profile);renderAcct('Welcome back, '+j.profile.displayName+'!')}).catch(e=>renderAcct(e.message,true)));
-  b.append(mk('div','lbh','Create a new account'));
-  const ru=field('Username (3-16 letters, numbers or _)','text'),rp=field('Password (6 or more characters)','password'),rd=field('Display name shown in games','text','',12);
-  btnE('Create account','pri',()=>api('POST','/api/account/register',{username:ru.value.trim(),password:rp.value,displayName:rd.value.trim()}).then(j=>{setAcct(j.token,j.profile);renderAcct('Account created! You are logged in.')}).catch(e=>renderAcct(e.message,true)));
+  const reg=acctMode==='register';$('acct').querySelector('h1').textContent=reg?'Create account':'Log in';
+  if(!reg){const lu=field('Username','text'),lp=field('Password','password');
+   const go1=()=>api('POST','/api/account/login',{username:lu.value.trim(),password:lp.value}).then(j=>{setAcct(j.token,j.profile);renderAcct('Welcome back, '+j.profile.displayName+'!')}).catch(e=>renderAcct(e.message,true));
+   btnE('Log in','pri',go1);lp.addEventListener('keydown',e=>{if(e.key==='Enter')go1()});
+   btnE('No account yet? Register','',()=>{acctMode='register';renderAcct()});setTimeout(()=>lu.focus(),50)}
+  else{const ru=field('Username (3-16 letters, numbers or _)','text'),rp=field('Password (6 or more characters)','password'),rd=field('Display name shown in games','text','',12);
+   btnE('Create account','pri',()=>api('POST','/api/account/register',{username:ru.value.trim(),password:rp.value,displayName:rd.value.trim()}).then(j=>{setAcct(j.token,j.profile);renderAcct('Account created! You are logged in.')}).catch(e=>renderAcct(e.message,true)));
+   btnE('Already have an account? Log in','',()=>{acctMode='login';renderAcct()});setTimeout(()=>ru.focus(),50)}
   return}
  b.append(mk('div','lbme','👤 '+ME.username+' · joined '+new Date(ME.created).toLocaleDateString()));
  b.append(mk('div','lbr','Display name: '+ME.displayName));
@@ -258,17 +239,17 @@ function renderAcct(msg,isErr){
  b.append(mk('div','lbh','Delete account'));
  const dp=field('Type your password to delete','password');
  btnE('Delete my account','dng',()=>{if(!confirm('Delete your account for good?'))return;api('DELETE','/api/account',{password:dp.value}).then(()=>{setAcct('',null);renderAcct('Account deleted.')}).catch(e=>renderAcct(e.message,true))})}
-$('acctBtn').onclick=()=>{$('acct').classList.add('on');renderAcct()};
+$('acctBtn').onclick=()=>{acctMode='login';$('acct').classList.add('on');renderAcct()};
+$('regBtn').onclick=()=>{acctMode='register';$('acct').classList.add('on');renderAcct()};
+$('setBtn').onclick=()=>$('gearH').click();
+$('tutBtn').onclick=()=>{const b=document.querySelector('.help-home');if(b)b.click()};
 $('acctClose').onclick=()=>$('acct').classList.remove('on');
-$('code').addEventListener('input',e=>{const c=e.target;c.value=c.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4)});
-$('join').onclick=()=>{const code=$('code').value.toUpperCase().replace(/[^A-Z]/g,'');if(code.length!==4){toast('Enter the 4-letter room code');return}go({t:'join',name:$('name').value,code,uid:UID,acct:AT})};
 $('ready').onclick=()=>go({t:'ready'});
 $('addbot').onclick=()=>go({t:'addbot'});
 $('invite').onclick=()=>{const url=location.origin+location.pathname+'?code='+S.code;
   if(navigator.share){navigator.share({title:'That’s My Property',text:'Join my room '+S.code,url}).catch(()=>{})}
   else{navigator.clipboard&&navigator.clipboard.writeText(url);toast('Invite link copied')}};
-$('leave').onclick=()=>{go({t:'leave'});S=null;clearTok();if(ws)ws.close();show('home')};
-{const c=new URLSearchParams(location.search).get('code');if(c)$('code').value=c.toUpperCase().slice(0,4)}
+$('leave').onclick=()=>{pend=null;go({t:'leave'});S=null;clearTok();if(ws)ws.close();show('home')};
 setInterval(()=>{if(S&&!rc&&ws&&ws.readyState===1)ws.send(JSON.stringify({t:'ping',ts:Date.now()}))},2000);
 if(token){rc=1;open()} // page was refreshed: try to take the old seat back
 $('start').onclick=()=>go({t:'start'});
@@ -276,9 +257,48 @@ $('copy').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(S.code
 const sendChat=()=>{const v=$('msg').value.trim();if(v){go({t:'chat',text:v});$('msg').value=''}};
 $('send').onclick=sendChat;$('msg').onkeydown=e=>{if(e.key==='Enter')sendChat()};
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{const n=Date.now();if(S&&n-lastAct>10000){lastAct=n;go({t:'active'})}}));
-document.addEventListener('click',()=>{try{screen.orientation.lock('landscape')}catch(e){}},{once:true});
-</script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>window.THREE||document.write('<script src="three.min.js"><\/script>')</script><script src="fx.js?v=13"></script>
-<script src="game3d.js?v=13"></script>
-<script src="game.js?v=13"></script>
-<script src="help.js?v=13"></script>
+document.addEventListener('click',()=>{try{const p=screen.orientation.lock('landscape');if(p&&p.catch)p.catch(()=>{})}catch(e){}},{once:true});
+
+
+/* real 3D renders of each map (the same scenery the match uses); the drawn pictures show until each one is ready */
+let shotRun=false;
+function shootMaps(){if(shotRun||typeof R3D==='undefined'||!R3D.mapShot)return;const keys=MAPS.map(m=>m[0]).filter(k=>!SHOTS[k]);if(!keys.length)return;shotRun=true;
+ const next=()=>{const k=keys.shift();if(!k){shotRun=false;return}let u=null;try{u=R3D.mapShot(k,480,288)}catch(e){}
+  if(u){SHOTS[k]=u;document.querySelectorAll('.mv[data-mk="'+k+'"]').forEach(e=>{e.innerHTML='<img class="mshot" alt="" src="'+u+'">'})}
+  setTimeout(next,60)};setTimeout(next,400)}
+setTimeout(shootMaps,1500);
+/* ---- Sunny Meadow screens: profile card, Host a room, Join a room, map picker, 3D preview controls ---- */
+const guestName=()=>{let g='';try{g=localStorage.getItem('tmp_guest')||''}catch(e){}if(!g){g='Guest'+Math.floor(1000+Math.random()*9000);try{localStorage.setItem('tmp_guest',g)}catch(e){}}return g};
+const myName=()=>ME?ME.displayName:guestName();
+function paintProfile(){const n=myName();$('pname').textContent=n;$('pav').textContent=n.charAt(0).toUpperCase();$('psub').textContent=ME?'Logged in':'Playing as a guest';$('jname').textContent=n;$('acctTxt').textContent=ME?'Account':'Log in';$('regBtn').style.display=ME?'none':'';$('outBtn').style.display=ME?'':'none'}
+paintProfile();
+$('outBtn').onclick=()=>api('POST','/api/account/logout').catch(()=>0).then(()=>setAcct('',null));
+const HS={map:'forest',mode:'solo',target:5};
+function buildHost(){mapCards($('hMaps'),HS.map,k=>{HS.map=k;buildHost()});const m=MAPS.find(x=>x[0]===HS.map);$('hArt').innerHTML=mapSvg(m[0]);$('hName').textContent=m[1];$('hTag').textContent=m[2];
+ const mc=$('hModes');mc.innerHTML='';[...$('mode').options].forEach(o=>{const b=document.createElement('button');b.type='button';b.className='mchip'+(o.value===HS.mode?' sel':'');b.textContent=o.textContent;b.setAttribute('aria-pressed',String(o.value===HS.mode));b.onclick=()=>{HS.mode=o.value;buildHost()};mc.append(b)});
+ const rn=$('hRace');rn.innerHTML='';for(let i=1;i<=10;i++){const b=document.createElement('button');b.type='button';b.className='rnum'+(i===HS.target?' sel':'');b.textContent=i;b.setAttribute('aria-pressed',String(i===HS.target));b.onclick=()=>{HS.target=i;buildHost()};rn.append(b)}}
+$('hostGo').onclick=()=>{pend={map:HS.map,mode:HS.mode,target:HS.target};go({t:'create',name:myName(),uid:UID,acct:AT})};
+$('hostBack').onclick=()=>show('home');
+const cbs=[...document.querySelectorAll('#joinS .cb')];
+const fillCode=t=>{t=(t||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);cbs.forEach((x,j)=>x.value=t[j]||'');return t};
+cbs.forEach((c,i)=>{c.addEventListener('input',()=>{c.value=c.value.toUpperCase().replace(/[^A-Z]/g,'').slice(-1);if(c.value&&cbs[i+1])cbs[i+1].focus()});
+ c.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!c.value&&cbs[i-1]){cbs[i-1].focus();cbs[i-1].value=''}else if(e.key==='Enter')$('joinGo').click()});
+ c.addEventListener('paste',e=>{e.preventDefault();const t=fillCode((e.clipboardData||window.clipboardData).getData('text'));cbs[Math.min(t.length,3)].focus()})});
+$('join').onclick=()=>{paintProfile();show('joinS');cbs[0].focus()};
+$('joinBack').onclick=()=>show('home');
+$('joinGo').onclick=()=>{const code=cbs.map(c=>c.value).join('');if(code.length!==4){toast('Enter the 4-letter room code');return}go({t:'join',name:myName(),code,uid:UID,acct:AT})};
+{const c=new URLSearchParams(location.search).get('code');if(c){fillCode(c);paintProfile();show('joinS')}}
+function syncMap(){if(!S)return;const m=MAPS.find(x=>x[0]===S.map)||MAPS[0],host=S.hostId===S.you;$('mapArt').innerHTML=mapSvg(m[0]);$('mapName').textContent=m[1];$('mapTag').textContent=m[2];$('mapBtn').disabled=!host;$('mapChg').style.display=host?'':'none'}
+let pk='forest';
+function buildPick(){mapCards($('pMaps'),pk,k=>{pk=k;buildPick()});const m=MAPS.find(x=>x[0]===pk);$('pArt').innerHTML=mapSvg(pk);$('pName').textContent=m[1];const t=$('pTags');t.innerHTML='';[m[2],'Bigger with more players','A natural disaster each round'].forEach((x,i)=>{const s=document.createElement('span');s.className='mchip'+(i?'':' sel');s.textContent=x;t.append(s)})}
+$('mapBtn').onclick=()=>{if(S&&S.hostId===S.you){pk=S.map;buildPick();$('mapPick').classList.add('on')}};
+$('mapUse').onclick=()=>{$('map').value=pk;settings();$('mapPick').classList.remove('on')};
+$('mapX').onclick=()=>$('mapPick').classList.remove('on');
+$('mapPick').addEventListener('pointerdown',e=>{if(e.target===$('mapPick'))$('mapPick').classList.remove('on')});
+$('rotL').onclick=()=>{if(typeof R3D!=='undefined'&&R3D.previewRotate)R3D.previewRotate(-.7)};
+$('rotR').onclick=()=>{if(typeof R3D!=='undefined'&&R3D.previewRotate)R3D.previewRotate(.7)};
+</script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>window.THREE||document.write('<script src="three.min.js"><\/script>')</script><script src="fx.js?v=24"></script>
+<script src="game3d.js?v=24"></script>
+<script src="game.js?v=24"></script>
+<script src="help.js?v=24"></script>
 </body></html>

@@ -143,3 +143,229 @@ button.dng{background:#b91c1c;color:#fff}
 
 /* speed: blurring the live game picture is very slow on phones, so the game screen never uses backdrop blur */
 #game *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+
+:root{--vh:1vh;--vw:1vw}
+/* ===== Sunny Meadow main menu ===== */
+#home{--n:#0f172a;align-items:center;justify-content:center;font-family:'Baloo 2','Trebuchet MS',system-ui,sans-serif}
+#home .fl,#home .gear,#home .help-home{display:none!important}
+#home .scene{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+#home .mm{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:clamp(6px,calc(1.8*var(--vh)),20px);width:min(940px,calc(96*var(--vw)))}
+#home .mt{margin:0;font:800 clamp(34px,calc(12*var(--vh)),108px)/.95 'Baloo 2','Trebuchet MS',system-ui,sans-serif;color:#fde047;text-align:center;transform:rotate(-3deg);animation:mtBob 3.2s ease-in-out infinite;
+ text-shadow:-3px -3px 0 var(--n),3px -3px 0 var(--n),-3px 3px 0 var(--n),3px 3px 0 var(--n),0 -3px 0 var(--n),0 3px 0 var(--n),-3px 0 0 var(--n),3px 0 0 var(--n),0 7px 0 var(--n),4px 9px 0 #ef4444;background:none;-webkit-text-fill-color:currentColor}
+#home .stk{width:auto;flex:none;white-space:nowrap;background:#fff;color:var(--n);border:4px solid var(--n);border-radius:999px;padding:1px clamp(12px,calc(2.4*var(--vh)),22px);font:800 clamp(13px,calc(3*var(--vh)),20px) 'Baloo 2',sans-serif;transform:rotate(1.5deg);box-shadow:0 4px 0 var(--n)}
+#home .mm-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,calc(3*var(--vw)),36px);width:100%;margin-top:clamp(2px,calc(1*var(--vh)),10px)}
+#home .mm-col{display:flex;flex-direction:column;gap:clamp(7px,calc(1.6*var(--vh)),14px);justify-content:flex-start}
+#home .mm-row{display:flex;gap:10px}#home .mm-row .mi{width:38%;text-align:center;letter-spacing:2px;text-transform:uppercase}
+:is(#home,#host,#joinS,#lobby,#mapPick) .mb,:is(#home,#host,#joinS,#lobby) .mi{height:clamp(40px,calc(8*var(--vh)),64px);box-sizing:border-box;border:4px solid var(--n);border-radius:18px;font:800 clamp(15px,calc(3.2*var(--vh)),26px) 'Baloo 2','Trebuchet MS',system-ui,sans-serif;color:var(--n);margin:0}
+:is(#home,#host,#joinS,#lobby,#mapPick) .mb{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--c);box-shadow:0 7px 0 var(--n);cursor:pointer;padding:0 14px;width:100%;transition:transform .12s,box-shadow .12s;animation:none;text-shadow:none}
+:is(#home,#host,#joinS,#lobby,#mapPick) .mb:hover{transform:translateY(-3px) rotate(-1deg);box-shadow:0 10px 0 var(--n)}
+:is(#home,#host,#joinS,#lobby,#mapPick) .mb:active{transform:translateY(5px);box-shadow:0 2px 0 var(--n)}
+:is(#home,#host,#joinS,#lobby,#mapPick) .mb:focus-visible,:is(#home,#host,#joinS,#lobby) .mi:focus-visible,:is(#home,#host,#joinS,#lobby) .fsb:focus-visible{outline:4px solid #fff;outline-offset:3px}
+:is(#home,#host,#joinS,#lobby,#mapPick) .mb svg{flex:none}
+:is(#home,#host,#joinS,#lobby) .mi{background:#fff;padding:0 16px;box-shadow:inset 0 3px 0 #0f172a22;min-width:0}
+:is(#home,#host,#joinS,#lobby) .mi::placeholder{color:#64748b;opacity:1}
+#home .mm-col .sub{margin:0;color:var(--n);background:#fff;border:3px solid var(--n);border-radius:12px;padding:4px 8px}
+:is(#home,#host,#joinS,#lobby) .fsb{position:absolute;top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:3;width:clamp(42px,calc(8*var(--vh)),52px);height:clamp(42px,calc(8*var(--vh)),52px);min-width:0;padding:0;background:#fff;color:var(--n);border:4px solid var(--n);border-radius:14px;box-shadow:0 5px 0 var(--n);font:800 24px/1 system-ui,sans-serif;cursor:pointer}
+#home .scene .cl{animation:cloud 26s linear infinite alternate}#home .scene .c2{animation-duration:34s}
+#home .scene .blk{animation:blk 2.4s ease-in-out infinite}
+#home .scene .flag{transform-box:fill-box;transform-origin:left center;animation:wave 1.8s ease-in-out infinite}
+@keyframes mtBob{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(-2deg) translateY(-6px)}}
+@keyframes cloud{from{transform:translateX(-60px)}to{transform:translateX(90px)}}
+@keyframes blk{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes wave{0%,100%{transform:skewY(0)}50%{transform:skewY(8deg)}}
+@media (prefers-reduced-motion:reduce){#home .mt,#home .scene .cl,#home .scene .blk,#home .scene .flag{animation:none}}
+
+
+/* ===== Sunny Meadow windows: Settings, Account, Leaderboard, Tutorial ===== */
+#settings,#acct,#lb,html #help{--n:#0f172a;background:#0f172a99!important;font-family:'Baloo 2','Trebuchet MS',system-ui,sans-serif}
+#settings .card,#acct .card,#lb .card,html #help .hc{background:#fffbea!important;color:var(--n);border:4px solid var(--n)!important;border-radius:22px;box-shadow:0 8px 0 var(--n)!important;backdrop-filter:none;gap:10px;scrollbar-color:#f97316 #fde68a}
+#settings .card::-webkit-scrollbar-track,#acct .card::-webkit-scrollbar-track,#lb .card::-webkit-scrollbar-track{background:#fde68a}
+#settings .card::-webkit-scrollbar-thumb,#acct .card::-webkit-scrollbar-thumb,#lb .card::-webkit-scrollbar-thumb{background:#f97316;border:2px solid var(--n)}
+#settings h1,#acct h1,#lb h1,html #help .hh b{background:#fde047;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--n);color:var(--n);animation:none;text-shadow:none;border:4px solid var(--n);border-radius:14px;padding:2px 16px;align-self:flex-start;transform:rotate(-1.5deg);box-shadow:0 4px 0 var(--n);font-weight:800;font-size:clamp(20px,calc(4*var(--vh)),28px)!important;line-height:1.15;margin:0 0 6px;display:inline-block}
+html #help .hh b{font-size:clamp(18px,calc(3.6*var(--vh)),24px)!important}
+#settings .field,#acct .field{color:var(--n);font-weight:800;font-size:clamp(14px,calc(2.7*var(--vh)),17px)}
+#settings input:not([type=range]):not([type=checkbox]),#settings select,#acct input,#acct select{background:#fff;border:4px solid var(--n);border-radius:14px;color:var(--n);font-weight:800;padding:6px 12px;height:44px;box-sizing:border-box}
+#settings input::placeholder,#acct input::placeholder{color:#64748b;opacity:1}
+#settings input:focus,#settings select:focus,#acct input:focus,#acct select:focus{outline:4px solid #f97316;outline-offset:2px;border-color:var(--n)}
+#settings input[type=range]{accent-color:#f97316;height:28px;padding:0;border:0;background:none}
+#settings .field.chk{flex-direction:row;align-items:center;gap:12px;background:#fff;border:3px solid var(--n);border-radius:14px;padding:8px 12px;margin-bottom:6px}
+#settings input[type=checkbox]{width:26px;height:26px;min-width:26px;accent-color:#22c55e;flex:none;margin:0}
+#settings button,#acct button,#lb button,html #helpX{border:4px solid var(--n);border-radius:16px;background:#fff;color:var(--n);font:800 clamp(15px,calc(3*var(--vh)),20px) 'Baloo 2','Trebuchet MS',system-ui,sans-serif;box-shadow:0 6px 0 var(--n);padding:6px 16px;filter:none}
+#settings button.pri,#acct button.pri,#lb button.pri{background:#fde047}
+#settings button.dng,#acct button.dng,#lb button.dng{background:#fca5a5;color:var(--n)}
+#settings button:not(:disabled):hover,#acct button:not(:disabled):hover,#lb button:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--n);filter:none}
+#settings button:not(:disabled):active,#acct button:not(:disabled):active,#lb button:not(:disabled):active,html #helpX:active{transform:translateY(4px);box-shadow:0 2px 0 var(--n)}
+#settings button:focus-visible,#acct button:focus-visible,#lb button:focus-visible,html #help button:focus-visible{outline:4px solid #f97316;outline-offset:3px}
+#acct .lbh,#lb .lbh{display:inline-block;align-self:flex-start;background:#bae6fd;color:var(--n);border:3px solid var(--n);border-radius:10px;padding:0 10px;font-weight:800;font-size:17px;margin:10px 0 4px}
+#acct .lbr,#lb .lbr{background:#fff;border:3px solid var(--n);border-radius:12px;color:var(--n);font-weight:700;font-size:15px;padding:6px 10px;margin-bottom:6px}
+#acct .lbme,#lb .lbme{background:#bef264;color:var(--n);border:3px solid var(--n);border-radius:12px;font-size:15px}
+#acct .lbme.err{background:#fecaca}
+#acct .sub,#lb .sub{color:#334155}
+html #help .hh{padding:12px 16px 4px}
+html #help .ht button{background:#fff;color:var(--n);border:3px solid var(--n);border-radius:12px;box-shadow:none;font-weight:800;font-size:14px;padding:4px 12px}
+html #help .ht button.on{background:#fde047;background-image:none;color:var(--n);box-shadow:0 3px 0 var(--n)}
+html #help .hb{color:var(--n)}html #help .hb p{color:#334155}html #help .hb h3{color:#334155}
+html #help .hr{background:#fff;border:3px solid var(--n);border-radius:12px}html #help .hr b{color:var(--n)}
+html #helpX{padding:2px 12px;font-size:18px}
+#acctBody,#lbBody{display:flex;flex-direction:column;gap:8px}
+#acctBody button{width:100%}
+
+/* ===== Sunny Meadow: profile card, Host, Join, Lobby, map picker ===== */
+#host,#joinS,#lobby{--n:#0f172a;font-family:'Baloo 2','Trebuchet MS',system-ui,sans-serif;background:#7dd3fc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720' preserveAspectRatio='xMidYMax slice'%3E%3Crect width='1280' height='720' fill='%237dd3fc'/%3E%3Ccircle cx='1070' cy='120' r='68' fill='%23fde047' stroke='%230f172a' stroke-width='5'/%3E%3Cg fill='%23fff' stroke='%230f172a' stroke-width='5'%3E%3Cellipse cx='190' cy='130' rx='95' ry='34'/%3E%3Cellipse cx='260' cy='104' rx='58' ry='30'/%3E%3Cellipse cx='760' cy='90' rx='80' ry='28'/%3E%3C/g%3E%3Cpath d='M0 560Q320 430 660 540T1280 500V720H0Z' fill='%234ade80' stroke='%230f172a' stroke-width='5'/%3E%3Cpath d='M0 650Q420 560 820 640T1280 610V720H0Z' fill='%2322c55e' stroke='%230f172a' stroke-width='5'/%3E%3C/svg%3E") center bottom/100% 100% no-repeat;color:var(--n)}
+#mapPick{--n:#0f172a;position:fixed;inset:0;z-index:42;display:none;align-items:center;justify-content:center;background:#0f172a99;font-family:'Baloo 2','Trebuchet MS',system-ui,sans-serif;padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+#mapPick.on{display:flex}
+#host,#joinS{align-items:center;justify-content:center}
+.pn{background:#fffbea;border:4px solid var(--n);border-radius:20px;box-shadow:0 7px 0 var(--n);color:var(--n);padding:clamp(10px,calc(2.2*var(--vh)),22px);backdrop-filter:none}
+.pn h2,#lobby h2{font:800 clamp(16px,calc(3.4*var(--vh)),26px)/1.1 'Baloo 2','Trebuchet MS',sans-serif;text-transform:none;letter-spacing:0;color:var(--n);margin:0 0 6px}
+.ttl{font:800 clamp(22px,calc(6*var(--vh)),40px)/1 'Baloo 2','Trebuchet MS',sans-serif;color:var(--n)}.ttl2{font:800 clamp(18px,calc(4.2*var(--vh)),32px)/1 'Baloo 2','Trebuchet MS',sans-serif}
+.lab3{font:800 clamp(13px,calc(2.6*var(--vh)),18px)/1 'Baloo 2','Trebuchet MS',sans-serif;margin:2px 0 3px;color:var(--n)}
+.tag,.cap,.mchip{display:inline-block;border:3px solid var(--n);border-radius:999px;background:#fff;color:var(--n);padding:0 clamp(8px,calc(1.4*var(--vh)),14px);font:800 clamp(12px,calc(2.4*var(--vh)),16px)/1.4 'Baloo 2','Trebuchet MS',sans-serif}
+.cap{background:#bef264;align-self:flex-start}.hint{font:700 clamp(14px,calc(2.8*var(--vh)),20px) 'Baloo 2',sans-serif;text-align:center;color:var(--n)}
+.mchips,.rnums{display:flex;flex-wrap:wrap;gap:clamp(4px,.9vh,8px)}
+button.mchip,button.rnum{cursor:pointer;box-shadow:none;transition:transform .1s}
+.mchip.sel,.rnum.sel{background:#fde047;box-shadow:0 3px 0 var(--n)}
+button.mchip:hover,button.rnum:hover{transform:translateY(-2px)}
+.rnum{width:clamp(24px,calc(5.2*var(--vh)),36px);height:clamp(24px,calc(5.2*var(--vh)),36px);padding:0;border:3px solid var(--n);border-radius:9px;background:#fff;color:var(--n);font:800 clamp(12px,calc(2.4*var(--vh)),16px) 'Baloo 2',sans-serif}
+.hh2{display:flex;align-items:center;gap:14px;width:100%}.hh2 .tag{margin-left:auto}
+.hc{width:min(1180px,calc(98*var(--vw)));max-height:100%;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:clamp(6px,calc(1.6*var(--vh)),16px)}
+.hb2{display:flex;gap:clamp(10px,calc(2*var(--vw)),26px);width:100%;min-height:0;align-items:flex-start}.hl{flex:1;min-width:0}
+.mgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(5px,calc(1.3*var(--vh)),12px) clamp(6px,calc(1*var(--vw)),12px);flex:1;min-width:0}
+.hpv{width:clamp(250px,calc(29*var(--vw)),340px);display:flex;flex-direction:column;gap:clamp(4px,calc(1.1*var(--vh)),8px);flex:none}
+.pvart{border:4px solid var(--n);border-radius:16px;overflow:hidden;line-height:0}.pvart svg{width:100%;height:clamp(64px,calc(22*var(--vh)),150px);display:block}
+.mc2{display:flex;flex-direction:column;gap:3px;background:none;border:0;box-shadow:none;padding:0;cursor:pointer;color:var(--n);text-align:center;position:relative;filter:none}
+.mc2 .th{display:block;border:4px solid var(--n);border-radius:14px;overflow:hidden;line-height:0}
+.mc2 svg{display:block;width:100%;height:clamp(36px,calc(10*var(--vh)),70px)}
+.mc2 .nmx{font:800 clamp(11px,calc(2.2*var(--vh)),16px)/1.1 'Baloo 2',sans-serif}
+.mc2.sel .th{box-shadow:0 0 0 4px #fde047,0 5px 0 4px var(--n)}
+.mc2.sel::after{content:'✓';position:absolute;top:4px;right:4px;width:22px;height:22px;border:3px solid var(--n);border-radius:50%;background:#fde047;font:800 14px/16px sans-serif;text-align:center;color:var(--n)}
+.mc2:hover .th{transform:translateY(-2px)}
+.gobtn{width:min(380px,100%)!important;margin-top:4px}
+.sm{height:clamp(34px,calc(6*var(--vh)),46px)!important;font-size:clamp(13px,calc(2.5*var(--vh)),18px)!important;width:auto!important;padding:0 12px!important;gap:6px!important;box-shadow:0 5px 0 var(--n)!important}
+.sq{width:clamp(36px,calc(6*var(--vh)),46px)!important;padding:0!important;justify-content:center}
+.jc{width:min(640px,calc(96*var(--vw)));display:flex;flex-direction:column;align-items:center;gap:clamp(8px,calc(2.4*var(--vh)),24px);padding:clamp(12px,calc(3*var(--vh)),34px)}
+.cbs{display:flex;gap:clamp(8px,calc(2*var(--vh)),16px)}
+.cb{width:clamp(54px,calc(12*var(--vh)),100px)!important;height:clamp(64px,calc(15*var(--vh)),116px)!important;padding:0!important;text-align:center;border:4px solid var(--n)!important;border-radius:16px!important;background:#fff!important;color:var(--n)!important;font:800 clamp(40px,calc(10*var(--vh)),80px)/1 'Baloo 2',sans-serif!important;text-transform:uppercase;caret-color:#f97316}
+.cb:focus{outline:4px solid #f97316!important;outline-offset:2px}
+.pcard{position:absolute;left:max(12px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));z-index:3;display:flex;align-items:center;gap:10px;background:#fffbea;border:4px solid #0f172a;border-radius:18px;box-shadow:0 6px 0 #0f172a;padding:clamp(4px,calc(1*var(--vh)),8px) clamp(8px,calc(1.6*var(--vh)),16px);color:#0f172a;font-family:'Baloo 2','Trebuchet MS',sans-serif}
+.pav{width:clamp(32px,calc(7*var(--vh)),50px);height:clamp(32px,calc(7*var(--vh)),50px);border-radius:50%;background:#f9a8d4;border:4px solid #0f172a;display:flex;align-items:center;justify-content:center;font:800 clamp(16px,calc(3.6*var(--vh)),26px) 'Baloo 2',sans-serif;flex:none}
+.pinfo{display:flex;flex-direction:column;gap:1px}.pinfo b{font:800 clamp(14px,calc(3*var(--vh)),22px)/1.1 'Baloo 2',sans-serif;max-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.psub{font:700 clamp(11px,calc(2.2*var(--vh)),14px) 'Baloo 2',sans-serif;color:#334155}.prow{display:flex;gap:6px;margin-top:2px}
+.mini{height:clamp(24px,calc(4.6*var(--vh)),30px);padding:0 10px;border:3px solid #0f172a;border-radius:10px;background:#fff;color:#0f172a;font:800 clamp(11px,calc(2.2*var(--vh)),14px) 'Baloo 2',sans-serif;box-shadow:0 3px 0 #0f172a;cursor:pointer}
+.mini:hover{transform:translateY(-1px);filter:none}.mini:active{transform:translateY(2px);box-shadow:0 1px 0 #0f172a}
+#lobby{flex-direction:column;gap:clamp(8px,calc(2*var(--vh)),20px)}
+#lobby .lh{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fffbea;border:4px solid var(--n);border-radius:20px;box-shadow:0 7px 0 var(--n);padding:clamp(4px,calc(1*var(--vh)),10px) clamp(8px,calc(1.6*var(--vw)),18px);margin-right:clamp(52px,calc(9*var(--vh)),68px);flex:none}
+#lobby .lh>div{display:flex;align-items:center;gap:clamp(6px,calc(1*var(--vw)),12px)}
+#lobby .rl{font:700 clamp(13px,calc(2.6*var(--vh)),18px) 'Baloo 2',sans-serif}
+#lobby #rc{background:#fde047;border:4px solid var(--n);border-radius:12px;padding:0 clamp(8px,calc(1.4*var(--vw)),16px);font:800 clamp(22px,calc(6*var(--vh)),44px)/1.1 'Baloo 2',sans-serif;letter-spacing:clamp(2px,.5vw,6px);color:var(--n);margin:0}
+#lobby main.lm{display:grid;grid-template-columns:clamp(190px,calc(22*var(--vw)),270px) minmax(0,1.7fr) minmax(0,1fr);gap:clamp(8px,calc(1.8*var(--vw)),24px);flex:1;min-height:0;padding-bottom:6px}
+#lobby .c1{display:flex;flex-direction:column;gap:clamp(8px,calc(1.6*var(--vh)),14px);min-height:0}
+#lobby .plp{flex:1;min-height:0;overflow:auto}#lobby .plp #ready{margin-top:auto}
+#lobby .chat{height:clamp(84px,calc(22*var(--vh)),150px);flex:none;padding:clamp(6px,calc(1.2*var(--vh)),12px) clamp(8px,calc(1.4*var(--vh)),14px)}
+#lobby .chat h2{margin:0 0 2px;font-size:clamp(14px,calc(2.8*var(--vh)),20px)}
+#lobby #log{color:var(--n);font:700 clamp(12px,calc(2.4*var(--vh)),15px)/1.25 'Baloo 2',sans-serif}#lobby #log b{color:#0369a1}
+#lobby .chat .row input{text-transform:none}
+#lobby .pl{background:#fff;border:3px solid var(--n);border-radius:14px;color:var(--n);padding:clamp(3px,.8vh,6px) clamp(5px,.8vh,8px);gap:clamp(5px,.8vh,10px);margin-bottom:clamp(4px,.9vh,8px)}
+#lobby .pl:hover{background:#fff}
+#lobby .av{width:clamp(26px,calc(6*var(--vh)),40px);height:clamp(26px,calc(6*var(--vh)),40px);border:3px solid var(--n);font-size:clamp(14px,calc(3.4*var(--vh)),22px)}
+#lobby .nm{font:800 clamp(13px,calc(2.7*var(--vh)),18px) 'Baloo 2',sans-serif;color:var(--n)}
+#lobby .rdy{display:inline-block;background:#bef264;color:var(--n);border:3px solid var(--n);border-radius:999px;padding:0 8px;font:800 clamp(11px,calc(2.2*var(--vh)),14px)/1.4 'Baloo 2',sans-serif}
+#lobby .rdy.wait{background:#fff}
+#lobby .kick{width:clamp(24px,calc(4.6*var(--vh)),30px);height:clamp(24px,calc(4.6*var(--vh)),30px);padding:0;border:3px solid var(--n);border-radius:50%;background:#fca5a5;color:var(--n);font:800 13px/1 sans-serif;box-shadow:none}
+#lobby .c2{min-height:0;overflow:auto}
+#lobby .cw{display:flex;gap:clamp(8px,calc(1.4*var(--vw)),18px);align-items:flex-start}
+#lobby .cl{width:clamp(110px,calc(16*var(--vw)),220px);display:flex;flex-direction:column;align-items:center;gap:6px;flex:none}
+#lobby .vw{position:relative;width:100%;aspect-ratio:11/15;max-height:calc(44*var(--vh));border:4px solid var(--n);border-radius:16px;overflow:hidden;background:#bae6fd}
+#lobby .vw::before{content:'';position:absolute;left:8%;right:8%;bottom:7%;height:15%;border-radius:50%;background:#fde68a;border:3px solid var(--n)}
+#lobby #prev{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;background:transparent;margin:0;touch-action:none;cursor:grab}
+#lobby #pfb{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:clamp(56px,calc(16*var(--vh)),120px);pointer-events:none}
+#lobby .b3d,#lobby .dh{position:absolute;background:#fde047;border:3px solid var(--n);border-radius:999px;padding:0 8px;font:800 clamp(10px,calc(2*var(--vh)),14px)/1.4 'Baloo 2',sans-serif;pointer-events:none}
+#lobby .b3d{left:6px;top:6px}#lobby .dh{left:50%;transform:translateX(-50%);bottom:5px;background:#fff;white-space:nowrap}
+#lobby .rot{position:absolute;top:42%;width:clamp(26px,calc(5*var(--vh)),36px);height:clamp(26px,calc(5*var(--vh)),36px);padding:0;border:3px solid var(--n);border-radius:50%;background:#fff;color:var(--n);font:800 22px/1 'Baloo 2',sans-serif;box-shadow:none}
+#lobby .rot.l{left:5px}#lobby .rot.r{right:5px}
+#lobby .cr{flex:1;min-width:0}
+#lobby .minfo{color:#7c2d12;font:700 clamp(11px,calc(2.2*var(--vh)),14px)/1.3 'Baloo 2',sans-serif;margin:2px 0 6px;min-height:0}
+#lobby .chips{gap:clamp(3px,.7vh,6px);margin-bottom:6px}
+#lobby .tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}
+#lobby .tiles .chip{width:100%;height:clamp(30px,calc(6.4*var(--vh)),46px);font-size:clamp(16px,calc(3.4*var(--vh)),24px);padding:0;background:#fff;border:3px solid var(--n);border-radius:10px;color:var(--n);box-shadow:none;filter:none}
+#lobby .tiles .chip.sel{background:#fde047;box-shadow:0 3px 0 var(--n)}#lobby .tiles .chip.taken{opacity:.3}
+#lobby #teams .dot{width:clamp(22px,calc(4.6*var(--vh)),30px);height:clamp(22px,calc(4.6*var(--vh)),30px);border:3px solid var(--n);box-shadow:none}
+#lobby #teams .dot.sel{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--n)}#lobby #teams{justify-content:center;margin:0}
+#lobby .c3{min-height:0;overflow:auto;gap:clamp(5px,calc(1.1*var(--vh)),10px)}
+#lobby .mapcard{display:block;position:relative;width:100%;padding:0;border:4px solid var(--n);border-radius:14px;overflow:hidden;background:none;box-shadow:none;cursor:pointer;line-height:0;flex:none;filter:none}
+#lobby .mapcard:disabled{cursor:default;opacity:1}
+#lobby .mapcard svg{width:100%;height:clamp(56px,calc(16*var(--vh)),130px);display:block}
+#lobby .mn,#lobby .mcg{position:absolute;bottom:6px;border:3px solid var(--n);border-radius:999px;padding:0 9px;font:800 clamp(12px,calc(2.4*var(--vh)),16px)/1.4 'Baloo 2',sans-serif;color:var(--n)}
+#lobby .mn{left:6px;background:#fff}#lobby .mcg{right:6px;background:#fde047}
+#lobby .field{color:var(--n);font-weight:800;font-size:clamp(13px,calc(2.6*var(--vh)),17px);margin-bottom:0}
+#lobby select,#lobby input:not([type=range]){background:#fff;border:3px solid var(--n);border-radius:12px;color:var(--n);font:800 clamp(13px,calc(2.6*var(--vh)),17px) 'Baloo 2',sans-serif;padding:2px 10px;height:clamp(32px,calc(6*var(--vh)),44px)}
+#lobby input[type=range]{accent-color:#f97316;padding:0;border:0;background:none;height:26px}
+#lobby input::placeholder{color:#64748b;opacity:1}
+html.short #lobby .tiles{grid-template-columns:repeat(8,minmax(0,1fr))}html.short #lobby .tiles .chip{height:clamp(24px,calc(7*var(--vh)),30px)}html.short #lobby .c2 h2,html.short #lobby .c3 h2{display:none}html.short #lobby .vw{max-height:calc(34*var(--vh))}
+
+#lobby .hbtn{width:clamp(30px,calc(5.4*var(--vh)),40px);height:clamp(30px,calc(5.4*var(--vh)),40px);min-width:0;padding:0;border:3px solid var(--n);border-radius:12px;background:#fff;color:var(--n);font:800 18px/1 'Baloo 2',sans-serif;box-shadow:0 4px 0 var(--n);filter:none}
+#lobby .pl{flex-wrap:wrap}#lobby .nm{flex:1 1 72px;min-width:60px}
+.rt{flex-direction:row!important;align-items:center;gap:8px}.rt input{flex:1}
+.mc2{padding-bottom:6px}
+html.short #lobby .rdy.wait{display:none}html.short #lobby .c3 .minfo{display:none}html.short #lobby .c3 .mb{height:34px!important;font-size:14px!important;white-space:nowrap}html.short #lobby .c3{gap:4px}html.short #lobby .cap{font-size:11px;line-height:1.2}
+
+/* installed app: already full screen, so hide the fullscreen buttons */
+html.app .fsb{display:none!important}
+html.app #lobby .lh{margin-right:0}
+
+/* ===== Sunny Meadow: in-game HUD, popups and scoreboards ===== */
+#game,#popup,#sb,#toast{--n:#0f172a;--ol:-3px -3px 0 var(--n),3px -3px 0 var(--n),-3px 3px 0 var(--n),3px 3px 0 var(--n),0 -3px 0 var(--n),0 3px 0 var(--n),-3px 0 0 var(--n),3px 0 0 var(--n),0 7px 0 var(--n);font-family:'Baloo 2','Trebuchet MS',system-ui,sans-serif}
+#hTop{background:#fffbea;border:4px solid var(--n);border-radius:18px;box-shadow:0 5px 0 var(--n);color:var(--n);backdrop-filter:none;padding:2px 14px;font-weight:800}
+#hTimer{color:#c2410c}#hTimer.low{color:#dc2626}#hBar{background:#f97316;height:5px;bottom:-10px}
+#hScores{background:#fffbea;border:3px solid var(--n);border-radius:14px;box-shadow:0 4px 0 var(--n);color:var(--n);font-weight:700}
+#game button{border:3px solid var(--n);border-radius:12px;background:#fff;color:var(--n);font-weight:800;box-shadow:0 4px 0 var(--n);filter:none}
+#game #hLeave{background:#fca5a5}
+#game #hEm button{background:#fff;border:3px solid var(--n);box-shadow:0 3px 0 var(--n)}
+#game #hDash{background:#fde047;color:var(--n);border:4px solid var(--n);border-radius:50%;box-shadow:0 6px 0 var(--n)}
+#game #hItem{background:#7dd3fc;color:var(--n);border:4px solid var(--n);border-radius:50%;box-shadow:0 6px 0 var(--n)}
+#game #hDash.cd{filter:grayscale(.5) brightness(.85)}
+#game #hAb{border:4px solid var(--n);box-shadow:0 6px 0 var(--n)}
+#hFeed div{background:#fffbea;border:3px solid var(--n);color:var(--n);text-shadow:none;border-radius:12px;font-weight:800}
+#hNet{color:#fff;text-shadow:0 2px 0 var(--n);opacity:1}
+.count{color:#fde047;text-shadow:var(--ol);-webkit-text-stroke:0}
+#banner{color:#fde047;text-shadow:var(--ol)}
+#hHeld{color:#fde047;text-shadow:var(--ol)}#hHeld.hot{color:#fca5a5;text-shadow:var(--ol)}
+#hFx{color:#fff;text-shadow:var(--ol)}
+#popup,#sb{background:#0f172a99}
+#popup .role{background:#fffbea;color:var(--n);border:4px solid var(--n)!important;border-radius:22px;box-shadow:0 7px 0 var(--n)}
+#popup .role.p{background:#fef08a}#popup .role.s{background:#bae6fd}
+#popup h2{color:var(--n)}#popup p{color:#334155}
+#sb .card{background:#fffbea;border:4px solid var(--n);border-radius:22px;box-shadow:0 8px 0 var(--n);color:var(--n)}
+#sb h2{display:inline-block;background:#fde047;color:var(--n);border:4px solid var(--n);border-radius:14px;padding:2px 14px;transform:rotate(-1.5deg);box-shadow:0 4px 0 var(--n)}
+#sb .r{background:#fff;border:3px solid var(--n);color:var(--n)}#sb .r:first-of-type{background:#fde047}#sb .r b{color:var(--n)}#sb p{color:#334155}
+.aw{background:#fff;border:3px solid var(--n);color:var(--n)}.aw b{color:#c2410c}
+#toast{background:#fffbea;color:var(--n);border:3px solid var(--n);border-radius:14px;box-shadow:0 5px 0 var(--n);font-weight:800}
+#hFx{text-shadow:-2px -2px 0 var(--n),2px -2px 0 var(--n),-2px 2px 0 var(--n),2px 2px 0 var(--n)}
+#game::after{background:radial-gradient(ellipse at center,transparent 62%,rgba(0,0,0,.22))}
+
+/* chat stays inside its panel and scrolls */
+#lobby .chat{display:flex;flex-direction:column;overflow:hidden}
+#lobby .chat h2{flex:none}
+#lobby #log{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;word-break:break-word;padding-right:4px}
+#lobby .chat .row{flex:none;display:flex;gap:6px;margin-top:4px;align-items:center}
+#lobby .chat .row input{flex:1;min-width:0}
+/* real map renders */
+.mv{display:block;line-height:0}.mshot{display:block;width:100%;object-fit:cover}
+.mc2 .mshot{height:clamp(36px,calc(10*var(--vh)),70px)}.pvart .mshot{height:clamp(64px,calc(22*var(--vh)),150px)}#lobby .mapcard .mshot{height:clamp(56px,calc(16*var(--vh)),130px)}
+html.tall #lobby .chat{height:clamp(170px,calc(34*var(--vh)),280px)}
+
+/* ===== phones in landscape (short screens): nothing may overlap ===== */
+.hc>*,.jc>*{flex:none}.pn.c3>*,.pn.c2>*{flex:none}
+#host .hh2,#joinS .hh2{padding-right:clamp(44px,calc(8*var(--vh)),60px)}
+html.short .pn{padding:8px 10px;border-width:3px;border-radius:14px;box-shadow:0 4px 0 var(--n)}html.short .pn h2,html.short #lobby h2{font-size:15px;margin:0 0 3px}html.short #lobby{gap:6px}html.short #lobby .lh{border-width:3px;border-radius:14px;box-shadow:0 4px 0 var(--n);padding:2px 8px}html.short #lobby #rc{border-width:3px;font-size:22px;padding:0 8px;letter-spacing:2px;border-radius:9px}html.short #lobby main.lm{grid-template-columns:clamp(165px,calc(21*var(--vw)),200px) minmax(0,1.7fr) minmax(0,1fr);gap:8px;padding-bottom:4px}html.short #lobby .c1{gap:6px}html.short #lobby .chat{height:86px!important;padding:5px 8px}html.short #lobby .pl{padding:2px 5px;margin-bottom:4px;border-width:2px}html.short #lobby .av{width:26px;height:26px;font-size:15px;border-width:2px}html.short #lobby .nm{font-size:12px}html.short #lobby .rdy{font-size:10px;padding:0 6px;border-width:2px}html.short #lobby .plp #ready{height:34px!important;font-size:14px!important}html.short #lobby .cw{gap:8px}html.short #lobby .cl{width:96px}html.short #lobby .vw{aspect-ratio:3/4;max-height:128px;border-width:3px}html.short #lobby .b3d,html.short #lobby .dh{font-size:9px;border-width:2px;padding:0 5px}html.short #lobby .rot{width:22px;height:22px;font-size:16px;border-width:2px}html.short #lobby #teams .dot{width:18px;height:18px;border-width:2px}html.short #lobby .lab3{font-size:11px;margin:1px 0 2px}html.short #lobby .minfo{font-size:10px;line-height:1.2;margin:1px 0 3px}html.short #lobby .tiles{grid-template-columns:repeat(8,minmax(0,1fr));gap:3px}html.short #lobby .tiles .chip{height:auto;aspect-ratio:1/1;font-size:14px;border-width:2px;border-radius:7px;line-height:1;min-width:0}html.short #lobby .c3{gap:4px}html.short #lobby .c3 .mb{height:30px!important;font-size:12px!important;white-space:nowrap;line-height:1;padding:0 8px!important;box-shadow:0 3px 0 var(--n)!important}html.short #lobby .mapcard{border-width:3px;border-radius:10px}html.short #lobby .mapcard svg,html.short #lobby .mapcard .mshot{height:50px}html.short #lobby .mn,html.short #lobby .mcg{font-size:10px;padding:0 5px;border-width:2px;bottom:3px}html.short #lobby .mn{left:3px}html.short #lobby .mcg{right:3px}html.short #lobby .cap{font-size:10px;padding:0 6px;border-width:2px;line-height:1.3}html.short #lobby .field{font-size:12px}html.short #lobby select,html.short #lobby input:not([type=range]){height:28px;font-size:12px;border-width:2px;padding:0 6px}html.short #lobby input[type=range]{height:20px}html.short .hc{padding:8px 10px;gap:6px}html.short .hc .hh2,html.short .mpc .hh2{gap:8px}html.short .hc .ttl,html.short .mpc .ttl{font-size:20px}html.short .hb2{gap:10px}html.short .mgrid{gap:3px 6px}html.short .mc2 .th{border-width:3px;border-radius:9px}html.short .mc2 svg,html.short .mc2 .mshot{height:36px}html.short .mc2 .nmx{font-size:10px}html.short .mc2{padding-bottom:3px}html.short .mc2.sel .th{box-shadow:0 0 0 3px #fde047,0 3px 0 3px var(--n)}html.short .mc2.sel::after{width:16px;height:16px;font-size:10px;line-height:11px;border-width:2px}html.short .hpv{width:min(250px,calc(36*var(--vw)));gap:3px}html.short .pvart{border-width:3px;border-radius:10px}html.short .pvart svg,html.short .pvart .mshot{height:64px}html.short .ttl2{font-size:16px}html.short .lab3{font-size:11px}html.short .tag,html.short .cap,html.short .mchip{font-size:10.5px;border-width:2px;padding:0 7px;line-height:1.35}html.short .rnum{width:20px;height:20px;border-width:2px;border-radius:6px;font-size:10.5px}html.short .mchips,html.short .rnums{gap:3px}html.short .gobtn{height:34px!important;font-size:14px!important;margin-top:0}html.short .jc{padding:10px;gap:8px}
+html.short #host .hc{position:relative;gap:4px}html.short #hostGo{position:absolute;left:10px;bottom:8px;width:calc(100% - min(250px,calc(36*var(--vw))) - 34px)!important;height:34px!important}html.short .pvart svg,html.short .pvart .mshot{height:54px}
+html.tiny .mc2 svg,html.tiny .mc2 .mshot{height:32px}html.tiny .mc2 .nmx{font-size:9.5px}
+
+#home .bld{position:absolute;left:max(10px,env(safe-area-inset-left));bottom:max(6px,env(safe-area-inset-bottom));font:800 12px 'Baloo 2',sans-serif;color:#0f172a;background:#ffffffcc;border:2px solid #0f172a;border-radius:999px;padding:0 8px;z-index:3;pointer-events:none}
+
+/* phones: the chat must show messages */
+html.short #lobby .chat{height:112px!important}
+html.short #lobby .chat h2{display:none}
+html.short #lobby .chat #log{font-size:11px;line-height:1.2}
+html.short #lobby #start{font-size:11px!important;padding:0 4px!important}
+html.short .psub{display:none}
+html.short .pcard{padding:3px 10px}
