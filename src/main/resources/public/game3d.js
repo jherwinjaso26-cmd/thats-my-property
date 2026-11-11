@@ -694,18 +694,18 @@ function mapShot(key,w,h){
   const th=TM[key]||TM.forest,W=1600,H=1100;
   if(!shotR){const c=document.createElement('canvas');c.width=w;c.height=h;shotR=new T.WebGLRenderer({canvas:c,antialias:true,preserveDrawingBuffer:true});shotR.setClearColor(0x000000,1)}
   shotR.setSize(w,h,false);
-  TMH=th;map=key;I={w:W,h:H};quality=2;
+  TMH=th;map=key;I={w:W,h:H};quality=1;
   const s=new T.Scene();sc=s;s.background=new T.Color(th.sky);s.fog=new T.Fog(new T.Color(th.fog||th.sky),1100,3400);
   s.add(new T.HemisphereLight(th.hs,th.hg,.5));
   const sn=new T.DirectionalLight(th.sun,.64),cz=H*.55;sn.position.set(W/2-380,780,cz+300);sn.target.position.set(W/2,0,cz);s.add(sn);s.add(sn.target);
   const P=GROUND[key]||GROUND.forest;
-  const gc=document.createElement('canvas');gc.width=1024;gc.height=Math.round(1024*H/W);const x=gc.getContext('2d'),k=1024/W,r=mulberry(key.length*977+key.charCodeAt(0));
+  const gc=document.createElement('canvas');gc.width=512;gc.height=Math.round(512*H/W);const x=gc.getContext('2d'),k=512/W,r=mulberry(key.length*977+key.charCodeAt(0));
   x.scale(k,k);x.fillStyle=P.g[0];x.fillRect(0,0,W,H);
-  for(let i=0;i<W*H/5000;i++){x.globalAlpha=.5;x.fillStyle=P.g[1+(r()*2|0)];x.beginPath();x.ellipse(r()*W,r()*H,40+r()*130,30+r()*90,r()*3,0,7);x.fill()}
+  for(let i=0;i<W*H/9000;i++){x.globalAlpha=.5;x.fillStyle=P.g[1+(r()*2|0)];x.beginPath();x.ellipse(r()*W,r()*H,40+r()*130,30+r()*90,r()*3,0,7);x.fill()}
   x.globalAlpha=1;x.strokeStyle=P.edge||'rgba(0,0,0,.3)';x.lineWidth=90;x.strokeRect(0,0,W,H);x.strokeStyle='rgba(0,0,0,.45)';x.lineWidth=24;x.strokeRect(0,0,W,H);
   buildStatics({w:W,h:H,seed:key.length*7919+key.charCodeAt(1)},gc);
   const ops=[],kinds=th.ob,rr=mulberry(key.charCodeAt(0)*31+key.length);
-  for(let i=0;i<26;i++){const ox=140+rr()*(W-280),oy=140+rr()*(H-280),or=42+rr()*26,ry=rr()*6;try{ops.push(...place(OBJ[kinds[i%2]](or),ox,oy,ry,1,.75))}catch(e){}}
+  for(let i=0;i<18;i++){const ox=140+rr()*(W-280),oy=140+rr()*(H-280),or=42+rr()*26,ry=rr()*6;try{ops.push(...place(OBJ[kinds[i%2]](or),ox,oy,ry,1,.75))}catch(e){}}
   if(ops.length)s.add(mk(ops,true));
   const cm=new T.PerspectiveCamera(44,w/h,10,7000);cm.position.set(W/2,520,H+560);cm.lookAt(W/2,150,H*.42);
   shotR.render(s,cm);
