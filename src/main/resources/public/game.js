@@ -380,3 +380,4 @@ function drawAir(t){
 build();
 return{on,stop,get active(){return active}};
 })();
+;window.__ld_game=1;

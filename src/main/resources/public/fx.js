@@ -350,3 +350,4 @@ const ABIL=[
  ['🦛','Splash Stomp','Freezes nearby players and shields you.',20,'#a78bfa',150,'stun shield'],
  ['🐲','Fire Breath','Burns nearby players: they freeze and are pushed back.',18,'#fb923c',220,'stun push'],
  ['🐝','Buzz Sting','A burst of speed and a mine behind you.',15,'#facc15',90,'speed mine']];
+;window.__ld_fx=1;

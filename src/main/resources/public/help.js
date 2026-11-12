@@ -135,3 +135,4 @@ const lobbyBtns=document.querySelector('#lobby header>div');if(lobbyBtns)lobbyBt
 const game=document.getElementById('game');if(game)game.append(button('help-game'));
 return{open,close};
 })();
+;window.__ld_help=1;

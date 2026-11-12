@@ -719,3 +719,4 @@ function previewStop(){if(!pv)return;cancelAnimationFrame(pv.raf);try{pv.r.dispo
 const snapshot=cb=>{snapReq=cb};
 return{snapshot,get crowd(){return crowd},get season(){return season},available,get on(){return active},attach,init,setRound,frame,burst,fx:onEvent,resize,stop,hide,lower,toScreen,previewStart,previewSet,previewStop,previewRotate,mapShot,get quality(){return quality}};
 })();
+;window.__ld_g3d=1;
