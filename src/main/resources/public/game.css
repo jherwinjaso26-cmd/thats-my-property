@@ -379,14 +379,22 @@ html #help .hc{display:flex;flex-direction:column;max-height:100%;overflow:hidde
 html #help .hh,html #help .ht{flex:none}
 html #help .hb{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 
-/* role popup: never taller than the screen */
-#popup .role{max-height:calc(100dvh - 20px);overflow-y:auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
-@media (max-height:520px){
-  #popup .role{max-width:min(94vw,720px);display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;text-align:left;padding:8px 14px;border-width:3px}
-  #popup .big{grid-row:1 / span 20;align-self:center;font-size:clamp(36px,14vh,60px)}
-  #popup h2{font-size:clamp(16px,5.5vh,22px);margin:0 0 2px}
-  #popup p{font-size:clamp(11px,3.4vh,14px);line-height:1.25;margin:2px 0!important}
-}
-@media (max-height:400px){
-  #popup p:last-child{display:none}
-}
+/* role popup: never taller than the (possibly rotated) game screen */
+#popup .role{max-height:calc(96*var(--vh));overflow-y:auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+html.short #popup .role{max-width:min(94*var(--vw),720px);width:max-content;display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;text-align:left;padding:6px 14px;border-width:3px;box-shadow:0 4px 0 var(--n)}
+html.short #popup .big{grid-row:1 / span 20;align-self:center;font-size:clamp(34px,calc(16*var(--vh)),60px)}
+html.short #popup h2{font-size:clamp(15px,calc(6*var(--vh)),22px);margin:0 0 2px}
+html.short #popup p{font-size:clamp(10px,calc(3.5*var(--vh)),14px);line-height:1.2;margin:2px 0!important}
+html.tiny #popup p:last-child{display:none}
+
+/* top HUD on phones: keep the round bar and the buttons from overlapping */
+html.short #game #hMute,html.short #game .fs-game,html.short #game .help-game,html.short #game #hCam,html.short #game #hSnap{width:38px;height:38px;min-width:0;padding:0;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:11px}
+html.short #game #hLeave{height:38px;padding:0 10px;font-size:14px}
+html.short #game #hMute{right:calc(max(10px,env(safe-area-inset-right)) + 74px)}
+html.short #game .fs-game{right:calc(max(10px,env(safe-area-inset-right)) + 118px)}
+html.short #game .help-game{right:calc(max(10px,env(safe-area-inset-right)) + 162px)}
+html.short #game #hCam{right:calc(max(10px,env(safe-area-inset-right)) + 206px)}
+html.short #game #hSnap{right:calc(max(10px,env(safe-area-inset-right)) + 250px)}
+html.short #hTop{left:max(10px,env(safe-area-inset-left));transform:none;gap:8px;padding:1px 10px;font-size:13px;max-width:calc(100% - 330px);overflow:hidden;text-overflow:ellipsis}
+html.short #hScores{top:calc(max(8px,env(safe-area-inset-top)) + 46px)}
+html.tiny #hTop{font-size:11px;gap:6px;padding:0 8px;max-width:calc(100% - 320px)}
