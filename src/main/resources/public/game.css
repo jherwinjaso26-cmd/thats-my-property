@@ -378,3 +378,15 @@ html.app .fsb:not(.musb){display:none!important}
 html #help .hc{display:flex;flex-direction:column;max-height:100%;overflow:hidden}
 html #help .hh,html #help .ht{flex:none}
 html #help .hb{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+
+/* role popup: never taller than the screen */
+#popup .role{max-height:calc(100dvh - 20px);overflow-y:auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+@media (max-height:520px){
+  #popup .role{max-width:min(94vw,720px);display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;text-align:left;padding:8px 14px;border-width:3px}
+  #popup .big{grid-row:1 / span 20;align-self:center;font-size:clamp(36px,14vh,60px)}
+  #popup h2{font-size:clamp(16px,5.5vh,22px);margin:0 0 2px}
+  #popup p{font-size:clamp(11px,3.4vh,14px);line-height:1.25;margin:2px 0!important}
+}
+@media (max-height:400px){
+  #popup p:last-child{display:none}
+}
