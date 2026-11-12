@@ -294,6 +294,7 @@ return{want(b,tr){wanted=!!b;if(tr&&tr!==track){track=tr;SPB=60/TR[tr].bpm/4;CHO
  tense(v){hot=!!v},get playing(){return playing}};
 })();
 
+Music.want(true,'lobby'); // background music on every menu screen (it starts at the first tap or key press)
 /* Settings panel (opened from the home and lobby screens) and the lobby music button. */
 (function(){
  const g=id=>document.getElementById(id),m=g('settings');if(!m)return;
@@ -319,6 +320,8 @@ return{want(b,tr){wanted=!!b;if(tr&&tr!==track){track=tr;SPB=60/TR[tr].bpm/4;CHO
  g('sVibe').onchange=e=>{Settings.set('vibe',e.target.checked);if(e.target.checked&&navigator.vibrate)try{navigator.vibrate(60)}catch(x){}};
  const mus=g('mus');
  if(mus){const upd=()=>{mus.textContent=Settings.get('musicOn')?'🎵':'🔇';mus.title='Lobby music'};upd();mus.onclick=()=>Settings.set('musicOn',!Settings.get('musicOn'));Settings.on(upd)}
+ ['home','host','joinS'].forEach(id=>{const s=g(id);if(!s)return;const b=document.createElement('button');b.className='ghost fsb musb';b.setAttribute('aria-label','Music on or off');
+  const u=()=>{b.textContent=Settings.get('musicOn')?'🎵':'🔇';b.title=Settings.get('musicOn')?'Music on':'Music off'};u();b.onclick=()=>Settings.set('musicOn',!Settings.get('musicOn'));Settings.on(u);s.append(b)});
 })();
 
 /* soft click on every button (except the dash button, which has its own sound) */
