@@ -127,7 +127,8 @@ function on(m){
  else if(m.t==='state'){
   m.p=m.p.map(a=>({id:a[0],x:a[1],y:a[2],dc:a[3],d:!!a[4],a:!!a[5],sp:a[6],sh:a[7],fz:a[8],tr:a[9],it:!!a[10],wt:a[11],sm:a[12],off:!!a[13]}));
   ['ho','lb','bt'].forEach(k=>{if(m[k]===undefined)m[k]=st?st[k]:[]}); // the server only resends these when they change
-  st=m;m.p.forEach(p=>{const g=pos[p.id]||(pos[p.id]={sx:p.x,sy:p.y,px:p.x,py:p.y});g.x=p.x;g.y=p.y})}
+  st=m;const arr=performance.now();if(lastArr){const ia=arr-lastArr;ai=ai*.9+ia*.1;jt=jt*.9+Math.abs(ia-ai)*.1;interpMs=Math.max(80,Math.min(180,ai*1.6+jt*3))}lastArr=arr;
+  m.p.forEach(p=>{const g=pos[p.id]||(pos[p.id]={sx:p.x,sy:p.y,px:p.x,py:p.y});g.x=p.x;g.y=p.y;const b=g.b||(g.b=[]);b.push([arr,p.x,p.y]);if(b.length>10)b.shift()})}
  else if(m.t==='ev'){
   const dd=(x,y)=>{const g=pos[S.you];return g?Math.hypot(x-g.sx,y-g.sy):0};
   if(use3d){try{R3D.fx(m,pos,S.you)}catch(e){console.error(e)}}
@@ -171,6 +172,19 @@ function vec(){let x=0,y=0;
 function inZone(g,k,x,y){for(const z of zones)if(z.k===k&&Math.hypot((x===undefined?g.sx:x)-z.x,(y===undefined?g.sy:y)-z.y)<z.r)return z;return null}
 const inBush=g=>!!inZone(g,'bush');
 
+/* Other players are drawn a little in the past (80-180 ms, adapting to how evenly updates arrive) and moved smoothly between the last two updates,
+   so a slow or bumpy Wi-Fi connection no longer makes them stutter. Your own character is predicted instead, so it never waits. */
+let lastArr=0,ai=50,jt=0,interpMs=100;
+function snapPos(b,rt){
+ if(!b||b.length<2)return null;
+ const n=b.length;let i=n-1;while(i>0&&b[i][0]>rt)i--;
+ if(b[i][0]>rt)return [b[0][1],b[0][2]];                        // older than everything we have
+ if(i===n-1){const a=b[n-2],c=b[n-1],span=c[0]-a[0],ex=Math.min(120,rt-c[0]);   // newer than the newest update: carry on a little
+  if(span<=0||ex<=0||Math.hypot(c[1]-a[1],c[2]-a[2])>150)return [c[1],c[2]];
+  return [c[1]+(c[1]-a[1])/span*ex,c[2]+(c[2]-a[2])/span*ex]}
+ const a=b[i],c=b[i+1];
+ if(Math.hypot(c[1]-a[1],c[2]-a[2])>150)return [c[1],c[2]];       // teleport, swap or bounce: jump instead of sliding across the map
+ const f=(rt-a[0])/Math.max(1,c[0]-a[0]);return [a[1]+(c[1]-a[1])*f,a[2]+(c[2]-a[2])*f]}
 /* Client-side prediction: your own character moves instantly with your input and is gently pulled toward the server's position. */
 function predictMe(g,mine,dt){
  const ix=vec(),can=st.ph==='PLAY'&&mine&&mine.a&&!mine.off&&mine.fz<=0&&mine.tr<=0&&!mine.d&&!inZone(g,'ice',g.px,g.py);
@@ -194,7 +208,9 @@ function frame(t){
  const mine=st.p.find(p=>p.id===S.you),dead=!!mine&&!mine.a;
  for(const id in pos){const g=pos[id];
   if(id===S.you&&predictMe(g,mine,dt))continue;
-  const ddx=g.x-g.sx,ddy=g.y-g.sy,dl=Math.hypot(ddx,ddy);g.mv=dl>2;if(g.mv){g.fx=ddx/dl;g.fy=ddy/dl}g.sx+=(g.x-g.sx)*.4;g.sy+=(g.y-g.sy)*.4}
+  const sp=snapPos(g.b,t-interpMs);
+  if(sp){const ox=g.sx,oy=g.sy;g.sx=sp[0];g.sy=sp[1];const mx=g.sx-ox,my=g.sy-oy,ml=Math.hypot(mx,my);g.mv=ml>.25;if(ml>.25){g.fx=mx/ml;g.fy=my/ml}}
+  else{const ddx=g.x-g.sx,ddy=g.y-g.sy,dl=Math.hypot(ddx,ddy);g.mv=dl>2;if(g.mv){g.fx=ddx/dl;g.fy=ddy/dl}g.sx+=(g.x-g.sx)*.4;g.sy+=(g.y-g.sy)*.4}}
  const me=pos[S.you],view=dead?(pos[specId()]||me):me,z=cv.height/700;vw=cv.width/z;vh=700;const W=init.w,H=init.h;
  let cx=view?view.sx:W/2,cy=view?view.sy:H/2;
  cx=Math.max(vw/2,Math.min(W-vw/2,cx));cy=Math.max(vh/2,Math.min(H-vh/2,cy));
