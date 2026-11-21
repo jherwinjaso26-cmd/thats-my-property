@@ -55,7 +55,6 @@ public class Main {
             s.hostedPath = "/";
             s.directory = "/public";
             s.location = Location.CLASSPATH;
-            s.precompress = true; // the game files are compressed once and sent small
             s.headers = java.util.Map.of("Cache-Control", "no-cache");
         }));
         app.get("/health", ctx -> ctx.result("ok")); // for uptime pings (keeps Render awake)
