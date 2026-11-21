@@ -73,7 +73,7 @@ function render(){
   const ch=$('chars');ch.innerHTML='';
   CH.forEach((e,i)=>{const taken=S.players.some(p=>p.id!==S.you&&p.character===i);
     const b=btn('chip'+(me.character===i?' sel':'')+(taken?' taken':''),e,()=>go({t:'profile',character:i}));b.title=CHN[i]+(taken?' (taken)':'');b.disabled=taken;ch.append(b)});
-  const ai=ABIL[me.character%ABIL.length];$('abInfo').textContent='Special move: '+ai[0]+' '+ai[1]+' — '+ai[2]+' ('+ai[3]+'s recharge, key Q)';
+  const ai=ABIL[me.character%ABIL.length];$('abInfo').textContent='Special move: '+ai[0]+' '+ai[1]+' — '+ai[2]+' ('+ai[3]+'s recharge, key Q)';const sy=STORY[me.character%STORY.length];$('story').textContent='📖 '+sy[1];
   const ac=$('accs');ac.innerHTML='';const myAcc=me.acc==null?-1:me.acc;
   const accBtn=(lbl,title,val)=>{const b=btn('chip'+(myAcc===val?' sel':''),lbl,()=>{try{localStorage.setItem('tmp_acc',String(val))}catch(e){}go({t:'profile',acc:val})});b.title=title;ac.append(b)};
   accBtn('🎲','Surprise me (automatic)',-1);ACC.forEach((a,i)=>accBtn(a[0],a[1],i));

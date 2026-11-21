@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Game check</title>
+<style>body{margin:0;padding:16px;font:16px/1.4 system-ui,sans-serif;background:#fffbea;color:#0f172a}h1{margin:0 0 8px;font-size:24px}table{border-collapse:collapse;width:100%;max-width:760px}td,th{border:2px solid #0f172a;padding:4px 8px;text-align:left;font-size:14px}th{background:#fde047}.ok{background:#bef264}.bad{background:#fca5a5}button{margin:10px 0;padding:8px 16px;font:700 16px system-ui;border:3px solid #0f172a;border-radius:12px;background:#fde047;cursor:pointer}pre{white-space:pre-wrap;background:#fff;border:2px solid #0f172a;padding:8px;max-width:760px;font-size:13px}</style></head>
+<body><h1>That’s My Property: connection check</h1><p>Wait a few seconds, then take a screenshot of this page (or press Copy report) and send it.</p>
+<table id="t"><tr><th>Check</th><th>Result</th><th>Details</th></tr></table><button id="cp">Copy report</button><pre id="info"></pre>
+<script>
+var rows=[],t=document.getElementById('t');
+function add(name,ok,det){rows.push(name+': '+(ok?'OK':'FAIL')+' - '+det);var r=t.insertRow();r.insertCell().textContent=name;var c=r.insertCell();c.textContent=ok?'OK':'FAIL';c.className=ok?'ok':'bad';r.insertCell().textContent=det}
+var V='32',files=[['index.html','/index.html'],['game.css','/game.css?v='+V],['app.js','/app.js?v='+V],['fx.js','/fx.js?v='+V],['game3d.js','/game3d.js?v='+V],['game.js','/game.js?v='+V],['help.js','/help.js?v='+V],['manifest.json','/manifest.json'],['server /health','/health']];
+function chk(f,next){var t0=performance.now();fetch(f[1],{cache:'no-store'}).then(function(r){return r.text().then(function(x){var ms=Math.round(performance.now()-t0),extra='';var ok=r.ok&&x.length>0;
+ if(f[0]==='index.html'){var e=x.indexOf('id="eof"')>0;ok=ok&&e;extra=e?'page is complete':'page is CUT OFF (missing end marker)'}
+ else if(/\.js$/.test(f[0])){var m=/__ld_\w+=1/.test(x);ok=ok&&m;extra=m?'file is complete':'file is CUT OFF or damaged'}
+ add(f[0],ok,'HTTP '+r.status+', '+x.length+' bytes, '+ms+' ms'+(extra?', '+extra:''));next()})}).catch(function(e){add(f[0],false,'could not download: '+e.message);next()})}
+(function run(i){if(i>=files.length)return tests();chk(files[i],function(){run(i+1)})})(0);
+function tests(){
+ var info=['Address: '+location.href,'Browser: '+navigator.userAgent,'Window: '+innerWidth+' x '+innerHeight+', pixel ratio '+devicePixelRatio,'Online: '+navigator.onLine];
+ try{localStorage.setItem('t','1');localStorage.removeItem('t');info.push('Saved data (localStorage): works')}catch(e){info.push('Saved data (localStorage): BLOCKED')}
+ try{var c=document.createElement('canvas');info.push('3D (WebGL): '+((c.getContext('webgl')||c.getContext('experimental-webgl'))?'available':'NOT available'))}catch(e){info.push('3D (WebGL): error')}
+ info.push('Audio: '+((window.AudioContext||window.webkitAudioContext)?'available':'NOT available'));
+ document.getElementById('info').textContent=info.join('\n');rows=rows.concat(info);
+ var done=false,ws;try{ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws')}catch(e){add('live connection (WebSocket)',false,e.message);return}
+ var to=setTimeout(function(){if(!done){done=true;add('live connection (WebSocket)',false,'no answer after 8 seconds (the server may be asleep or blocked)');try{ws.close()}catch(e){}}},8000);
+ ws.onopen=function(){if(!done){done=true;clearTimeout(to);add('live connection (WebSocket)',true,'connected');ws.close()}};
+ ws.onerror=function(){if(!done){done=true;clearTimeout(to);add('live connection (WebSocket)',false,'could not connect')}};
+}
+document.getElementById('cp').onclick=function(){var s=rows.join('\n');if(navigator.clipboard)navigator.clipboard.writeText(s).then(function(){alert('Copied')},function(){alert(s)});else alert(s)};
+</script></body></html>
